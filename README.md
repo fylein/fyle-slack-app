@@ -1,4 +1,4 @@
-# fyle-slack-service #
+# fyle-slack-app #
 
 * Download and install Docker desktop for Mac from [here.](https://www.docker.com/products/docker-desktop)
 
