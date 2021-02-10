@@ -1,0 +1,53 @@
+version: '3.7'
+    
+services:
+  database:
+    image: postgres
+    restart: always
+    environment:
+        POSTGRES_DB: slack_db
+        POSTGRES_USER: slack_user
+        POSTGRES_PASSWORD: slack12345
+    ports: 
+      - 5434:5432
+    volumes:
+        - database-slack:/var/lib/postgresql/data/
+  slack-app-service:
+    build: .
+    restart: always
+    environment: 
+      DEBUG: "True"
+      DB_NAME: slack_db
+      DB_USER: slack_user
+      DB_PASSWORD: slack12345
+      DB_HOST: database
+      DB_PORT: 5432
+    env_file: 
+      - .env
+    entrypoint: bash run.sh
+    volumes:
+      - .:/fyle-slack-app
+    ports:
+      - 8000:8000
+    depends_on:
+      - database
+  slack-app-qcluster:
+    build: .
+    restart: always
+    environment: 
+      DEBUG: "True"
+      DB_NAME: slack_db
+      DB_USER: slack_user
+      DB_PASSWORD: slack12345
+      DB_HOST: database
+      DB_PORT: 5432
+    env_file: 
+      - .env
+    entrypoint: python manage.py qcluster
+    volumes:
+      - .:/fyle-slack-app
+    depends_on:
+      - database
+      - slack-app-service
+volumes: 
+    database-slack:
