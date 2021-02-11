@@ -8,7 +8,7 @@ from ...models import SlackTeam
 from ...libs import utils, assertions
 
 
-def slack_authorization(request):
+def slack_authorization(request) -> HttpResponseRedirect:
 
     error = request.GET.get('error')
 

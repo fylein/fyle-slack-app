@@ -1,5 +1,8 @@
 
-def get_pre_authorization_message(user_name):
+from typing import Dict, List
+
+
+def get_pre_authorization_message(user_name) -> List[Dict]:
     return [
         {
             "type": "section",
