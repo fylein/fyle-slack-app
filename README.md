@@ -54,5 +54,5 @@
 
 * Ensure that you have services up and running. Then run the following command to connect to the PostgreSQL DB.
     ```
-    PGPASSWORD=slack12345 psql -h database -U postgres slack_db
+    PGPASSWORD=slack12345 psql -h database -U slack_user slack_db
     ```
