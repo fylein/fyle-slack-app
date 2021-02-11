@@ -25,6 +25,8 @@ def slack_authorization(request):
         code=code
     )
 
+    assertions.assert_auth(auth_response['ok'] is True)
+
     team_id = auth_response['team']['id']
     team_name = auth_response['team']['name']
     bot_user_id = auth_response['bot_user_id']
