@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'fyle_slack_service.exception_middleware.CustomExceptionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -185,6 +186,8 @@ LOGGING = {
         }
     }
 }
+
+LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 
 # Fyle Settings
 FYLE_TOKEN_URL = os.environ.get('FYLE_TOKEN_URI')

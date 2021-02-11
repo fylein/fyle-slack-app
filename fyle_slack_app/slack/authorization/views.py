@@ -8,6 +8,7 @@ from ...libs import utils, assertions
 
 
 def slack_authorization(request):
+
     error = request.GET.get('error')
 
     if error:
