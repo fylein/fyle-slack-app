@@ -195,3 +195,5 @@ FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
 # Slack Settings
 SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
 SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
+SLACK_APP_ID = os.environ.get('SLACK_APP_ID')
+SLACK_APP_TOKEN = os.environ.get('SLACK_APP_TOKEN')

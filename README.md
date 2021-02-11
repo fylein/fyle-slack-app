@@ -18,6 +18,8 @@
     FYLE_TOKEN_URL=abcd
     SLACK_CLIENT_ID=abcd
     SLACK_CLIENT_ID=abcd
+    SLACK_APP_ID=abcd
+    SLACK_APP_TOKEN=abcd
     ```
 
 ### Bringing up via Docker Compose ###
