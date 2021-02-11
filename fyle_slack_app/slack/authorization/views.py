@@ -1,5 +1,6 @@
 from django.http import HttpResponseRedirect
 from django.conf import settings
+from django_q.tasks import async_task
 
 from slack_sdk.web import WebClient
 
@@ -42,5 +43,8 @@ def slack_authorization(request):
         bot_user_id=bot_user_id,
         bot_access_token=bot_access_token
     )
+
+    # Background task to broadcast pre auth message to all slack workspace members
+    async_task('fyle_slack_app.slack.authorization.tasks.broadcast_installation_message', team_id)
 
     return HttpResponseRedirect("https://slack.com/app_redirect?app={}".format(settings.SLACK_APP_ID))

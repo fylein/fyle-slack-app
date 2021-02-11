@@ -137,7 +137,9 @@ Q_CLUSTER = {
     'workers': 1,
     'queue_limit': 50,
     'orm': 'default',
-    'ack_failures': True
+    'ack_failures': True,
+    'max_attempts': 1,
+    'attempt_count': 1
 }
 
 LOGGING = {
