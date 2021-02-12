@@ -13,4 +13,4 @@ class SlackTeam(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{} - {}".format(self.name, self.id)
+        return "{} - {}".format(self.id, self.name)

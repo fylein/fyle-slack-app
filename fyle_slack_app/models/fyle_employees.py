@@ -16,4 +16,4 @@ class FyleEmployee(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{} - {}".format(self.id, self.org_id)
+        return "{} - {}".format(self.id, self.email)
