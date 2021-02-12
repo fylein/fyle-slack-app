@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.environ.get('DEBUG') == 'True' else False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -202,3 +202,5 @@ SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
 SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
 SLACK_APP_ID = os.environ.get('SLACK_APP_ID')
 SLACK_APP_TOKEN = os.environ.get('SLACK_APP_TOKEN')
+SLACK_SIGNING_SECRET = os.environ.get('SLACK_SIGNING_SECRET')
+SLACK_SERVICE_BASE_URL = os.environ.get('SLACK_SERVICE_BASE_URL')
