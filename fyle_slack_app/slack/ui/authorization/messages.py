@@ -42,3 +42,60 @@ def get_pre_authorization_message(user_name) -> List[Dict]:
             ]
         }
     ]
+
+
+def get_post_authorization_message() -> List[Dict]:
+    return {
+	'blocks': [
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': 'Yaay :tada: you\'ve linked *Fyle* to Slack :confetti_ball:  \n\n'
+			}
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': '*What to do next?*'
+			}
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': 'When one of your teammates submits an expense report for your approval, you\'ll receive a direct message like this:'
+			}
+		},
+		{
+			'type': 'image',
+			'image_url': 'https://i.ibb.co/p4q5XSC/Screen-Shot-2021-01-20-at-4-46-34-PM.png',
+			'alt_text': 'inspiration'
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': 'You can approve reports within Slack or view details in Fyle within 2 seconds. Your teammates are going to love you a little bit more!'
+			}
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': '*Coming soon* \n •  Submit your expenses from Slack'
+			}
+		},
+		{
+			'type': 'divider'
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': 'To see the official documentation, visit https://www.fylehq.com/help/en/?q=slack \nIf you\'re running into any trouble, please send us a note at support@fylehq.com'
+			}
+		}
+	]
+}

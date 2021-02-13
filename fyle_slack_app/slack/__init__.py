@@ -4,6 +4,7 @@ import time
 
 from functools import wraps
 from typing import Any
+from slack_sdk.web import WebClient
 
 from django import http
 from django.conf import settings
@@ -11,7 +12,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.views import View
 from django.utils.decorators import method_decorator
 
-from fyle_slack_app.libs import assertions
+from ..libs import assertions
 
 
 def verify_slack_signature(request) -> bool:
@@ -50,6 +51,11 @@ def verify_slack_request(function):
         return function(request, *args, **kwargs)
     function_wrapper.csrf_exempt = True
     return function_wrapper
+
+
+def get_slack_client(bot_access_token):
+    return WebClient(token=bot_access_token)
+
 
 # Base class for all Slack functionalities
 class SlackView(View):
