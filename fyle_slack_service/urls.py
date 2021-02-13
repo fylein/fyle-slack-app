@@ -25,11 +25,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
 
     # Slack routes
-    path('slack/authorization', slack_auth_views.slack_authorization),
+    path('slack/authorization', slack_auth_views.SlackAuthorization.as_view()),
 
     # Fyle routes
     path('fyle/authorization', fyle_auth_views.fyle_authorization),
 
     # Slack interactive routes
     path('slack/interactives', slack_interactive_views.SlackInteractiveView.as_view())
+
 ]
