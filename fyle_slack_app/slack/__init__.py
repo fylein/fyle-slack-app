@@ -51,6 +51,7 @@ def verify_slack_request(function):
     function_wrapper.csrf_exempt = True
     return function_wrapper
 
+# Base class for all Slack functionalities
 class SlackView(View):
     @method_decorator(verify_slack_request)
     def dispatch(self, request: http.HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponse:

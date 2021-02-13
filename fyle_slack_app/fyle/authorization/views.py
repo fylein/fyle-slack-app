@@ -8,5 +8,4 @@ def fyle_authorization(request):
 
     decoded_state = base64.urlsafe_b64decode(state.encode())
     state_json = json.loads(decoded_state.decode())
-
     pass
