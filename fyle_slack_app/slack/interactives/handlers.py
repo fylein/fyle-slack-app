@@ -12,11 +12,11 @@ from fyle_slack_app.slack.authorization.tasks import get_slack_user_dm_channel_i
 class BlockActionHandler():
 
     def link_fyle_account(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        state_json = {
+        state_params = {
             'user_id': user_id,
             'team_id': team_id
         }
-        state = json.dumps(state_json)
+        state = json.dumps(state_params)
 
         encoded_state = state.encode()
         base64_encoded_state = base64.urlsafe_b64encode(encoded_state).decode()
@@ -31,8 +31,10 @@ class BlockActionHandler():
         
         slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
         
+        auth_text = 'Click this <{}|link> to start your Fyle authorization'.format(FYLE_OAUTH_URL)
+
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
-            text=FYLE_OAUTH_URL
+            text=auth_text
         )
         return JsonResponse({}, status=200)
