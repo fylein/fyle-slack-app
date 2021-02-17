@@ -191,6 +191,7 @@ FYLE_TOKEN_URL = os.environ.get('FYLE_TOKEN_URI')
 FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
 FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
 FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_SLACK_APP_SEGMENT_KEY = os.environ.get('FYLE_SLACK_APP_SEGMENT_KEY')
 
 # Slack Settings
 SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
