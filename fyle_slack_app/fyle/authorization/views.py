@@ -1,14 +1,14 @@
 import json
 import base64
 
-from django.http.response import JsonResponse
+from django.http.response import HttpResponseRedirect
 from django.views import View
 from django.conf import settings
 
 from slack_sdk.web.client import WebClient
 
 from ...libs import utils, assertions, http
-from ...models import SlackTeam, FyleEmployee, SlackUser, SlackFyleUserMapping
+from ...models import Team, User
 from ...slack import get_slack_client
 from ...slack.authorization.tasks import get_slack_user_dm_channel_id
 from ...slack.ui.authorization.messages import get_post_authorization_message
@@ -17,9 +17,8 @@ from ...slack.ui.authorization.messages import get_post_authorization_message
 class FyleAuthorization(View):
 
     FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
-    FYLE_MY_PROFILE_URL = '{}/fyler/my_profile'.format(settings.FYLE_BASE_URL)
 
-    def get(self, request) -> JsonResponse:
+    def get(self, request) -> HttpResponseRedirect:
         code = request.GET.get('code')
         state = request.GET.get('state')
 
@@ -27,7 +26,7 @@ class FyleAuthorization(View):
         state_params = json.loads(decoded_state.decode())
 
         # Fetch the slack team
-        slack_team = utils.get_or_none(SlackTeam, id=state_params['team_id'])
+        slack_team = utils.get_or_none(Team, id=state_params['team_id'])
         assertions.assert_found(slack_team, 'slack team not found')
 
         # Get slack client
@@ -36,48 +35,37 @@ class FyleAuthorization(View):
         # Fetch slack dm channel
         slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
 
-        # Create slack user
-        slack_user = self.create_slack_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id)
+        fyle_refresh_token = self.get_fyle_refresh_token(code)
 
-        # Create fyle employee
-        fyle_employee = self.create_fyle_employee(code)
-
-        # Create slack fyle user mapping
-        slack_fyle_user_mapping = self.create_slack_fyle_user_mapping(slack_user, fyle_employee)
+        # Create user
+        slack_user = self.create_slack_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
 
         # Send post authorization message to user
         self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
 
-        return JsonResponse({}, status=200)
+        # Redirecting the user to slack bot when auth is complete
+        return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
-    def create_slack_user(self, slack_client: WebClient, slack_team: SlackTeam, user_id: str, slack_user_dm_channel_id: str) -> SlackUser:
+    def create_slack_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str) -> User:
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
         assertions.assert_good(slack_user_info['ok'] == True)
 
         # Store slack user in DB
-        slack_user = SlackUser.objects.create(
-            id=slack_user_info['user']['id'],
-            slack_team_id=slack_team,
+        slack_user = User.objects.create(
+            slack_user_id=slack_user_info['user']['id'],
+            slack_team=slack_team,
             email=slack_user_info['user']['profile']['email'],
-            dm_channel_id=slack_user_dm_channel_id
+            slack_dm_channel_id=slack_user_dm_channel_id,
+            fyle_refresh_token=fyle_refresh_token
         )
 
         return slack_user
 
 
-    def create_slack_fyle_user_mapping(self, slack_user: SlackUser, fyle_employee: FyleEmployee) -> SlackFyleUserMapping:
-        slack_fyle_user_mapping = SlackFyleUserMapping.objects.create(
-            slack_user_id=slack_user,
-            fyle_employee_id=fyle_employee
-        )
-
-        return slack_fyle_user_mapping
-
-
-    def create_fyle_employee(self, code: str) -> FyleEmployee:
+    def get_fyle_refresh_token(self, code: str) -> str:
         oauth_payload = {
             'grant_type': 'authorization_code',
             'client_id': settings.FYLE_CLIENT_ID,
@@ -90,27 +78,7 @@ class FyleAuthorization(View):
 
         oauth_details = oauth_response.json()
 
-        refresh_token = oauth_details['refresh_token']
-        access_token = oauth_details['access_token']
-
-        headers = {
-            'X-AUTH-TOKEN': access_token
-        }
-        fyle_profile_response = http.get(self.FYLE_MY_PROFILE_URL, headers=headers)
-        assertions.assert_good(fyle_profile_response.status_code == 200, 'Error while fetching fyle profile details')
-
-        fyle_profile_details = fyle_profile_response.json()['data']
-
-        fyle_employee = FyleEmployee.objects.create(
-            id=fyle_profile_details['id'],
-            refresh_token=refresh_token,
-            email=fyle_profile_details['user']['email'],
-            org_id=fyle_profile_details['org_id'],
-            org_name=fyle_profile_details['org']['name'],
-            org_currency=fyle_profile_details['org']['currency']
-        )
-
-        return fyle_employee
+        return oauth_details['refresh_token']
 
 
     def send_post_authorization_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:

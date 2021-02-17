@@ -45,8 +45,7 @@ def get_pre_authorization_message(user_name) -> List[Dict]:
 
 
 def get_post_authorization_message() -> List[Dict]:
-    return {
-	'blocks': [
+    return [
 		{
 			'type': 'section',
 			'text': {
@@ -98,4 +97,3 @@ def get_post_authorization_message() -> List[Dict]:
 			}
 		}
 	]
-}

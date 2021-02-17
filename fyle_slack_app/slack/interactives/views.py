@@ -8,9 +8,9 @@ from django.http.response import JsonResponse
 from django.contrib.sites.shortcuts import get_current_site
 
 from ...slack import SlackView
-from ...models import SlackTeam
+from ...models import Team
 from ...libs import utils
-from .handlers import BlockActionHandler
+from .block_action_handlers import BlockActionHandler
 
 
 class SlackInteractiveView(SlackView, BlockActionHandler):
@@ -23,7 +23,7 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
     slack_client: WebClient = None
 
     def _set_slack_client(self) -> None:
-        slack_team = utils.get_or_none(SlackTeam, id=self.team_id)
+        slack_team = utils.get_or_none(Team, id=self.team_id)
         self.slack_client = WebClient(token=slack_team.bot_access_token)
 
 
@@ -42,12 +42,13 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
 
         event_type = slack_payload['type']
 
+        # Check interactive event type and call it's respective handler
         if event_type == 'block_actions':
             return self.handle_block_actions()
     
         return JsonResponse({}, status=200)
     
-
+    # Gets called when function with an action is not found
     def handle_invalid_block_actions(self) -> JsonResponse:
         user_dm_channel_id = get_slack_user_dm_channel_id(self.slack_client, self.user_id)
         self.slack_client.chat_postMessage(
@@ -59,6 +60,11 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
 
     # Handle all the block actions from slack
     def handle_block_actions(self) -> Callable:
+        '''
+            Check if any function is associated with the action
+            If present handler will call the respective function from `BlockActionHandle`
+            If not present call `handle_invalid_block_actions` to send a prompt to user
+        '''
         action_id = self.slack_payload['actions'][0]['action_id']
         handler = getattr(self, action_id, self.handle_invalid_block_actions)
         return handler(self.slack_client, self.slack_payload, self.user_id, self.team_id)
