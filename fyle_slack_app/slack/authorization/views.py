@@ -5,7 +5,7 @@ from django_q.tasks import async_task
 
 from slack_sdk.web import WebClient
 
-from ...models import SlackTeam
+from ...models import Team
 from ...libs import utils, assertions
 
 
@@ -37,11 +37,11 @@ class SlackAuthorization(View):
         bot_user_id = auth_response['bot_user_id']
         bot_access_token = auth_response['access_token']
 
-        slack_team = utils.get_or_none(SlackTeam, id=team_id)
+        slack_team = utils.get_or_none(Team, id=team_id)
 
         assertions.assert_valid(slack_team is None, 'Fyle app has already been installed on your workspace')
 
-        slack_team = SlackTeam.objects.create(
+        slack_team = Team.objects.create(
             id=team_id,
             name=team_name,
             bot_user_id=bot_user_id,
