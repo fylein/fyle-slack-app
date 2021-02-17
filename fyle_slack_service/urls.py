@@ -17,8 +17,9 @@ from django.contrib import admin
 from django.urls import path
 
 from fyle_slack_app.slack.authorization import views as slack_auth_views
-from fyle_slack_app.fyle.authorization import views as fyle_auth_views
 from fyle_slack_app.slack.interactives import views as slack_interactive_views
+
+from fyle_slack_app.fyle.authorization import views as fyle_auth_views
 
 
 urlpatterns = [
@@ -28,7 +29,7 @@ urlpatterns = [
     path('slack/authorization', slack_auth_views.SlackAuthorization.as_view()),
 
     # Fyle routes
-    path('fyle/authorization', fyle_auth_views.fyle_authorization),
+    path('fyle/authorization', fyle_auth_views.FyleAuthorization.as_view()),
 
     # Slack interactive routes
     path('slack/interactives', slack_interactive_views.SlackInteractiveView.as_view())

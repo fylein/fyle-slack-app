@@ -23,7 +23,8 @@ class BlockActionHandler():
 
         redirect_uri = '{}/fyle/authorization'.format(settings.SLACK_SERVICE_BASE_URL)
 
-        FYLE_OAUTH_URL = 'https://accounts.fyle.tech/app/developers/#/oauth/authorize?client_id={}&response_type=code&state={}&redirect_uri={}'.format(
+        FYLE_OAUTH_URL = '{}/app/developers/#/oauth/authorize?client_id={}&response_type=code&state={}&redirect_uri={}'.format(
+            settings.FYLE_ACCOUNTS_URL,
             settings.FYLE_CLIENT_ID,
             base64_encoded_state,
             redirect_uri

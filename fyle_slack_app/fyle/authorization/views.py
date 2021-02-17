@@ -17,7 +17,7 @@ from ...slack.ui.authorization.messages import get_post_authorization_message
 class FyleAuthorization(View):
 
     FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
-    FYLE_MY_PROFILE_URL = 'https://platform.fyle.tech/fyler/my_profile'
+    FYLE_MY_PROFILE_URL = '{}/fyler/my_profile'.format(settings.FYLE_BASE_URL)
 
     def get(self, request) -> JsonResponse:
         code = request.GET.get('code')
@@ -79,35 +79,35 @@ class FyleAuthorization(View):
 
     def create_fyle_employee(self, code: str) -> FyleEmployee:
         oauth_payload = {
-        'grant_type': 'authorization_code',
-        'client_id': settings.FYLE_CLIENT_ID,
-        'client_secret': settings.FYLE_CLIENT_SECRET,
-        'code': code
+            'grant_type': 'authorization_code',
+            'client_id': settings.FYLE_CLIENT_ID,
+            'client_secret': settings.FYLE_CLIENT_SECRET,
+            'code': code
         }
 
         oauth_response = http.post(self.FYLE_OAUTH_TOKEN_URL, oauth_payload)
         assertions.assert_good(oauth_response.status_code == 200, 'Error while fetching fyle token details')
 
-        oauth_response = oauth_response.json()
+        oauth_details = oauth_response.json()
 
-        refresh_token = oauth_response['refresh_token']
-        access_token = oauth_response['access_token']
+        refresh_token = oauth_details['refresh_token']
+        access_token = oauth_details['access_token']
 
         headers = {
             'X-AUTH-TOKEN': access_token
         }
-        my_profile_response = http.get(self.FYLE_MY_PROFILE_URL, headers=headers)
-        assertions.assert_good(my_profile_response.status_code == 200, 'Error while fetching fyle profile details')
+        fyle_profile_response = http.get(self.FYLE_MY_PROFILE_URL, headers=headers)
+        assertions.assert_good(fyle_profile_response.status_code == 200, 'Error while fetching fyle profile details')
 
-        my_profile_response = my_profile_response.json()['data']
+        fyle_profile_details = fyle_profile_response.json()['data']
 
         fyle_employee = FyleEmployee.objects.create(
-            id=my_profile_response['id'],
+            id=fyle_profile_details['id'],
             refresh_token=refresh_token,
-            email=my_profile_response['user']['email'],
-            org_id=my_profile_response['org_id'],
-            org_name=my_profile_response['org']['name'],
-            org_currency=my_profile_response['org']['currency']
+            email=fyle_profile_details['user']['email'],
+            org_id=fyle_profile_details['org_id'],
+            org_name=fyle_profile_details['org']['name'],
+            org_currency=fyle_profile_details['org']['currency']
         )
 
         return fyle_employee
