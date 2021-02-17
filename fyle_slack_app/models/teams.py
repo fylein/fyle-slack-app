@@ -1,9 +1,9 @@
 from django.db import models
 
-class SlackTeam(models.Model):
+class Team(models.Model):
     
     class Meta:
-        db_table = 'slack_teams'
+        db_table = 'teams'
 
     id = models.CharField(max_length=120, primary_key=True)
     name = models.CharField(max_length=120)
