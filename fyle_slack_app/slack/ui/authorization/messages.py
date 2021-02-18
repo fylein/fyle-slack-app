@@ -2,7 +2,7 @@
 from typing import Dict, List
 
 
-def get_pre_authorization_message(user_name) -> List[Dict]:
+def get_pre_authorization_message(user_name, FYLE_OAUTH_URL) -> List[Dict]:
     return [
         {
             'type': 'section',
@@ -35,6 +35,7 @@ def get_pre_authorization_message(user_name) -> List[Dict]:
                         'text': 'Link Your Fyle Account',
                         'emoji': True
                     },
+					'url': FYLE_OAUTH_URL,
                     'style': 'primary',
                     'value': 'link_fyle_account',
                     'action_id': 'link_fyle_account'

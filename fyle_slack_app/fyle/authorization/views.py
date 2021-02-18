@@ -37,24 +37,30 @@ class FyleAuthorization(View):
 
         fyle_refresh_token = self.get_fyle_refresh_token(code)
 
-        # Create user
-        slack_user = self.create_slack_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+        user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
 
-        # Send post authorization message to user
-        self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+        if user is not None:
+            # If the user already exists send a message to user indicating they've already linked Fyle account
+            self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+        else:
+            # Create user
+            user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+
+            # Send post authorization message to user
+            self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
-    def create_slack_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str) -> User:
+    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str) -> User:
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
         assertions.assert_good(slack_user_info['ok'] == True)
 
         # Store slack user in DB
-        slack_user = User.objects.create(
+        user = User.objects.create(
             slack_user_id=slack_user_info['user']['id'],
             slack_team=slack_team,
             email=slack_user_info['user']['profile']['email'],
@@ -62,7 +68,7 @@ class FyleAuthorization(View):
             fyle_refresh_token=fyle_refresh_token
         )
 
-        return slack_user
+        return user
 
 
     def get_fyle_refresh_token(self, code: str) -> str:
@@ -86,4 +92,11 @@ class FyleAuthorization(View):
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
             blocks=post_authorization_message
+        )
+
+
+    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
+        slack_client.chat_postMessage(
+            channel=slack_user_dm_channel_id,
+            text='Hey buddy you\'ve already linked your *Fyle* account'
         )
