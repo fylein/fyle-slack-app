@@ -68,5 +68,5 @@ class SlackAuthorization(View):
     def send_bot_already_installed_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
-            text='Hey buddy, Fyle app has already been installed on your workspace'
+            text='Hey buddy, Fyle app has already been installed on your workspace :rainbow:'
         )
