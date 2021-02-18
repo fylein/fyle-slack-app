@@ -22,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get('DEBUG') == 'True' else False
+DEBUG = True if os.environ['DEBUG'] == 'True' else False
 
 ALLOWED_HOSTS = []
 
@@ -82,11 +82,11 @@ WSGI_APPLICATION = 'fyle_slack_service.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ['DB_PORT'],
     }
 }
 
@@ -189,16 +189,16 @@ LOGGING = {
     }
 }
 
-LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
+LOG_LEVEL = os.environ['LOGGING_LEVEL']
 
 # Fyle Settings
-FYLE_TOKEN_URL = os.environ.get('FYLE_TOKEN_URI')
-FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
-FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
-FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_TOKEN_URL = os.environ['FYLE_TOKEN_URI']
+FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
+FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
+FYLE_BASE_URL = os.environ['FYLE_BASE_URL']
 
 # Slack Settings
-SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
-SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
-SLACK_APP_ID = os.environ.get('SLACK_APP_ID')
-SLACK_APP_TOKEN = os.environ.get('SLACK_APP_TOKEN')
+SLACK_CLIENT_ID = os.environ['SLACK_CLIENT_ID']
+SLACK_CLIENT_SECRET = os.environ['SLACK_CLIENT_SECRET']
+SLACK_APP_ID = os.environ['SLACK_APP_ID']
+SLACK_APP_TOKEN = os.environ['SLACK_APP_TOKEN']
