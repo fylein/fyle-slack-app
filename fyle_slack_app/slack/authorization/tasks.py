@@ -1,15 +1,10 @@
-from fyle_slack_app.models.teams import Team
 import slack_sdk
 
 from ...libs import utils, assertions
 from ...models import Team
 from ..ui.authorization import messages
+from ...slack.utils import get_slack_user_dm_channel_id
 
-
-def get_slack_user_dm_channel_id(slack_client: slack_sdk.WebClient, user_id: str) -> str:
-    slack_user_dm_channel_id = slack_client.conversations_open(users=[user_id])
-    assertions.assert_good(slack_user_dm_channel_id['ok'] == True)
-    return slack_user_dm_channel_id['channel']['id']
 
 def broadcast_installation_message(slack_team_id: str) -> None:
     slack_team = utils.get_or_none(Team, id=slack_team_id)
