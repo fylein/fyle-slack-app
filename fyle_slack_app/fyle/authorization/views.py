@@ -98,5 +98,5 @@ class FyleAuthorization(View):
     def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
-            text='Hey buddy you\'ve already linked your *Fyle* account'
+            text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
         )
