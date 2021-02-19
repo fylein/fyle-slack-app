@@ -8,6 +8,7 @@ from slack_sdk.web import WebClient
 from ...models import Team
 from ...libs import utils, assertions, logger
 from .tasks import get_slack_user_dm_channel_id
+from ... import tracking
 
 
 logger = logger.get_logger(__name__)
@@ -68,6 +69,9 @@ class SlackAuthorization(View):
             # Background task to broadcast pre auth message to all slack workspace members
             async_task('fyle_slack_app.slack.authorization.tasks.broadcast_installation_message', team_id)
 
+        # Tracking slack bot installation to Mixpanel
+        self.track_installation(user_id, slack_team)
+
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
@@ -76,3 +80,29 @@ class SlackAuthorization(View):
             channel=slack_user_dm_channel_id,
             text='Hey buddy, Fyle app has already been installed on your workspace :rainbow:'
         )
+
+
+    def track_installation(self, user_id: str, slack_team: Team) -> None:
+        try:
+            slack_client = WebClient(token=slack_team.bot_access_token)
+
+            user_info = slack_client.users_info(user=user_id)
+            assertions.assert_good(user_info['ok'] == True)
+
+            user_email = user_info['profile']['email']
+
+            identify_user = tracking.identify_user(user_email)
+
+            event_data = {
+                'slack_user_id': user_id,
+                'slack_team_id': slack_team.id,
+                'slack_team_name': slack_team.name,
+                'installer_email': user_email,
+                'installer_name': user_info['real_name'],
+                'is_slack_admin': user_info['is_admin']
+            }
+
+            tracking.track_event(user_email, 'Slack Bot Installed', event_data)
+
+        except Exception as e:
+            logger.error('Failed to log to MixPanel: {}'.format(e))
