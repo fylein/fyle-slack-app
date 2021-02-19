@@ -1,14 +1,13 @@
 import json
 
-from typing import Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 from slack_sdk.web import WebClient
 
 from django.http.response import JsonResponse
 
 from ...slack import SlackView
 from ...models import Team
-from ...slack.authorization.tasks import get_slack_user_dm_channel_id
-from ...libs import utils
+from ...libs import utils, assertions
 from .block_action_handlers import BlockActionHandler
 
 
@@ -23,6 +22,7 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
 
     def _set_slack_client(self) -> None:
         slack_team = utils.get_or_none(Team, id=self.team_id)
+        assertions.assert_found(slack_team, 'Slack team not registered')
         self.slack_client = WebClient(token=slack_team.bot_access_token)
 
 
@@ -43,27 +43,7 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
 
         # Check interactive event type and call it's respective handler
         if event_type == 'block_actions':
-            return self._handle_block_actions()
+            # Call handler function from BlockActionHandler
+            return self.handle_block_actions(self.slack_client, self.slack_payload, self.user_id, self.team_id)
     
         return JsonResponse({}, status=200)
-    
-    # Gets called when function with an action is not found
-    def _handle_invalid_block_actions(self, slack_client, slack_payload, user_id, team_id) -> JsonResponse:
-        user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
-        slack_client.chat_postMessage(
-            channel=user_dm_channel_id,
-            text='Seems like something bad happened :zipper_mouth_face: \n Please try again'
-        )
-        return JsonResponse({}, status=200)
-
-
-    # Handle all the block actions from slack
-    def _handle_block_actions(self) -> Callable:
-        '''
-            Check if any function is associated with the action
-            If present handler will call the respective function from `BlockActionHandler`
-            If not present call `handle_invalid_block_actions` to send a prompt to user
-        '''
-        action_id = self.slack_payload['actions'][0]['action_id']
-        handler = getattr(self, action_id, self._handle_invalid_block_actions)
-        return handler(self.slack_client, self.slack_payload, self.user_id, self.team_id)
