@@ -43,12 +43,12 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
 
         # Check interactive event type and call it's respective handler
         if event_type == 'block_actions':
-            return self.handle_block_actions()
+            return self._handle_block_actions()
     
         return JsonResponse({}, status=200)
     
     # Gets called when function with an action is not found
-    def handle_invalid_block_actions(self, slack_client, slack_payload, user_id, team_id) -> JsonResponse:
+    def _handle_invalid_block_actions(self, slack_client, slack_payload, user_id, team_id) -> JsonResponse:
         user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
@@ -58,12 +58,12 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
 
 
     # Handle all the block actions from slack
-    def handle_block_actions(self) -> Callable:
+    def _handle_block_actions(self) -> Callable:
         '''
             Check if any function is associated with the action
             If present handler will call the respective function from `BlockActionHandler`
             If not present call `handle_invalid_block_actions` to send a prompt to user
         '''
         action_id = self.slack_payload['actions'][0]['action_id']
-        handler = getattr(self, action_id, self.handle_invalid_block_actions)
+        handler = getattr(self, action_id, self._handle_invalid_block_actions)
         return handler(self.slack_client, self.slack_payload, self.user_id, self.team_id)

@@ -4,7 +4,6 @@ import time
 
 from functools import wraps
 from typing import Any
-from slack_sdk.web import WebClient
 
 from django import http
 from django.conf import settings
@@ -16,31 +15,47 @@ from ..libs import assertions
 
 
 def verify_slack_signature(request) -> bool:
+    '''
+        Slack creates a unique string for our app and shares it with us.
+        This verifies requests from Slack with confidence by verifying signatures using your signing secret.
+
+        On each HTTP request that Slack sends, slack add an X-Slack-Signature HTTP header.
+        The signature is created by combining the signing secret with the body of the request slack sends.
+
+        The signature sent by slack in request is checked against the signature we build from the request body.
+
+        Reference: https://api.slack.com/authentication/verifying-requests-from-slack#verifying-requests-from-slack-using-signing-secrets__app-management-updates
+    '''
     slack_signature = request.META.get('HTTP_X_SLACK_SIGNATURE')
     slack_request_timestamp = request.META.get('HTTP_X_SLACK_REQUEST_TIMESTAMP')
 
+    is_signature_verified = True
+
     if not slack_signature or not slack_request_timestamp:
-        return False
+        is_signature_verified = False
 
     if time.time() - int(slack_request_timestamp) > 60 * 5:
         # The request timestamp is more than five minutes from local time.
         # It could be a replay attack, so let's ignore it.
-        return False
+        is_signature_verified = False
 
-    request_body = request.body.decode("utf-8")
+    if is_signature_verified:
+        request_body = request.body.decode("utf-8")
 
-    basestring = "v0:{}:{}".format(slack_request_timestamp, request_body).encode('utf-8')
+        basestring = "v0:{}:{}".format(slack_request_timestamp, request_body).encode('utf-8')
 
-    try:
-        slack_signing_secret = bytes(settings.SLACK_SIGNING_SECRET, 'utf-8')
-    except AttributeError:
-        raise ImproperlyConfigured(
-            "`settings.SLACK_SIGNING_SECRET` isn't defined"
-        )
+        try:
+            slack_signing_secret = bytes(settings.SLACK_SIGNING_SECRET, 'utf-8')
+        except AttributeError:
+            raise ImproperlyConfigured(
+                "`settings.SLACK_SIGNING_SECRET` isn't defined"
+            )
 
-    my_signature = 'v0=' + hmac.new(slack_signing_secret, basestring, hashlib.sha256).hexdigest()
+        my_signature = 'v0=' + hmac.new(slack_signing_secret, basestring, hashlib.sha256).hexdigest()
 
-    return hmac.compare_digest(my_signature, slack_signature)
+        is_signature_verified = hmac.compare_digest(my_signature, slack_signature)
+
+    return is_signature_verified
 
 
 def verify_slack_request(function):
@@ -51,10 +66,6 @@ def verify_slack_request(function):
         return function(request, *args, **kwargs)
     function_wrapper.csrf_exempt = True
     return function_wrapper
-
-
-def get_slack_client(bot_access_token):
-    return WebClient(token=bot_access_token)
 
 
 # Base class for all Slack functionalities

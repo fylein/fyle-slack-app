@@ -9,7 +9,6 @@ from slack_sdk.web.client import WebClient
 
 from ...libs import utils, assertions, http
 from ...models import Team, User
-from ...slack import get_slack_client
 from ...slack.authorization.tasks import get_slack_user_dm_channel_id
 from ...slack.ui.authorization.messages import get_post_authorization_message
 
@@ -30,7 +29,7 @@ class FyleAuthorization(View):
         assertions.assert_found(slack_team, 'slack team not found')
 
         # Get slack client
-        slack_client = get_slack_client(slack_team.bot_access_token)
+        slack_client = WebClient(token=slack_team.bot_access_token)
 
         # Fetch slack dm channel
         slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
