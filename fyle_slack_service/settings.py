@@ -192,10 +192,10 @@ LOGGING = {
 LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 
 # Fyle Settings
-FYLE_TOKEN_URL = os.environ['FYLE_TOKEN_URI']
 FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
 FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
 FYLE_BASE_URL = os.environ['FYLE_BASE_URL']
+FYLE_SLACK_APP_SEGMENT_KEY = os.environ['FYLE_SLACK_APP_SEGMENT_KEY']
 
 # Slack Settings
 SLACK_CLIENT_ID = os.environ['SLACK_CLIENT_ID']
