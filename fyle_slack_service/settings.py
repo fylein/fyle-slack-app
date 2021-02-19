@@ -22,10 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ.get('DEBUG') == 'True' else False
+DEBUG = os.environ.get('DEBUG', False)
 
 ALLOWED_HOSTS = []
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'fyle_slack_service.exception_middleware.CustomExceptionMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -81,11 +82,11 @@ WSGI_APPLICATION = 'fyle_slack_service.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('DB_NAME'),
-        'USER': os.environ.get('DB_USER'),
-        'PASSWORD': os.environ.get('DB_PASSWORD'),
-        'HOST': os.environ.get('DB_HOST'),
-        'PORT': os.environ.get('DB_PORT'),
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
+        'HOST': os.environ['DB_HOST'],
+        'PORT': os.environ['DB_PORT'],
     }
 }
 
@@ -136,7 +137,9 @@ Q_CLUSTER = {
     'workers': 1,
     'queue_limit': 50,
     'orm': 'default',
-    'ack_failures': True
+    'ack_failures': True,
+    'max_attempts': 1,
+    'attempt_count': 1
 }
 
 LOGGING = {
@@ -186,13 +189,16 @@ LOGGING = {
     }
 }
 
+LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
+
 # Fyle Settings
-FYLE_TOKEN_URL = os.environ.get('FYLE_TOKEN_URI')
-FYLE_CLIENT_ID = os.environ.get('FYLE_CLIENT_ID')
-FYLE_CLIENT_SECRET = os.environ.get('FYLE_CLIENT_SECRET')
-FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
+FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
+FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
+FYLE_BASE_URL = os.environ['FYLE_BASE_URL']
 FYLE_SLACK_APP_SEGMENT_KEY = os.environ['FYLE_SLACK_APP_SEGMENT_KEY']
 
 # Slack Settings
-SLACK_CLIENT_ID = os.environ.get('SLACK_CLIENT_ID')
-SLACK_CLIENT_SECRET = os.environ.get('SLACK_CLIENT_SECRET')
+SLACK_CLIENT_ID = os.environ['SLACK_CLIENT_ID']
+SLACK_CLIENT_SECRET = os.environ['SLACK_CLIENT_SECRET']
+SLACK_APP_ID = os.environ['SLACK_APP_ID']
+SLACK_APP_TOKEN = os.environ['SLACK_APP_TOKEN']

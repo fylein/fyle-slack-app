@@ -15,10 +15,11 @@
     FYLE_CLIENT_SECRET=abcd
     FYLE_BASE_URL=abcd
     FYLE_ACCOUNTS_URL=abcd
-    FYLE_TOKEN_URL=abcd
     FYLE_SLACK_APP_SEGMENT_KEY=abcd
     SLACK_CLIENT_ID=abcd
     SLACK_CLIENT_ID=abcd
+    SLACK_APP_ID=abcd
+    SLACK_APP_TOKEN=abcd
     ```
 
 ### Bringing up via Docker Compose ###
