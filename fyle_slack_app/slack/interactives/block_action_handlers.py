@@ -1,4 +1,4 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 from slack_sdk.web.client import WebClient
 
 from django.http.response import JsonResponse
@@ -8,7 +8,8 @@ from ...slack.utils import get_slack_user_dm_channel_id
 
 class BlockActionHandler():
 
-    def __init__(self) -> None:
+    # Maps action_id with it's respective function
+    def _initialize_block_action_handlers(self) -> None:
         self._block_action_handlers = {
             'link_fyle_account': self.link_fyle_account
         }
@@ -31,6 +32,10 @@ class BlockActionHandler():
             If present handler will call the respective function
             If not present call `handle_invalid_block_actions` to send a prompt to user
         '''
+
+        # Initialize handlers
+        self._initialize_block_action_handlers()
+
         action_id = slack_payload['actions'][0]['action_id']
 
         handler = self._block_action_handlers.get(action_id, self._handle_invalid_block_actions)
