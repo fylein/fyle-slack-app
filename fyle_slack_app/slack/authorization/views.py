@@ -6,8 +6,11 @@ from django_q.tasks import async_task
 from slack_sdk.web import WebClient
 
 from ...models import Team
-from ...libs import utils, assertions
+from ...libs import utils, assertions, logger
 from .tasks import get_slack_user_dm_channel_id
+
+
+logger = logger.get_logger(__name__)
 
 
 class SlackAuthorization(View):
@@ -18,6 +21,9 @@ class SlackAuthorization(View):
 
         # If any error occured redirecting to FyleHQ website
         if error:
+
+            logger.error('Slack bot installation failed')
+
             return HttpResponseRedirect('https://www.fylehq.com/')
 
         code = request.GET.get('code')

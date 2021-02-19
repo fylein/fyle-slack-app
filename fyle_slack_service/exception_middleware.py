@@ -1,6 +1,6 @@
 import traceback
 
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.utils.deprecation import MiddlewareMixin
 
 from fyle_slack_app.libs.assertions import InvalidUsage
