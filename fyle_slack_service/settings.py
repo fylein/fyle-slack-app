@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True if os.environ['DEBUG'] == 'True' else False
+DEBUG = os.environ.get('DEBUG', False)
 
 ALLOWED_HOSTS = []
 
@@ -189,7 +189,7 @@ LOGGING = {
     }
 }
 
-LOG_LEVEL = os.environ['LOGGING_LEVEL']
+LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 
 # Fyle Settings
 FYLE_TOKEN_URL = os.environ['FYLE_TOKEN_URI']
