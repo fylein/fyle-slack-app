@@ -40,6 +40,7 @@ class SlackAuthorization(View):
 
         assertions.assert_auth(auth_response['ok'] is True)
 
+        user_id = auth_response['authed_user']['id']
         team_id = auth_response['team']['id']
         team_name = auth_response['team']['name']
         bot_user_id = auth_response['bot_user_id']
@@ -51,7 +52,6 @@ class SlackAuthorization(View):
             # If slack team already exists means
             # Slack bot is already installed in the workspace
             # Send user a message that bot is already installed
-            user_id = auth_response['authed_user']['id']
             slack_client = WebClient(token=bot_access_token)
             slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
 
