@@ -7,6 +7,7 @@ from django.conf import settings
 
 from slack_sdk.web.client import WebClient
 
+from ... import tracking
 from ...libs import utils, assertions, http
 from ...models import Team, User
 from ...slack.authorization.tasks import get_slack_user_dm_channel_id
@@ -47,6 +48,9 @@ class FyleAuthorization(View):
 
             # Send post authorization message to user
             self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+
+            # Track fyle account link to slack
+            self.track_fyle_authorization(user)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
@@ -99,3 +103,16 @@ class FyleAuthorization(View):
             channel=slack_user_dm_channel_id,
             text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
         )
+
+
+    def track_fyle_authorization(self, user: User) -> None:
+        event_data = {
+            'slack_user_id': user.slack_user_id,
+            'email': user.email,
+            'slack_team_id': user.slack_team.id,
+            'slack_team_name': user.slack_team.name
+        }
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, 'Fyle Account Linked To Slack', event_data)
