@@ -1,7 +1,12 @@
+from datetime import timedelta
+
 from django.http import JsonResponse
+from django.utils import timezone
+from django_q.tasks import schedule
+from django_q.models import Schedule
 
 from ...models import Team
-from ...slack.utils import get_slack_user_dm_channel_id
+from ...slack.utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
 from ...libs import utils, assertions
 
 
@@ -9,7 +14,8 @@ class SlackEventHandler:
 
     def _initialize_event_callback_handlers(self):
         self._event_callback_handlers = {
-            'app_uninstalled': self.handle_app_uninstalled
+            'app_uninstalled': self.handle_app_uninstalled,
+            'team_join': self.handle_new_user_joined
         }
 
 
@@ -42,4 +48,14 @@ class SlackEventHandler:
         # Deleting team :)
         team.delete()
 
+        return JsonResponse({}, status=200)
+
+
+    def handle_new_user_joined(self, slack_client, slack_payload, user_id, team_id):
+        schedule('fyle_slack_app.slack.events.tasks.schedule_new_user_pre_auth_message',
+                 user_id,
+                 team_id,
+                 schedule_type=Schedule.ONCE,
+                 next_run=timezone.now() + timedelta(days=7)
+                 )
         return JsonResponse({}, status=200)
