@@ -20,6 +20,7 @@
     SLACK_CLIENT_ID=abcd
     SLACK_APP_ID=abcd
     SLACK_APP_TOKEN=abcd
+    ALLOWED_HOSTS=abcd
     ```
 
 ### Bringing up via Docker Compose ###
