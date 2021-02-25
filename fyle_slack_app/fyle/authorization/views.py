@@ -9,7 +9,7 @@ from slack_sdk.web.client import WebClient
 
 from ...libs import utils, assertions, http
 from ...models import Team, User
-from ...slack.authorization.tasks import get_slack_user_dm_channel_id
+from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
 
 
@@ -21,8 +21,7 @@ class FyleAuthorization(View):
         code = request.GET.get('code')
         state = request.GET.get('state')
 
-        decoded_state = base64.urlsafe_b64decode(state.encode())
-        state_params = json.loads(decoded_state.decode())
+        state_params = decode_state(state)
 
         # Fetch the slack team
         slack_team = utils.get_or_none(Team, id=state_params['team_id'])
