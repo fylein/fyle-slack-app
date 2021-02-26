@@ -69,8 +69,10 @@ class SlackAuthorization(View):
             # Background task to broadcast pre auth message to all slack workspace members
             async_task('fyle_slack_app.slack.authorization.tasks.broadcast_installation_message', team_id)
 
-        # Tracking slack bot installation to Mixpanel
-        self.track_installation(user_id, slack_team, slack_client)
+            slack_client = WebClient(token=bot_access_token)
+
+            # Tracking slack bot installation to Mixpanel
+            self.track_installation(user_id, slack_team, slack_client)
 
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
@@ -86,7 +88,7 @@ class SlackAuthorization(View):
         user_info = slack_client.users_info(user=user_id)
         assertions.assert_good(user_info['ok'] == True)
 
-        user_email = user_info['profile']['email']
+        user_email = user_info['user']['profile']['email']
 
         tracking.identify_user(user_email)
 
@@ -95,8 +97,8 @@ class SlackAuthorization(View):
             'slack_team_id': slack_team.id,
             'slack_team_name': slack_team.name,
             'installer_email': user_email,
-            'installer_name': user_info['real_name'],
-            'is_slack_admin': user_info['is_admin']
+            'installer_name': user_info['user']['real_name'],
+            'is_slack_admin': user_info['user']['is_admin']
         }
 
         tracking.track_event(user_email, 'Slack Bot Installed', event_data)
