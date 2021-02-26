@@ -7,10 +7,12 @@ from django.conf import settings
 
 from slack_sdk.web.client import WebClient
 
+from ... import tracking
 from ...libs import utils, assertions, http
 from ...models import Team, User
-from ...slack.authorization.tasks import get_slack_user_dm_channel_id
+from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
+from ...slack.ui.dashboard import messages as dashboad_messages
 
 
 class FyleAuthorization(View):
@@ -21,8 +23,7 @@ class FyleAuthorization(View):
         code = request.GET.get('code')
         state = request.GET.get('state')
 
-        decoded_state = base64.urlsafe_b64decode(state.encode())
-        state_params = json.loads(decoded_state.decode())
+        state_params = decode_state(state)
 
         # Fetch the slack team
         slack_team = utils.get_or_none(Team, id=state_params['team_id'])
@@ -47,6 +48,12 @@ class FyleAuthorization(View):
 
             # Send post authorization message to user
             self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+
+            # Update user home tab with post auth message
+            self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
+            
+            # Track fyle account link to slack
+            self.track_fyle_authorization(user)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
@@ -99,3 +106,21 @@ class FyleAuthorization(View):
             channel=slack_user_dm_channel_id,
             text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
         )
+
+
+    def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
+        post_authorization_message_view = dashboad_messages.get_post_authorization_message()
+        slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
+    
+
+    def track_fyle_authorization(self, user: User) -> None:
+        event_data = {
+            'slack_user_id': user.slack_user_id,
+            'email': user.email,
+            'slack_team_id': user.slack_team.id,
+            'slack_team_name': user.slack_team.name
+        }
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, 'Fyle Account Linked To Slack', event_data)
