@@ -14,24 +14,31 @@ from fyle_slack_app.fyle.authorization.views import FyleAuthorization
 @mock.patch('fyle_slack_app.slack.authorization.views.Team')
 @mock.patch('fyle_slack_app.slack.authorization.views.async_task')
 @mock.patch('fyle_slack_app.slack.authorization.views.WebClient')
-def test_slack_authorization(slack_client, async_task, team, utils):
+@mock.patch.object(SlackAuthorization, 'track_installation')
+def test_slack_authorization(track_installation, slack_client, async_task, team, utils):
 
     # Create a request object to send to view for testing
     request = RequestFactory().get('slack/authorization')
+    slack_secret_code = 'some-secret-code'
     request.GET = {
-        'code': 'some-secret-code'
+        'code': slack_secret_code
     }
 
-    # Mocking slack sdk call's response
-    slack_client.return_value.oauth_v2_access.return_value = {
+    mock_oauth_v2_access_response = {
         'ok': True,
         'team': {
             'id': 'TA12345',
             'name': 'Test Team'
         },
+        'authed_user': {
+            'id': 'U12345'
+        },
         'bot_user_id': 'bot-abcd-12345',
         'access_token': 'secret-token'
     }
+
+    # Mocking slack sdk call's response
+    slack_client.return_value.oauth_v2_access.return_value = mock_oauth_v2_access_response
 
     # Condition where slack team is not registered/created in our DB
     utils.get_or_none.return_value = None
@@ -52,25 +59,28 @@ def test_slack_authorization(slack_client, async_task, team, utils):
     slack_client.return_value.oauth_v2_access.assert_called_with(
         client_id=settings.SLACK_CLIENT_ID,
         client_secret=settings.SLACK_CLIENT_SECRET,
-        code='some-secret-code'
+        code=slack_secret_code
     )
 
     utils.get_or_none.assert_called_once()
-    utils.get_or_none.assert_called_with(team, id='TA12345')
+    utils.get_or_none.assert_called_with(team, id=mock_oauth_v2_access_response['team']['id'])
 
     team.objects.create.assert_called_once()
     team.objects.create.assert_called_with(
-        id='TA12345',
-        name='Test Team',
-        bot_user_id='bot-abcd-12345',
-        bot_access_token='secret-token'
+        id=mock_oauth_v2_access_response['team']['id'],
+        name=mock_oauth_v2_access_response['team']['name'],
+        bot_user_id=mock_oauth_v2_access_response['bot_user_id'],
+        bot_access_token=mock_oauth_v2_access_response['access_token']
     )
 
     async_task.assert_called_once()
     async_task.assert_called_with(
         'fyle_slack_app.slack.authorization.tasks.broadcast_installation_message',
-        'TA12345'
+        mock_oauth_v2_access_response['team']['id']
     )
+
+    track_installation.assert_called_once()
+    track_installation.assert_called_with(mock_oauth_v2_access_response['authed_user']['id'], mock_team, slack_client())
 
 
 @mock.patch('fyle_slack_app.fyle.authorization.views.utils')
@@ -79,7 +89,8 @@ def test_slack_authorization(slack_client, async_task, team, utils):
 @mock.patch.object(FyleAuthorization, 'create_user')
 @mock.patch.object(FyleAuthorization, 'send_post_authorization_message')
 @mock.patch.object(FyleAuthorization, 'get_fyle_refresh_token')
-def test_fyle_authorization(get_fyle_refresh_token, send_post_authorization_message, create_user, slack_client, slack_user_dm_channel_id, utils):
+@mock.patch.object(FyleAuthorization, 'track_fyle_authorization')
+def test_fyle_authorization(track_fyle_authorization, get_fyle_refresh_token, send_post_authorization_message, create_user, slack_client, slack_user_dm_channel_id, utils):
 
     state_params = {
         'team_id': 'T12345',
@@ -90,8 +101,9 @@ def test_fyle_authorization(get_fyle_refresh_token, send_post_authorization_mess
 
     # Create a request object to send to view for testing
     request = RequestFactory().get('fyle/authorization')
+    mock_fyle_secret_code = 'secret-fyle-code'
     request.GET = {
-        'code': 'secret-fyle-code',
+        'code': mock_fyle_secret_code,
         'state': b64_encoded_state
     }
 
@@ -100,11 +112,15 @@ def test_fyle_authorization(get_fyle_refresh_token, send_post_authorization_mess
     mock_team = mock.Mock(spec=Team)
     utils.get_or_none.side_effect = [mock_team, None]
 
-    slack_user_dm_channel_id.return_value = 'UDM12345'
+    mock_slack_user_dm_channel_id = 'UDM12345'
+    slack_user_dm_channel_id.return_value = mock_slack_user_dm_channel_id
 
     # Mock FyleAuthorization class methods
-    get_fyle_refresh_token.return_value = 'fyle-refresh-token'
-    create_user.return_value = mock.Mock(spec=User)
+    mock_fyle_refresh_token = 'fyle-refresh-token'
+    get_fyle_refresh_token.return_value = mock_fyle_refresh_token
+
+    mock_user = mock.Mock(spec=User)
+    create_user.return_value = mock_user
     send_post_authorization_message.return_value = True
 
     # Call function to test
@@ -114,14 +130,14 @@ def test_fyle_authorization(get_fyle_refresh_token, send_post_authorization_mess
     assert isinstance(response, HttpResponseRedirect)
 
     # Checking the required methods have been called
-    get_fyle_refresh_token.assert_called()
-    get_fyle_refresh_token.assert_called_with('secret-fyle-code')
+    get_fyle_refresh_token.assert_called_once()
+    get_fyle_refresh_token.assert_called_with(mock_fyle_secret_code)
 
     create_user.assert_called()
-    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', 'fyle-refresh-token')
+    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token)
 
-    send_post_authorization_message.assert_called()
-    send_post_authorization_message.assert_called_with(slack_client(), 'UDM12345')
+    send_post_authorization_message.assert_called_once()
+    send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)
 
     # Check is get_or_none function has been called twice
     assert utils.get_or_none.call_count == 2
@@ -134,3 +150,6 @@ def test_fyle_authorization(get_fyle_refresh_token, send_post_authorization_mess
     ]
 
     utils.get_or_none.assert_has_calls(expected_calls)
+
+    track_fyle_authorization.assert_called_once()
+    track_fyle_authorization.assert_called_with(mock_user)
