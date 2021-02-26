@@ -88,7 +88,7 @@ class SlackAuthorization(View):
 
         user_email = user_info['profile']['email']
 
-        identify_user = tracking.identify_user(user_email)
+        tracking.identify_user(user_email)
 
         event_data = {
             'slack_user_id': user_id,
