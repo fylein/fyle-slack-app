@@ -12,6 +12,7 @@ from ...libs import utils, assertions, http
 from ...models import Team, User
 from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
+from ...slack.ui.dashboard import messages as dashboad_messages
 
 
 class FyleAuthorization(View):
@@ -48,6 +49,9 @@ class FyleAuthorization(View):
             # Send post authorization message to user
             self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
 
+            # Update user home tab with post auth message
+            self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
+            
             # Track fyle account link to slack
             self.track_fyle_authorization(user)
 
@@ -103,6 +107,11 @@ class FyleAuthorization(View):
             text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
         )
 
+
+    def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
+        post_authorization_message_view = dashboad_messages.get_post_authorization_message()
+        slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
+    
 
     def track_fyle_authorization(self, user: User) -> None:
         event_data = {

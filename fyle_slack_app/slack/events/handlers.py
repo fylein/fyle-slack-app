@@ -1,15 +1,17 @@
 from django.http import JsonResponse
 
-from ...models import Team
-from ...slack.utils import get_slack_user_dm_channel_id
+from ...models import Team, User
+from ...slack.utils import get_fyle_oauth_url
 from ...libs import utils, assertions
+from ..ui.dashboard import messages
 
 
 class SlackEventHandler:
 
     def _initialize_event_callback_handlers(self):
         self._event_callback_handlers = {
-            'app_uninstalled': self.handle_app_uninstalled
+            'app_uninstalled': self.handle_app_uninstalled,
+            'app_home_opened': self.handle_app_home_opened
         }
 
 
@@ -41,5 +43,24 @@ class SlackEventHandler:
 
         # Deleting team :)
         team.delete()
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_app_home_opened(self, slack_client, slack_payload, user_id, team_id):
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        # User is not present i.e. user hasn't done Fyle authorization
+        if user is not None:
+            dashboard_view = messages.get_post_authorization_message()
+        else:
+            user_info = slack_client.users_info(user=user_id)
+            assertions.assert_good(user_info['ok'] == True)
+
+            fyle_oauth_url = get_fyle_oauth_url(user_id, team_id)
+
+            dashboard_view = messages.get_pre_authorization_message(user_info['user']['real_name'], fyle_oauth_url)
+
+        slack_client.views_publish(user_id=user_id, view=dashboard_view)
 
         return JsonResponse({}, status=200)

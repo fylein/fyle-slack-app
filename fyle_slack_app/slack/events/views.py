@@ -1,5 +1,4 @@
 import json
-from django.http import response
 
 from slack_sdk.web import WebClient
 
