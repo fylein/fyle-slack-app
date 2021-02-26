@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 
 from ...models import Team, User
-from ...slack.utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
+from ...slack.utils import get_fyle_oauth_url
 from ...libs import utils, assertions
 from ..ui.dashboard import messages
 

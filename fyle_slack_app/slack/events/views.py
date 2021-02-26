@@ -23,11 +23,12 @@ class SlackEventView(SlackView, SlackEventHandler):
 
         event_type = slack_payload['type']
 
+        event_response = {}
         # This event is required by slack during our slack event endpoint registering in slack settings
         # When adding endpoint it expects a challenge in response
         # If challenge is not received endpoint is not registered
         if event_type == 'url_verification':
-            return JsonResponse({'challenge': slack_payload['challenge']})
+            event_response = {'challenge': slack_payload['challenge']}
 
         elif event_type == 'event_callback':
             # Events of our interest come under event_callback from slack
@@ -39,4 +40,4 @@ class SlackEventView(SlackView, SlackEventHandler):
 
             self.handle_event_callback(self.slack_client, subevent_type, slack_payload, team_id)
 
-        return JsonResponse({}, status=200)
+        return JsonResponse(event_response, status=200)
