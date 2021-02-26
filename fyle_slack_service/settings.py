@@ -27,7 +27,7 @@ SECRET_KEY = os.environ['SECRET_KEY']
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(',')
 
 
 # Application definition
@@ -192,6 +192,7 @@ LOGGING = {
 LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 
 # Fyle Settings
+FYLE_ACCOUNTS_URL = os.environ['FYLE_ACCOUNTS_URL']
 FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
 FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
 FYLE_BASE_URL = os.environ['FYLE_BASE_URL']
@@ -202,3 +203,5 @@ SLACK_CLIENT_ID = os.environ['SLACK_CLIENT_ID']
 SLACK_CLIENT_SECRET = os.environ['SLACK_CLIENT_SECRET']
 SLACK_APP_ID = os.environ['SLACK_APP_ID']
 SLACK_APP_TOKEN = os.environ['SLACK_APP_TOKEN']
+SLACK_SIGNING_SECRET = os.environ['SLACK_SIGNING_SECRET']
+SLACK_SERVICE_BASE_URL = os.environ['SLACK_SERVICE_BASE_URL']

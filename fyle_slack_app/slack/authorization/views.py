@@ -23,7 +23,7 @@ class SlackAuthorization(View):
         # If any error occured redirecting to FyleHQ website
         if error:
 
-            logger.error('Slack bot installation failed')
+            logger.error('Slack bot installation failed {}'.format(error))
 
             return HttpResponseRedirect('https://www.fylehq.com/')
 
