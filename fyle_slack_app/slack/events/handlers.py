@@ -21,7 +21,7 @@ class SlackEventHandler:
         }
 
 
-    def handle_invalid_event(self, slack_client, slack_payload, user_id, team_id):
+    def handle_invalid_event(self, slack_client, slack_payload, team_id):
         # No need to send any message to user in this case
         # Slack sends some message event whenever a message is sent to slack
         # Ex: Pre auth message
@@ -34,16 +34,12 @@ class SlackEventHandler:
 
         self._initialize_event_callback_handlers()
 
-        # Need to do this way since some of the events don't send user_id
-        # Ex: Slack app_uninstalled event
-        user_id = slack_payload.get('event').get('user')
-
         handler = self._event_callback_handlers.get(event_type, self.handle_invalid_event)
 
-        return handler(slack_client, slack_payload, user_id, team_id)
+        return handler(slack_client, slack_payload, team_id)
 
 
-    def handle_app_uninstalled(self, slack_client, slack_payload, user_id, team_id):
+    def handle_app_uninstalled(self, slack_client, slack_payload, team_id):
         team = utils.get_or_none(Team, id=team_id)
         assertions.assert_found(team, 'Slack team not registered')
 
@@ -53,7 +49,8 @@ class SlackEventHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_new_user_joined(self, slack_client, slack_payload, user_id, team_id):
+    def handle_new_user_joined(self, slack_client, slack_payload, team_id):
+        user_id = slack_payload['event']['user']['id']
         schedule('fyle_slack_app.slack.events.tasks.new_user_joined_pre_auth_message',
                  user_id,
                  team_id,
@@ -62,7 +59,8 @@ class SlackEventHandler:
                 )
 
 
-    def handle_app_home_opened(self, slack_client, slack_payload, user_id, team_id):
+    def handle_app_home_opened(self, slack_client, slack_payload, team_id):
+        user_id = slack_payload['event']['user']
         user = utils.get_or_none(User, slack_user_id=user_id)
 
         # User is not present i.e. user hasn't done Fyle authorization
