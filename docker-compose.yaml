@@ -5,13 +5,13 @@ services:
     image: postgres
     restart: always
     environment:
-        POSTGRES_DB: slack_db
-        POSTGRES_USER: slack_user
-        POSTGRES_PASSWORD: slack12345
+      POSTGRES_DB: slack_db
+      POSTGRES_USER: slack_user
+      POSTGRES_PASSWORD: slack12345
     ports: 
       - 5434:5432
     volumes:
-        - database-slack:/var/lib/postgresql/data/
+      - database-slack:/var/lib/postgresql/data/
   slack-app-service:
     build: .
     restart: always

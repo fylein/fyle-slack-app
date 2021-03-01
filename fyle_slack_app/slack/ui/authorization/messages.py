@@ -70,7 +70,7 @@ def get_post_authorization_message() -> List[Dict]:
 		},
 		{
 			'type': 'image',
-			'image_url': 'https://i.ibb.co/p4q5XSC/Screen-Shot-2021-01-20-at-4-46-34-PM.png',
+			'image_url': 'https://i.ibb.co/1zY81f7/Screenshot-2021-03-01-at-12-00-25-PM.png',
 			'alt_text': 'inspiration'
 		},
 		{
