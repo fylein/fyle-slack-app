@@ -20,7 +20,8 @@ class FyleAuthorization(View):
     FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
     def get(self, request) -> HttpResponseRedirect:
-        code = request.GET.get('code')
+
+        error = request.GET.get('error')
         state = request.GET.get('state')
 
         state_params = decode_state(state)
@@ -35,25 +36,34 @@ class FyleAuthorization(View):
         # Fetch slack dm channel
         slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
 
-        fyle_refresh_token = self.get_fyle_refresh_token(code)
-
-        user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
-
-        if user is not None:
-            # If the user already exists send a message to user indicating they've already linked Fyle account
-            self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+        if error:
+            slack_client.chat_postMessage(
+                channel=slack_user_dm_channel_id,
+                text='Sad to see you decline us :white_frowning_face: \n' \
+                    'Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
+            )
         else:
-            # Create user
-            user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+            code = request.GET.get('code')
 
-            # Send post authorization message to user
-            self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+            fyle_refresh_token = self.get_fyle_refresh_token(code)
 
-            # Update user home tab with post auth message
-            self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
-            
-            # Track fyle account link to slack
-            self.track_fyle_authorization(user)
+            user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
+
+            if user is not None:
+                # If the user already exists send a message to user indicating they've already linked Fyle account
+                self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+            else:
+                # Create user
+                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+
+                # Send post authorization message to user
+                self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+
+                # Update user home tab with post auth message
+                self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
+
+                # Track fyle account link to slack
+                self.track_fyle_authorization(user)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
