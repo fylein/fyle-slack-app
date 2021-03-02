@@ -19,6 +19,7 @@ from django.urls import path
 from fyle_slack_app.slack.authorization import views as slack_auth_views
 from fyle_slack_app.slack.interactives import views as slack_interactive_views
 from fyle_slack_app.slack.events import  views as slack_event_views
+from fyle_slack_app.slack.commands import views as slack_command_views
 
 from fyle_slack_app.fyle.authorization import views as fyle_auth_views
 
@@ -35,6 +36,8 @@ urlpatterns = [
     # Slack interactive routes
     path('slack/interactives', slack_interactive_views.SlackInteractiveView.as_view()),
 
-    path('slack/events', slack_event_views.SlackEventView.as_view())
+    path('slack/events', slack_event_views.SlackEventView.as_view()),
+
+    path('slack/commands/<str:command>', slack_command_views.SlackCommandView.as_view())
 
 ]
