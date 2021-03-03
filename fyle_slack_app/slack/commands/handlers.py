@@ -35,7 +35,7 @@ class SlackCommandHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
 
         # Text message if user hasn't linked Fyle account
-        text = 'Hey buddy haven\'t linked your Fyle account yet :face_with_head_bandage: \n' \
+        text = 'Hey buddy, you haven\'t linked your Fyle account yet :face_with_head_bandage: \n' \
             'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:' 
 
         if user is not None:
