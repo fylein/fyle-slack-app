@@ -1,6 +1,3 @@
-import json
-import base64
-
 from django.http.response import HttpResponseRedirect
 from django.views import View
 from django.conf import settings
@@ -8,11 +5,14 @@ from django.conf import settings
 from slack_sdk.web.client import WebClient
 
 from ... import tracking
-from ...libs import utils, assertions, http
+from ...libs import utils, assertions, http, logger
 from ...models import Team, User
 from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
 from ...slack.ui.dashboard import messages as dashboad_messages
+
+
+logger = logger.get_logger(__name__)
 
 
 class FyleAuthorization(View):
@@ -20,7 +20,8 @@ class FyleAuthorization(View):
     FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
     def get(self, request) -> HttpResponseRedirect:
-        code = request.GET.get('code')
+
+        error = request.GET.get('error')
         state = request.GET.get('state')
 
         state_params = decode_state(state)
@@ -35,25 +36,44 @@ class FyleAuthorization(View):
         # Fetch slack dm channel
         slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
 
-        fyle_refresh_token = self.get_fyle_refresh_token(code)
+        if error:
 
-        user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
+            logger.error('Fyle authorization error: {}'.format(error))
 
-        if user is not None:
-            # If the user already exists send a message to user indicating they've already linked Fyle account
-            self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+            error_message = 'Seems like something went wrong :face_with_head_bandage: \n' \
+                        'If the issues still persists, please contact support@fylehq.com'
+
+            # Error when user declines Fyle authorization
+            if error == 'access_denied':
+                error_message = 'Sad to see you decline us :white_frowning_face: \n' \
+                    'Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
+
+            slack_client.chat_postMessage(
+                    channel=slack_user_dm_channel_id,
+                    text=error_message
+                )
         else:
-            # Create user
-            user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+            code = request.GET.get('code')
 
-            # Send post authorization message to user
-            self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+            fyle_refresh_token = self.get_fyle_refresh_token(code)
 
-            # Update user home tab with post auth message
-            self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
-            
-            # Track fyle account link to slack
-            self.track_fyle_authorization(user)
+            user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
+
+            if user is not None:
+                # If the user already exists send a message to user indicating they've already linked Fyle account
+                self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+            else:
+                # Create user
+                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+
+                # Send post authorization message to user
+                self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+
+                # Update user home tab with post auth message
+                self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
+
+                # Track fyle account link to slack
+                self.track_fyle_authorization(user)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
