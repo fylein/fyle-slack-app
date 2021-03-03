@@ -6,7 +6,7 @@ from ...models import User
 from ..ui.dashboard import messages as dashboard_messages
 
 class SlackCommandHandler:
-    
+
     def _initialize_command_handlers(self):
         self._command_handlers = {
             'fyle_unlink_account': self.handle_fyle_unlink_account
@@ -27,7 +27,7 @@ class SlackCommandHandler:
         self._initialize_command_handlers()
 
         handler = self._command_handlers.get(command, self.handle_invalid_command)
-        
+
         return handler(slack_client, user_id, team_id, user_dm_channel_id)
 
 
@@ -43,16 +43,16 @@ class SlackCommandHandler:
             user.delete()
             text = 'Hey, you\'ve successfully unlinked your Fyle account with slack :white_check_mark:\n ' \
                 'If you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
-            
+
             # Update home tab with pre auth message
             self.update_home_tab_with_pre_auth_message(slack_client, user_id, team_id)
 
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
-            text=text        
+            text=text
         )
         return JsonResponse({}, status=200)
-    
+
 
     def update_home_tab_with_pre_auth_message(self, slack_client, user_id, team_id):
         user_info = slack_client.users_info(user=user_id)
