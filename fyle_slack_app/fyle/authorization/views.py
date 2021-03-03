@@ -1,6 +1,3 @@
-import json
-import base64
-
 from django.http.response import HttpResponseRedirect
 from django.views import View
 from django.conf import settings
@@ -8,11 +5,14 @@ from django.conf import settings
 from slack_sdk.web.client import WebClient
 
 from ... import tracking
-from ...libs import utils, assertions, http
+from ...libs import utils, assertions, http, logger
 from ...models import Team, User
 from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
 from ...slack.ui.dashboard import messages as dashboad_messages
+
+
+logger = logger.get_logger(__name__)
 
 
 class FyleAuthorization(View):
@@ -37,11 +37,21 @@ class FyleAuthorization(View):
         slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
 
         if error:
-            slack_client.chat_postMessage(
-                channel=slack_user_dm_channel_id,
-                text='Sad to see you decline us :white_frowning_face: \n' \
+
+            logger.error('Fyle authorization error: {}'.format(error))
+
+            error_message = 'Seems like something went wrong :face_with_head_bandage: \n' \
+                        'If the issues still persists, please contact support@fylehq.com'
+
+            # Error when user declines Fyle authorization
+            if error == 'access_denied':
+                error_message = 'Sad to see you decline us :white_frowning_face: \n' \
                     'Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
-            )
+
+            slack_client.chat_postMessage(
+                    channel=slack_user_dm_channel_id,
+                    text=error_message
+                )
         else:
             code = request.GET.get('code')
 
