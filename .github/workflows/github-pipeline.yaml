@@ -10,6 +10,26 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: thisisafakedjangosecretkey
+      FYLE_CLIENT_ID: fakefyleclientid
+      FYLE_CLIENT_SECRET: fakefyleclientsecret
+      FYLE_BASE_URL: fakefylebaseurl
+      FYLE_ACCOUNTS_URL: fakefyleaccounturl
+      SLACK_CLIENT_ID: fakeslackclientid
+      SLACK_CLIENT_SECRET: fakeslackclientsecret
+      SLACK_APP_TOKEN: fakeslackapptoken
+      SLACK_SIGNING_SECRET: fakeslacksigningsecret
+      SLACK_APP_ID: fakeslackappid
+      SLACK_SERVICE_BASE_URL: fakeslackservicebaseurl
+      FYLEHQ_SLACK_URL: fakefylehqurl
+      FYLE_SLACK_APP_SEGMENT_KEY: fakesegmentkey
+      ALLOWED_HOSTS: fakeallowedhosts
+      DB_NAME: fakedbname
+      DB_USER: fakedbuser
+      DB_PASSWORD: fakedbpassword
+      DB_HOST: fakedbhost
+      DB_PORT: fakedbport
 
     steps:
     - uses: actions/checkout@v2
