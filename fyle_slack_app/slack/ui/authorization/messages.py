@@ -1,8 +1,4 @@
-
-from typing import Dict, List
-
-
-def get_pre_authorization_message(user_name, FYLE_OAUTH_URL) -> List[Dict]:
+def get_pre_authorization_message(user_name, FYLE_OAUTH_URL):
     return [
         {
             'type': 'section',
@@ -45,7 +41,7 @@ def get_pre_authorization_message(user_name, FYLE_OAUTH_URL) -> List[Dict]:
     ]
 
 
-def get_post_authorization_message() -> List[Dict]:
+def get_post_authorization_message():
     return [
 		{
 			'type': 'section',

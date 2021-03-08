@@ -6,7 +6,7 @@ from ..ui.authorization import messages
 from ...slack.utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
 
 
-def broadcast_installation_message(slack_team_id: str) -> None:
+def broadcast_installation_message(slack_team_id):
     slack_team = utils.get_or_none(Team, id=slack_team_id)
     assertions.assert_found(slack_team, 'slack team is not registered')
 

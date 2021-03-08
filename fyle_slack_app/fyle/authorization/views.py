@@ -19,7 +19,7 @@ class FyleAuthorization(View):
 
     FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
-    def get(self, request) -> HttpResponseRedirect:
+    def get(self, request):
 
         error = request.GET.get('error')
         state = request.GET.get('state')
@@ -79,7 +79,7 @@ class FyleAuthorization(View):
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
-    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str) -> User:
+    def create_user(self, slack_client, slack_team, user_id, slack_user_dm_channel_id, fyle_refresh_token):
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
@@ -97,7 +97,7 @@ class FyleAuthorization(View):
         return user
 
 
-    def get_fyle_refresh_token(self, code: str) -> str:
+    def get_fyle_refresh_token(self, code):
         oauth_payload = {
             'grant_type': 'authorization_code',
             'client_id': settings.FYLE_CLIENT_ID,
@@ -113,7 +113,7 @@ class FyleAuthorization(View):
         return oauth_details['refresh_token']
 
 
-    def send_post_authorization_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
+    def send_post_authorization_message(self, slack_client, slack_user_dm_channel_id):
         post_authorization_message = get_post_authorization_message()
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
@@ -121,7 +121,7 @@ class FyleAuthorization(View):
         )
 
 
-    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
+    def send_linked_account_message(self, slack_client, slack_user_dm_channel_id):
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
             text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
@@ -133,7 +133,7 @@ class FyleAuthorization(View):
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
     
 
-    def track_fyle_authorization(self, user: User) -> None:
+    def track_fyle_authorization(self, user):
         event_data = {
             'slack_user_id': user.slack_user_id,
             'email': user.email,

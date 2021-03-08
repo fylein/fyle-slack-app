@@ -12,7 +12,7 @@ from .handlers import SlackEventHandler
 
 class SlackEventView(SlackView, SlackEventHandler):
 
-    def _set_slack_client(self, team_id) -> None:
+    def _set_slack_client(self, team_id):
         slack_team = utils.get_or_none(Team, id=team_id)
         assertions.assert_found(slack_team, 'Slack team not registered')
         self.slack_client = WebClient(token=slack_team.bot_access_token)
