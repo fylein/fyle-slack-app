@@ -11,7 +11,8 @@ class BlockActionHandler():
     # Maps action_id with it's respective function
     def _initialize_block_action_handlers(self) -> None:
         self._block_action_handlers = {
-            'link_fyle_account': self.link_fyle_account
+            'link_fyle_account': self.link_fyle_account,
+            'report_review_in_fyle': self.review_report_in_fyle
         }
 
 
@@ -46,5 +47,10 @@ class BlockActionHandler():
     # Define all the action handlers below this
 
     def link_fyle_account(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        # Empty function because slack still sends an interactive event on button click and expects a 200 response
+        return JsonResponse({}, status=200)
+
+
+    def review_report_in_fyle(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
