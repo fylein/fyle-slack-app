@@ -1,12 +1,13 @@
 from django.http.response import HttpResponseRedirect
 from django.views import View
 from django.conf import settings
+from django.utils import timezone
 
 from slack_sdk.web.client import WebClient
 
 from ... import tracking
 from ...libs import utils, assertions, http, logger
-from ...models import Team, User
+from ...models import Team, User, ReportPollingDetail
 from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
 from ...slack.ui.dashboard import messages as dashboad_messages
@@ -65,6 +66,8 @@ class FyleAuthorization(View):
             else:
                 # Create user
                 user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+
+                self.create_report_polling_entry(user)
 
                 # Send post authorization message to user
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
@@ -132,6 +135,12 @@ class FyleAuthorization(View):
         post_authorization_message_view = dashboad_messages.get_post_authorization_message()
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
     
+
+    def create_report_polling_entry(self, user):
+        ReportPollingDetail.objects.create(
+            user=user,
+            last_successful_poll_at=timezone.now()
+        )
 
     def track_fyle_authorization(self, user: User) -> None:
         event_data = {
