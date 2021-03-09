@@ -1,6 +1,3 @@
-from typing import Callable, Dict, Optional
-from slack_sdk.web.client import WebClient
-
 from django.http.response import JsonResponse
 
 from ...slack.utils import get_slack_user_dm_channel_id
@@ -9,7 +6,7 @@ from ...slack.utils import get_slack_user_dm_channel_id
 class BlockActionHandler():
 
     # Maps action_id with it's respective function
-    def _initialize_block_action_handlers(self) -> None:
+    def _initialize_block_action_handlers(self):
         self._block_action_handlers = {
             'link_fyle_account': self.link_fyle_account,
             'report_review_in_fyle': self.review_report_in_fyle
@@ -17,7 +14,7 @@ class BlockActionHandler():
 
 
     # Gets called when function with an action is not found
-    def _handle_invalid_block_actions(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def _handle_invalid_block_actions(self, slack_client, slack_payload, user_id, team_id):
         user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
@@ -27,7 +24,7 @@ class BlockActionHandler():
 
 
     # Handle all the block actions from slack
-    def handle_block_actions(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> Callable:
+    def handle_block_actions(self, slack_client, slack_payload, user_id, team_id):
         '''
             Check if any function is associated with the action
             If present handler will call the respective function
@@ -46,7 +43,7 @@ class BlockActionHandler():
 
     # Define all the action handlers below this
 
-    def link_fyle_account(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def link_fyle_account(self, slack_client, slack_payload, user_id, team_id):
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
 

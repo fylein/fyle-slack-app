@@ -1,6 +1,5 @@
 import json
 
-from typing import Any, Callable, Dict, Optional
 from slack_sdk.web import WebClient
 
 from django.http.response import JsonResponse
@@ -13,15 +12,8 @@ from .block_action_handlers import BlockActionHandler
 
 class SlackInteractiveView(SlackView, BlockActionHandler):
 
-    slack_client: Optional[WebClient] = None
-    slack_payload: Optional[Dict] = None
-    user_id: Optional[str] = None
-    team_id: Optional[str] = None
-    trigger_id: Optional[str] = None
-
-
-    def _set_slack_client(self) -> None:
-        slack_team = utils.get_or_none(Team, id=self.team_id)
+    def _set_slack_client(self, team_id) -> None:
+        slack_team = utils.get_or_none(Team, id=team_id)
         assertions.assert_found(slack_team, 'Slack team not registered')
         self.slack_client = WebClient(token=slack_team.bot_access_token)
 
@@ -31,19 +23,18 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
         slack_payload = json.loads(payload)
 
         # Extract details from payload
-        self.slack_payload = slack_payload
-        self.user_id = slack_payload['user']['id']
-        self.team_id = slack_payload['team']['id']
-        self.trigger_id = slack_payload['trigger_id']
+        slack_payload = slack_payload
+        user_id = slack_payload['user']['id']
+        team_id = slack_payload['team']['id']
 
         # Set slack client
-        self._set_slack_client()
+        self._set_slack_client(team_id)
 
         event_type = slack_payload['type']
 
         # Check interactive event type and call it's respective handler
         if event_type == 'block_actions':
             # Call handler function from BlockActionHandler
-            return self.handle_block_actions(self.slack_client, self.slack_payload, self.user_id, self.team_id)
-    
+            return self.handle_block_actions(self.slack_client, slack_payload, user_id, team_id)
+
         return JsonResponse({}, status=200)
