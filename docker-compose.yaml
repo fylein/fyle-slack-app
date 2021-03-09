@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: slack_user
       POSTGRES_PASSWORD: slack12345
     ports: 
-      - 5434:5432
+      - 5432:5432
     volumes:
       - database-slack:/var/lib/postgresql/data/
   slack-app-service:

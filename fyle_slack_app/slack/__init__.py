@@ -3,9 +3,7 @@ import hmac
 import time
 
 from functools import wraps
-from typing import Any
 
-from django import http
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.views import View
@@ -14,7 +12,7 @@ from django.utils.decorators import method_decorator
 from ..libs import assertions
 
 
-def verify_slack_signature(request) -> bool:
+def verify_slack_signature(request):
     '''
         Slack creates a unique string for our app and shares it with us.
         This verifies requests from Slack with confidence by verifying signatures using your signing secret.
@@ -70,6 +68,7 @@ def verify_slack_request(function):
 
 # Base class for all Slack functionalities
 class SlackView(View):
+
     @method_decorator(verify_slack_request)
-    def dispatch(self, request: http.HttpRequest, *args: Any, **kwargs: Any) -> http.HttpResponse:
-        return super(SlackView, self).dispatch(request, *args, **kwargs)
+    def dispatch(self, request, *args, **kwargs):
+        return super().dispatch(request, *args, **kwargs)
