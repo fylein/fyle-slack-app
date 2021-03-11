@@ -6,6 +6,7 @@ from urllib.parse import quote_plus
 from ...libs import assertions
 from .. import utils
 
+
 class FyleReportApproval:
 
     @staticmethod

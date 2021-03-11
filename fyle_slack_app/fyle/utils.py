@@ -68,7 +68,6 @@ def get_fyle_refresh_token(code):
 
 
 def get_fyle_profile(refresh_token):
-
     FYLE_PROFILE_URL = '{}/fyler/my_profile'.format(settings.FYLE_PLATFORM_URL)
 
     access_token = get_fyle_access_token(refresh_token)

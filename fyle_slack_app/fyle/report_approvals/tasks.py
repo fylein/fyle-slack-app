@@ -59,12 +59,16 @@ def poll_report_approvals():
             report_polling_detail.save()
 
             for report in approver_reports['data']:
+                for approval in report['approvals']:
+                    if approval['approver_id'] == approver_id:
+                        # Send messsage only if report and approval states are below mentioned states
+                        if report['state'] == 'APPROVER_PENDING' and approval['state'] == 'APPROVAL_PENDING':
 
-                employee_display_name = slack_utils.get_report_employee_display_name(slack_client, report['employee'])
+                            employee_display_name = slack_utils.get_report_employee_display_name(slack_client, report['employee'])
 
-                report_notification_message = get_report_approval_notification_message(report, approver_id, employee_display_name, cluster_domain)
+                            report_notification_message = get_report_approval_notification_message(report, employee_display_name, cluster_domain)
 
-                slack_client.chat_postMessage(
-                    channel=user.slack_dm_channel_id,
-                    blocks=report_notification_message
-                )
+                            slack_client.chat_postMessage(
+                                channel=user.slack_dm_channel_id,
+                                blocks=report_notification_message
+                            )

@@ -37,29 +37,8 @@ def get_report_section_blocks(report, employee_display_name):
     ]
 
 
-def get_report_approval_notification_message(report, approver_id, employee_display_name, cluster_domain):
-    REPORT_WEBAPP_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(cluster_domain, report['id'], report['org_id'])
-
-    report_approval_message = get_report_section_blocks(report, employee_display_name)
-
-    actions_block = {
-        'type': 'actions',
-        'elements': []
-    }
-
-    report_approve_action_element = {
-        'type': 'button',
-        'style': 'primary',
-        'text': {
-            'type': 'plain_text',
-            'text': 'Approve',
-            'emoji': True
-        },
-        'action_id': 'report_approve',
-        'value': report['id'],
-    }
-
-    report_review_action_element = {
+def get_report_review_in_fyle_action(report_url):
+    return {
         'type': 'button',
         'text': {
             'type': 'plain_text',
@@ -67,14 +46,33 @@ def get_report_approval_notification_message(report, approver_id, employee_displ
             'emoji': True
         },
         'action_id': 'report_review_in_fyle',
-        'url': REPORT_WEBAPP_URL
+        'url': report_url
     }
 
-    for approval in report['approvals']:
-        if approval['approver_id'] == approver_id:
-            # Show `Approve` button only if report and approval states are below mentioned states
-            if report['state'] == 'APPROVER_PENDING' and approval['state'] == 'APPROVAL_PENDING':
-                actions_block['elements'].append(report_approve_action_element)
+
+def get_report_approval_notification_message(report, employee_display_name, cluster_domain):
+    REPORT_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(cluster_domain, report['id'], report['org_id'])
+
+    report_approval_message = get_report_section_blocks(report, employee_display_name)
+
+    actions_block = {
+        'type': 'actions',
+        'elements': [
+            {
+                'type': 'button',
+                'style': 'primary',
+                'text': {
+                    'type': 'plain_text',
+                    'text': 'Approve',
+                    'emoji': True
+                },
+                'action_id': 'report_approve',
+                'value': report['id'],
+            }
+        ]
+    }
+
+    report_review_action_element = get_report_review_in_fyle_action(REPORT_URL)
 
     actions_block['elements'].append(report_review_action_element)
 
