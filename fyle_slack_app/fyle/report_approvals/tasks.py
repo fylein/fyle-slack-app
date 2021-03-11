@@ -1,15 +1,14 @@
 from django.utils import timezone
 
-from django_q.tasks import schedule
 from django_q.models import Schedule
 
 from slack_sdk.web import WebClient
-from slack_sdk.errors import SlackApiError
 
 from ...slack.ui.report_approvals.messages import get_report_approval_notification_message
-from ...libs import utils
+from ...slack import utils as slack_utils
 from ...models.report_polling_details import ReportPollingDetail
 from .views import FyleReportApproval
+from .. import utils as fyle_utils
 
 
 # Schedule report polling task to run every 10 mins
@@ -18,18 +17,10 @@ def schedule_report_approval_polling():
     Schedule.objects.get_or_create(
         func='fyle_slack_app.fyle.report_approvals.tasks.poll_report_approvals',
         schedule_type=Schedule.CRON,
-        cron='*/10 * * * *' # User '*/10 * * * *' for testing -> cron to run every minute
+        cron='*/1 * * * *'
+        # Use '*/1 * * * *' for testing -> cron to run every minute
+        # Use '*/10 * * * *' for actual 10 min cron
     )
-
-
-def get_report_employee_message(slack_client, employee_details):
-    try:
-        user_info = slack_client.users_lookupByEmail(email=employee_details['user']['email'])
-        employee_message = '<@{}>'.format(user_info['user']['id'])
-    except SlackApiError:
-        employee_message = employee_details['user']['full_name']
-
-    return employee_message
 
 
 def poll_report_approvals():
@@ -42,67 +33,21 @@ def poll_report_approvals():
 
         slack_client = WebClient(token=user.slack_team.bot_access_token)
 
-        report_polling_detail = FyleReportApproval.get_or_create_report_polling_detail(user)
-
-        approver_id = 'ouUW6KWYLMq6'
+        approver_id = user.fyle_employee_id
 
         # Fetch approver reports to approve
         query_params = {
-            'approvals': 'cs.[{"approver_id": {}, "state": {}}]'.format(approver_id, 'APPROVAL_PENDING'),
-            'submitted_at': 'gte.{}'.format(report_polling_detail.last_successful_poll_at)
+            'approvals': 'cs.[{{ "approver_id": {}, "state": {} }}]'.format(approver_id, 'APPROVAL_PENDING'),
+            'submitted_at': 'gte.{}'.format(str(report_polling_detail.last_successful_poll_at))
         }
-        approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
+        # approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
 
-        # approver_reports = {
-        #         "count": 10000,
-        #         "offset": 10,
-        #         "data": [
-        #             {
-        #             "id": "sdfd2391",
-        #             "org_id": "orwruogwnngg",
-        #             "created_at": "2020-06-01T13:14:54.804+00:00",
-        #             "updated_at": "2020-06-11T13:14:55.201598+00:00",
-        #             "employee_id": "sdfd2391",
-        #             "employee": {
-        #                 "id": "sdfd2391",
-        #                 "user": {
-        #                     "email": "shreyanshss7@gmail.com",
-        #                     "full_name": "John Doe"
-        #                 },
-        #                 "code": "E84122"
-        #             },
-        #             "purpose": "Business trip to London",
-        #             "currency": "INR",
-        #             "amount": 47.99,
-        #             "tax": 47.99,
-        #             "state": "APPROVER_PENDING",
-        #             "num_expenses": 3,
-        #             "is_manually_flagged": True,
-        #             "is_policy_flaged": True,
-        #             "reimbursed_at": "2020-06-11T13:14:55.201598+00:00",
-        #             "approved_at": "2020-06-11T13:14:55.201598+00:00",
-        #             "submitted_at": "2020-06-11T13:14:55.201598+00:00",
-        #             "claim_number": "C/2021/02/R/907",
-        #             "source": "string",
-        #             "approvals": [
-        #                 {
-        #                 "approver_id": "sdfd2391",
-        #                 "approver": {
-        #                     "id": "sdfd2391",
-        #                     "user": {
-        #                     "email": "john.doe@example.com",
-        #                     "full_name": "John Doe"
-        #                     },
-        #                     "code": "E84122"
-        #                 },
-        #                 "state": "APPROVAL_PENDING"
-        #                 }
-        #             ]
-        #         }
-        #     ]
-        # }
+        fyle_access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
 
-        # approver_id = 'sdfd2391'
+        approver_reports = FyleReportApproval.get_appprover_reports_from_api(fyle_access_token, approver_id, report_polling_detail.last_successful_poll_at)
+
+        # Cluster domain for view report url
+        cluster_domain = fyle_utils.get_cluster_domain(fyle_access_token)
 
         if approver_reports['count'] > 0:
             # TODO: .save() save updated data to db
@@ -115,17 +60,11 @@ def poll_report_approvals():
 
             for report in approver_reports['data']:
 
-                employee_message = get_report_employee_message(slack_client, report['employee'])
+                employee_display_name = slack_utils.get_report_employee_display_name(slack_client, report['employee'])
 
-                report_notification_message = get_report_approval_notification_message(report, approver_id, employee_message)
+                report_notification_message = get_report_approval_notification_message(report, approver_id, employee_display_name, cluster_domain)
 
                 slack_client.chat_postMessage(
                     channel=user.slack_dm_channel_id,
                     blocks=report_notification_message
                 )
-
-                # Hardcoded for testing
-                # slack_client.chat_postMessage(
-                #     channel='D01K1L9UHBP',
-                #     blocks=report_notification_message
-                # )

@@ -1,9 +1,7 @@
 import datetime
 
-from django.conf import settings
 
-
-def get_report_section_blocks(report, employee_message):
+def get_report_section_blocks(report, employee_display_name):
 
     submitted_at = datetime.datetime.fromisoformat(report['submitted_at'])
     readable_submitted_at = submitted_at.strftime('%B %d, %Y')
@@ -13,7 +11,7 @@ def get_report_section_blocks(report, employee_message):
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(employee_message, report['employee']['user']['email'], report['claim_number'])
+                'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(employee_display_name, report['employee']['user']['email'], report['claim_number'])
             }
         },
         {
@@ -39,10 +37,10 @@ def get_report_section_blocks(report, employee_message):
     ]
 
 
-def get_report_approval_notification_message(report, approver_id, employee_message):
-    REPORT_WEBAPP_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(settings.FYLE_ACCOUNTS_URL, report['id'], report['org_id'])
+def get_report_approval_notification_message(report, approver_id, employee_display_name, cluster_domain):
+    REPORT_WEBAPP_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(cluster_domain, report['id'], report['org_id'])
 
-    report_approval_message = get_report_section_blocks(report, employee_message)
+    report_approval_message = get_report_section_blocks(report, employee_display_name)
 
     actions_block = {
         'type': 'actions',

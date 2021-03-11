@@ -48,6 +48,6 @@ class BlockActionHandler():
         return JsonResponse({}, status=200)
 
 
-    def review_report_in_fyle(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def review_report_in_fyle(self, slack_client, slack_payload, user_id, team_id):
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
