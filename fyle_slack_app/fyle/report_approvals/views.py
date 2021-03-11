@@ -19,7 +19,7 @@ class FyleReportApproval:
     @staticmethod
     def get_appprover_reports_from_api(access_token, approver_id, submitted_at):
 
-        approver_reports_url = "{}/approver/reports?approvals=cs.[{{\"state\": \"APPROVAL_PENDING\", \"approver_id\": \"{}\"}}]&submitted_at=gte.{}".format(settings.FYLE_PLATFORM_URL, approver_id, quote_plus(str(submitted_at)))
+        approver_reports_url = "{}/approver/reports?state=eq.APPROVER_PENDING&approvals=cs.[{{\"state\": \"APPROVAL_PENDING\", \"approver_id\": \"{}\"}}]&submitted_at=gte.{}".format(settings.FYLE_PLATFORM_URL, approver_id, quote_plus(str(submitted_at)))
 
         approver_reports_headers = {
             'Authorization': 'Bearer {}'.format(access_token)
