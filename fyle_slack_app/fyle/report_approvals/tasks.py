@@ -60,9 +60,6 @@ def poll_report_approvals():
         cluster_domain = fyle_utils.get_cluster_domain(fyle_access_token)
 
         if approver_reports['count'] > 0:
-            # TODO: .save() saves updated data to db
-            # This might not be the right place to do this operation
-
             # Save current timestamp as last_successful_poll_at
             # This will fetch new reports in next poll
             report_polling_detail.last_successful_poll_at = timezone.now()
