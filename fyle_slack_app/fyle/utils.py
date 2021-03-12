@@ -25,7 +25,7 @@ def get_cluster_domain(access_token):
     }
 
     response = http.post(url=cluster_domain_url, headers=headers)
-    assertions.assert_valid(response.status_code == 200, 'Unable to fetch cluster_domain. Please contact support@fyle.in')
+    assertions.assert_valid(response.status_code == 200, 'Error fetching cluster domain')
 
     return response.json()['cluster_domain']
 
@@ -43,8 +43,7 @@ def get_fyle_access_token(fyle_refresh_token):
     }
 
     oauth_response = requests.post('{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL), json=payload, headers=headers)
-
-    assertions.assert_good(oauth_response.status_code == 200)
+    assertions.assert_good(oauth_response.status_code == 200, 'Error fetching fyle token details')
 
     return oauth_response.json()['access_token']
 
@@ -60,23 +59,12 @@ def get_fyle_refresh_token(code):
     }
 
     oauth_response = http.post(FYLE_OAUTH_TOKEN_URL, oauth_payload)
-    assertions.assert_good(oauth_response.status_code == 200, 'Error while fetching fyle token details')
+    assertions.assert_good(oauth_response.status_code == 200, 'Error fetching fyle token details')
 
-    oauth_details = oauth_response.json()
-
-    return oauth_details['refresh_token']
+    return oauth_response.json()['refresh_token']
 
 
 def get_fyle_profile(refresh_token):
-    FYLE_PROFILE_URL = '{}/fyler/my_profile'.format(settings.FYLE_PLATFORM_URL)
-
-    access_token = get_fyle_access_token(refresh_token)
-
-    headers = {
-        'Authorization': 'Bearer {}'.format(access_token)
-    }
-    fyle_profile_response = http.get(FYLE_PROFILE_URL, headers=headers)
-
-    assertions.assert_good(fyle_profile_response.status_code == 200, 'Error while fetching fyle profile details')
-
-    return fyle_profile_response.json()['data']
+    connection = get_fyle_sdk_connection(refresh_token)
+    fyle_profile_response = connection.v1.fyler.my_profile.get()
+    return fyle_profile_response['data']

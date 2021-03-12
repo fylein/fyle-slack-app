@@ -3,6 +3,7 @@ from django.utils import timezone
 from django_q.models import Schedule
 
 from slack_sdk.web import WebClient
+from fyle.platform.exceptions import NoPrivilegeError
 
 from ...slack.ui.report_approvals.messages import get_report_approval_notification_message
 from ...slack import utils as slack_utils
@@ -17,7 +18,7 @@ def schedule_report_approval_polling():
     Schedule.objects.get_or_create(
         func='fyle_slack_app.fyle.report_approvals.tasks.poll_report_approvals',
         schedule_type=Schedule.CRON,
-        cron='*/1 * * * *'
+        cron='*/10 * * * *'
         # Use '*/1 * * * *' for testing -> cron to run every minute
         # Use '*/10 * * * *' for actual 10 min cron
     )
@@ -35,23 +36,31 @@ def poll_report_approvals():
 
         approver_id = user.fyle_employee_id
 
-        # Fetch approver reports to approve
+        # Fetch approver reports to approve - i.e. report state -> APPROVER_PENDING & approval state -> APPROVAL_PENDING
         query_params = {
             'state': 'eq.APPROVER_PENDING',
-            'approvals': 'cs.[{{ "approver_id": {}, "state": {} }}]'.format(approver_id, 'APPROVAL_PENDING'),
-            'submitted_at': 'gte.{}'.format(str(report_polling_detail.last_successful_poll_at))
+            'approvals': 'cs.[{{ "approver_id": {}, "state": "APPROVAL_PENDING" }}]'.format(approver_id),
+            'submitted_at': 'gte.{}'.format(str(report_polling_detail.last_successful_poll_at)),
+
+            # Mandatory query params required by sdk
+            'limit': 10, # Assuming no more than 10 reports will be there in 10 min poll
+            'offset': 0,
+            'order': 'submitted_at.desc'
         }
-        # approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
+
+        # Since not all users will be approvers so the sdk api call with throw exception
+        try:
+            approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
+        except NoPrivilegeError:
+            return None
 
         fyle_access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
-
-        approver_reports = FyleReportApproval.get_appprover_reports_from_api(fyle_access_token, approver_id, report_polling_detail.last_successful_poll_at)
 
         # Cluster domain for view report url
         cluster_domain = fyle_utils.get_cluster_domain(fyle_access_token)
 
         if approver_reports['count'] > 0:
-            # TODO: .save() save updated data to db
+            # TODO: .save() saves updated data to db
             # This might not be the right place to do this operation
 
             # Save current timestamp as last_successful_poll_at

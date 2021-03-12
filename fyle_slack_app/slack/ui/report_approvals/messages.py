@@ -37,12 +37,12 @@ def get_report_section_blocks(report, employee_display_name):
     ]
 
 
-def get_report_review_in_fyle_action(report_url):
+def get_report_review_in_fyle_action(report_url, button_text):
     return {
         'type': 'button',
         'text': {
             'type': 'plain_text',
-            'text': 'Review in Fyle',
+            'text': button_text,
             'emoji': True
         },
         'action_id': 'report_review_in_fyle',
@@ -72,7 +72,7 @@ def get_report_approval_notification_message(report, employee_display_name, clus
         ]
     }
 
-    report_review_action_element = get_report_review_in_fyle_action(REPORT_URL)
+    report_review_action_element = get_report_review_in_fyle_action(REPORT_URL, 'Review in Fyle')
 
     actions_block['elements'].append(report_review_action_element)
 
