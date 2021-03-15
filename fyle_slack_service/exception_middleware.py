@@ -22,4 +22,4 @@ class CustomExceptionMiddleware(MiddlewareMixin):
             status = code
             logger.error(traceback.format_exc())
 
-        return JsonResponse(resp, status=status) 
+        return JsonResponse(resp, status=status)

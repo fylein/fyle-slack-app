@@ -5,6 +5,8 @@ from ...slack.utils import get_slack_user_dm_channel_id
 
 class BlockActionHandler():
 
+    _block_action_handlers = {}
+
     # Maps action_id with it's respective function
     def _initialize_block_action_handlers(self):
         self._block_action_handlers = {

@@ -1,12 +1,12 @@
 from django.db import models
 
-from . import Team
+from .teams import Team
 
 class User(models.Model):
 
     class Meta:
         db_table = 'users'
-    
+
     slack_user_id = models.CharField(max_length=120, primary_key=True)
     slack_team = models.ForeignKey(Team, on_delete=models.CASCADE)
     slack_dm_channel_id = models.CharField(max_length=120, unique=True)

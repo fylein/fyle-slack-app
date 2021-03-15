@@ -12,6 +12,8 @@ from .block_action_handlers import BlockActionHandler
 
 class SlackInteractiveView(SlackView, BlockActionHandler):
 
+    slack_client = None
+
     def _set_slack_client(self, team_id) -> None:
         slack_team = utils.get_or_none(Team, id=team_id)
         assertions.assert_found(slack_team, 'Slack team not registered')
@@ -23,7 +25,6 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
         slack_payload = json.loads(payload)
 
         # Extract details from payload
-        slack_payload = slack_payload
         user_id = slack_payload['user']['id']
         team_id = slack_payload['team']['id']
 

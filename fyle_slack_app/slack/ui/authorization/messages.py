@@ -11,6 +11,7 @@ def get_pre_authorization_message(user_name, FYLE_OAUTH_URL):
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
+				# pylint: disable=line-too-long
                 'text': 'Your organisation uses *Fyle* so you spend virtually no time on expense reports. That\'s some boring work.'
             }
         },
@@ -18,6 +19,7 @@ def get_pre_authorization_message(user_name, FYLE_OAUTH_URL):
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
+				# pylint: disable=line-too-long
                 'text': 'Once you link your Fyle account, you\'ll see alerts for reports that need your approval and you\'ll able to check and approve them from within Slack. Your teammates will love you for approving their reports in a jiffy!'
             }
         },
@@ -61,6 +63,7 @@ def get_post_authorization_message():
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
+				# pylint: disable=line-too-long
 				'text': 'When one of your teammates submits an expense report for your approval, you\'ll receive a direct message like this:'
 			}
 		},
@@ -73,6 +76,7 @@ def get_post_authorization_message():
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
+				# pylint: disable=line-too-long
 				'text': 'You can approve reports within Slack or view details in Fyle within 2 seconds. Your teammates are going to love you a little bit more!'
 			}
 		},
@@ -90,6 +94,7 @@ def get_post_authorization_message():
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
+				# pylint: disable=line-too-long
 				'text': 'To see the official documentation, visit https://www.fylehq.com/help/en/?q=slack \nIf you\'re running into any trouble, please send us a note at support@fylehq.com'
 			}
 		}

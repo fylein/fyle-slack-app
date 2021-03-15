@@ -23,7 +23,7 @@ class SlackAuthorization(View):
         # If any error occured redirecting to FyleHQ website
         if error:
 
-            logger.error('Slack bot installation failed {}'.format(error))
+            logger.error('Slack bot installation failed %s', error)
 
             return HttpResponseRedirect('https://www.fylehq.com/')
 
@@ -86,7 +86,7 @@ class SlackAuthorization(View):
 
     def track_installation(self, user_id, slack_team, slack_client):
         user_info = slack_client.users_info(user=user_id)
-        assertions.assert_good(user_info['ok'] == True)
+        assertions.assert_good(user_info['ok'] is True)
 
         user_email = user_info['user']['profile']['email']
 

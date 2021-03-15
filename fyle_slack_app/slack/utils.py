@@ -9,7 +9,7 @@ from ..libs import assertions
 
 def get_slack_user_dm_channel_id(slack_client, user_id):
     slack_user_dm_channel_id = slack_client.conversations_open(users=[user_id])
-    assertions.assert_good(slack_user_dm_channel_id['ok'] == True)
+    assertions.assert_good(slack_user_dm_channel_id['ok'] is True)
     return slack_user_dm_channel_id['channel']['id']
 
 
@@ -38,6 +38,7 @@ def get_fyle_oauth_url(user_id, team_id):
 
     redirect_uri = '{}/fyle/authorization'.format(settings.SLACK_SERVICE_BASE_URL)
 
+    # pylint: disable=line-too-long
     FYLE_OAUTH_URL = '{}/app/developers/#/oauth/authorize?client_id={}&response_type=code&state={}&redirect_uri={}'.format(
         settings.FYLE_ACCOUNTS_URL,
         settings.FYLE_CLIENT_ID,

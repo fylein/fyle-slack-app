@@ -15,4 +15,3 @@ def get_post_authorization_message():
         'type': 'home',
         'blocks': post_authorization_message_blocks
     }
-

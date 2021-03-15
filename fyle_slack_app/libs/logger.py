@@ -1,5 +1,4 @@
 import logging
-import requests
 
 from django.conf import settings
 
@@ -7,8 +6,8 @@ logging.getLogger('requests').setLevel(logging.ERROR)
 
 
 class ContextFilter(logging.Filter):
-    def filter(self, log_record):
-        log_record.request_id = '-'
+    def filter(self, record):
+        record.request_id = '-'
         return True
 
 
@@ -24,6 +23,7 @@ def get_logger(name):
     logger = logging.getLogger(name)
     logger.level = logging.__dict__[settings.LOG_LEVEL]
     handler = logging.StreamHandler()
+    # pylint: disable=line-too-long
     handler.setFormatter(logging.Formatter("%(levelname)s %(asctime)s %(name)s: %(message)s \nrequest_id:%(request_id)s"))
     handler.addFilter(ContextFilter())
     logger.addHandler(handler)
