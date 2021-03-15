@@ -19,6 +19,9 @@ RUN mkdir -p /fyle-slack-app
 WORKDIR /fyle-slack-app
 COPY . /fyle-slack-app
 
+# Run pylint checks
+RUN pylint --rcfile=.pylintrc fyle_slack_app/ fyle_slack_service
+
 # Expose server port
 EXPOSE 8000
 
