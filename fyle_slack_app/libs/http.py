@@ -1,6 +1,5 @@
-import os
-import requests
 import json
+import requests
 
 from . import logger
 

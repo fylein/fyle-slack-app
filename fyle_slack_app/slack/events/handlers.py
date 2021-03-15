@@ -13,6 +13,8 @@ from ..ui.dashboard import messages
 
 class SlackEventHandler:
 
+    _event_callback_handlers = {}
+
     def _initialize_event_callback_handlers(self):
         self._event_callback_handlers = {
             'app_uninstalled': self.handle_app_uninstalled,
@@ -68,7 +70,7 @@ class SlackEventHandler:
             dashboard_view = messages.get_post_authorization_message()
         else:
             user_info = slack_client.users_info(user=user_id)
-            assertions.assert_good(user_info['ok'] == True)
+            assertions.assert_good(user_info['ok'] is True)
 
             fyle_oauth_url = get_fyle_oauth_url(user_id, team_id)
 

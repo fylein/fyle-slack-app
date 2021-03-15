@@ -13,17 +13,17 @@ def broadcast_installation_message(slack_team_id):
     slack_client = WebClient(token=slack_team.bot_access_token)
 
     slack_workspace_users = slack_client.users_list()
-    assertions.assert_good(slack_workspace_users['ok'] == True)
+    assertions.assert_good(slack_workspace_users['ok'] is True)
 
     for workspace_user in slack_workspace_users['members']:
-        if workspace_user['deleted'] == False and workspace_user['is_bot'] == False:
+        if workspace_user['deleted'] is False and workspace_user['is_bot'] is False:
 
             fyle_oauth_url = get_fyle_oauth_url(workspace_user['id'], workspace_user['team_id'])
 
             workspace_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, workspace_user['id'])
-            
+
             pre_auth_message = messages.get_pre_authorization_message(workspace_user['real_name'], fyle_oauth_url)
-            
+
             slack_client.chat_postMessage(
                 channel=workspace_user_dm_channel_id,
                 blocks=pre_auth_message

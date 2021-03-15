@@ -21,7 +21,7 @@ def verify_slack_signature(request):
         The signature is created by combining the signing secret with the body of the request slack sends.
 
         The signature sent by slack in request is checked against the signature we build from the request body.
-
+        # pylint: disable=line-too-long
         Reference: https://api.slack.com/authentication/verifying-requests-from-slack#verifying-requests-from-slack-using-signing-secrets__app-management-updates
     '''
     slack_signature = request.META.get('HTTP_X_SLACK_SIGNATURE')
@@ -44,10 +44,10 @@ def verify_slack_signature(request):
 
         try:
             slack_signing_secret = bytes(settings.SLACK_SIGNING_SECRET, 'utf-8')
-        except AttributeError:
+        except AttributeError as error:
             raise ImproperlyConfigured(
                 "`settings.SLACK_SIGNING_SECRET` isn't defined"
-            )
+            ) from error
 
         my_signature = 'v0=' + hmac.new(slack_signing_secret, basestring, hashlib.sha256).hexdigest()
 
