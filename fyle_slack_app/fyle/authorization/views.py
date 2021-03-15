@@ -85,7 +85,7 @@ class FyleAuthorization(View):
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
-
+    # pylint: disable=line-too-long
     def create_user(self, slack_client, slack_team, user_id, slack_user_dm_channel_id, fyle_refresh_token, fyle_employee_id):
 
         # Fetch slack user details

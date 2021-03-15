@@ -58,7 +58,11 @@ def poll_report_approvals():
 
                 employee_display_name = slack_utils.get_report_employee_display_name(slack_client, report['employee'])
 
-                report_notification_message = get_report_approval_notification_message(report, employee_display_name, cluster_domain)
+                report_notification_message = get_report_approval_notification_message(
+                    report,
+                    employee_display_name,
+                    cluster_domain
+                )
 
                 slack_client.chat_postMessage(
                     channel=user.slack_dm_channel_id,

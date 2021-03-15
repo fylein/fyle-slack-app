@@ -23,7 +23,7 @@ class FyleReportApproval:
 
 
 class FyleReportPolling(View):
-    
+
     @method_decorator(csrf_exempt)
     def dispatch(self, request, *args, **kwargs):
         return super().dispatch(request, *args, **kwargs)
@@ -35,15 +35,16 @@ class FyleReportPolling(View):
         payload = json.loads(request.body)
         superuser_username = payload['superuser_username']
         superuser_password = payload['superuser_password']
-        
+
         superuser = authenticate(username=superuser_username, password=superuser_password)
         assertions.assert_found(superuser, 'Invalid superuser credentials')
         assertions.assert_true(superuser.is_superuser)
 
         cron_expression = payload['cron_expression']
         assertions.assert_valid(croniter.croniter.is_valid(cron_expression), 'Invalid cron expression')
-        
-        # Info on `get_or_create` method -> https://simpleisbetterthancomplex.com/tips/2016/07/14/django-tip-6-get-or-create.html
+
+        # Info on `get_or_create` method
+        # https://simpleisbetterthancomplex.com/tips/2016/07/14/django-tip-6-get-or-create.html
         Schedule.objects.get_or_create(
             func='fyle_slack_app.fyle.report_approvals.tasks.poll_report_approvals',
             schedule_type=Schedule.CRON,

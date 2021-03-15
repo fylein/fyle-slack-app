@@ -1,6 +1,6 @@
 from django.db import models
 
-from . import User
+from .users import User
 
 
 class ReportPollingDetail(models.Model):

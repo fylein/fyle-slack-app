@@ -12,7 +12,7 @@ class User(models.Model):
     slack_dm_channel_id = models.CharField(max_length=120, unique=True)
     email = models.EmailField()
     fyle_refresh_token = models.TextField()
-    fyle_employee_id = models.CharField(max_length=120, null=True) # null=True because this column was added later and django migration needs a default value to fill existing rows
+    fyle_employee_id = models.CharField(max_length=120, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
