@@ -14,7 +14,7 @@ jobs:
       SECRET_KEY: thisisafakedjangosecretkey
       FYLE_CLIENT_ID: fakefyleclientid
       FYLE_CLIENT_SECRET: fakefyleclientsecret
-      FYLE_BASE_URL: fakefylebaseurl
+      FYLE_PLATFORM_URL: fakefyleplatformurl
       FYLE_ACCOUNTS_URL: fakefyleaccounturl
       SLACK_CLIENT_ID: fakeslackclientid
       SLACK_CLIENT_SECRET: fakeslackclientsecret
