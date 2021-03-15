@@ -1,7 +1,5 @@
 from django.utils import timezone
 
-from django_q.models import Schedule
-
 from slack_sdk.web import WebClient
 from fyle.platform.exceptions import NoPrivilegeError
 
@@ -12,21 +10,12 @@ from .views import FyleReportApproval
 from .. import utils as fyle_utils
 
 
-# Schedule report polling task to run every 10 mins
-def schedule_report_approval_polling():
-    # Info on `get_or_create` method -> https://simpleisbetterthancomplex.com/tips/2016/07/14/django-tip-6-get-or-create.html
-    Schedule.objects.get_or_create(
-        func='fyle_slack_app.fyle.report_approvals.tasks.poll_report_approvals',
-        schedule_type=Schedule.CRON,
-        cron='*/10 * * * *'
-        # Use '*/1 * * * *' for testing -> cron to run every minute
-        # Use '*/10 * * * *' for actual 10 min cron
-    )
-
-
 def poll_report_approvals():
     # select_related joins the two table with foriegn key column
-    # `__slack_team` joins `users` table with `teams` table
+    # 1st join -> `report_polling_details` table with `users` table with `user` field
+    # 2nd join -> `__slack_team` joins `users` table with `teams` table
+
+    # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
     report_polling_details = ReportPollingDetail.objects.select_related('user__slack_team').all()
 
     for report_polling_detail in report_polling_details:
