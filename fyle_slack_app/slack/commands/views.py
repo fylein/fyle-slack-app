@@ -10,6 +10,8 @@ from .handlers import SlackCommandHandler
 
 class SlackCommandView(SlackView, SlackCommandHandler):
 
+    slack_client = None
+
     def _set_slack_client(self, team_id) -> None:
         slack_team = utils.get_or_none(Team, id=team_id)
         assertions.assert_found(slack_team, 'Slack team not registered')

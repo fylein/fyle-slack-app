@@ -17,7 +17,7 @@ def new_user_joined_pre_auth_message(user_id, team_id):
         slack_client = WebClient(token=team.bot_access_token)
 
         user_info = slack_client.users_info(user=user_id)
-        assertions.assert_good(user_info['ok'] == True)
+        assertions.assert_good(user_info['ok'] is True)
 
         user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
 

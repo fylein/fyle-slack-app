@@ -38,15 +38,15 @@ class FyleAuthorization(View):
 
         if error:
 
-            logger.error('Fyle authorization error: {}'.format(error))
+            logger.error('Fyle authorization error: %s', error)
 
             error_message = 'Seems like something went wrong :face_with_head_bandage: \n' \
                         'If the issues still persists, please contact support@fylehq.com'
 
             # Error when user declines Fyle authorization
             if error == 'access_denied':
-                error_message = 'Sad to see you decline us :white_frowning_face: \n' \
-                    'Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
+                # pylint: disable=line-too-long
+                error_message = 'Sad to see you decline us :white_frowning_face: \n Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
 
             slack_client.chat_postMessage(
                     channel=slack_user_dm_channel_id,
@@ -64,6 +64,7 @@ class FyleAuthorization(View):
                 self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
             else:
                 # Create user
+                # pylint: disable=line-too-long
                 user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
 
                 # Send post authorization message to user
@@ -83,7 +84,7 @@ class FyleAuthorization(View):
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
-        assertions.assert_good(slack_user_info['ok'] == True)
+        assertions.assert_good(slack_user_info['ok'] is True)
 
         # Store slack user in DB
         user = User.objects.create(
@@ -131,7 +132,7 @@ class FyleAuthorization(View):
     def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
         post_authorization_message_view = dashboad_messages.get_post_authorization_message()
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
-    
+
 
     def track_fyle_authorization(self, user):
         event_data = {
