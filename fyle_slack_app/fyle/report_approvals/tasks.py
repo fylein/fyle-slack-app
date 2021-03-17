@@ -100,7 +100,7 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
     report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
     report_url = '{}/{}?org_id={}'.format(report_url, approver_report['id'], approver_report['org_id'])
 
-    if is_report_approvable is True or is_report_approved is False:
+    if is_report_approvable is True and is_report_approved is False:
 
         approver_report = FyleReportApproval.approve_report(user, report_id)
         report_state_message = 'Expense report approved by you :white_check_mark:'
