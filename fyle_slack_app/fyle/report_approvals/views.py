@@ -30,21 +30,28 @@ class FyleReportApproval:
 
 
     @staticmethod
+    def approve_report(user, report_id):
+        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
+        approved_report = connection.v1.approver.reports.post(report_id)
+        return approved_report
+
+
+    @staticmethod
     def check_report_approval_states(report, approver_id):
 
         report_approved_states = ['PAYMENT_PENDING', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']
 
-        message = ''
+        report_state_message = ''
         is_report_approved = False
         is_report_approvable = True
 
         if report['state'] == 'APPROVER_INQUIRY':
             is_report_approvable = False
-            message = 'This report can\'t be approved as it is sent back to the employee :x:'
+            report_state_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
 
         if report['state'] in report_approved_states and is_report_approvable is True:
             is_report_approved = True
-            message = 'This report is already approved :white_check_mark:'
+            report_state_message = 'This expense report is already approved :white_check_mark:'
 
         if is_report_approved is False and is_report_approvable is True:
 
@@ -54,13 +61,13 @@ class FyleReportApproval:
 
                     if approver['state'] == 'APPROVAL_DONE':
                         is_report_approved = True
-                        message = 'This report is already approved by you :white_check_mark:'
+                        report_state_message = 'This expense report is already approved by you :white_check_mark:'
 
                     if approver['state'] == 'APPROVAL_DISABLED':
                         is_report_approvable = False
-                        message = 'Your approval is disabled on this report :x:'
+                        report_state_message = 'Your approval is disabled on this expense report :x:'
 
-        return is_report_approved, is_report_approvable, message
+        return is_report_approved, is_report_approvable, report_state_message
 
 
 class FyleReportPolling(View):

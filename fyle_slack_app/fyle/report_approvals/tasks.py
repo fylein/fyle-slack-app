@@ -90,7 +90,7 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
     approver_report = FyleReportApproval.get_approver_reports(user, query_params)['data'][0]
     # approver_report = FyleReportApproval.get_approver_report_by_id(user, report_id)['data']
 
-    is_report_approved, is_report_approvable, message = FyleReportApproval.check_report_approval_states(
+    is_report_approved, is_report_approvable, report_state_message = FyleReportApproval.check_report_approval_states(
         approver_report,
         user.fyle_employee_id
     )
@@ -100,16 +100,20 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
     report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
     report_url = '{}/{}?org_id={}'.format(report_url, approver_report['id'], approver_report['org_id'])
 
-    if is_report_approvable is False or is_report_approved is True:
-        report_approval_message_block = report_approval_messages.get_report_approval_notification_message(
-            approver_report,
-            employee_display_name,
-            report_url,
-            message
-        )
+    if is_report_approvable is True or is_report_approved is False:
 
-        slack_client.chat_update(
-            channel=user.slack_dm_channel_id,
-            blocks=report_approval_message_block,
-            ts=message_ts
-        )
+        approver_report = FyleReportApproval.approve_report(user, report_id)
+        report_state_message = 'Expense report approved by you :white_check_mark:'
+
+    report_approval_message_block = report_approval_messages.get_report_approval_notification_message(
+        approver_report,
+        employee_display_name,
+        report_url,
+        report_state_message
+    )
+
+    slack_client.chat_update(
+        channel=user.slack_dm_channel_id,
+        blocks=report_approval_message_block,
+        ts=message_ts
+    )
