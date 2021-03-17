@@ -27,11 +27,13 @@ def poll_report_approvals():
 
         approver_id = user.fyle_employee_id
 
+        submitted_at = report_polling_detail.last_successful_poll_at.isoformat()
+
         # Fetch approver reports to approve - i.e. report state -> APPROVER_PENDING & approval state -> APPROVAL_PENDING
         query_params = {
             'state': 'eq.APPROVER_PENDING',
             'approvals': 'cs.[{{ "approver_id": {}, "state": "APPROVAL_PENDING" }}]'.format(approver_id),
-            'submitted_at': 'gte.{}'.format(str(report_polling_detail.last_successful_poll_at)),
+            'submitted_at': 'gte.{}'.format(submitted_at),
 
             # Mandatory query params required by sdk
             'limit': 10, # Assuming no more than 10 reports will be there in 10 min poll
