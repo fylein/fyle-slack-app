@@ -30,11 +30,6 @@ class FyleReportApproval:
 
 
     @staticmethod
-    def process_report_approval():
-        pass
-
-
-    @staticmethod
     def check_report_approval_states(report, approver_id):
 
         report_approved_states = ['PAYMENT_PENDING', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']

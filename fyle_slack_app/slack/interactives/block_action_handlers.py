@@ -2,11 +2,7 @@ from django.http.response import JsonResponse
 
 from django_q.tasks import async_task
 
-from ...slack.utils import get_report_employee_display_name, get_slack_user_dm_channel_id
-from ...libs import utils, assertions
-from ...fyle.report_approvals.views import FyleReportApproval
-from ...models import User
-from ..ui.report_approvals import messages as report_approval_messages
+from ...slack.utils import get_slack_user_dm_channel_id
 
 
 class BlockActionHandler():
@@ -66,7 +62,12 @@ class BlockActionHandler():
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
 
-        # pylint: disable=line-too-long
-        async_task('fyle_slack_app.fyle.report_approvals.tasks.process_report_approval', report_id, user_id, team_id, message_ts)
+        async_task(
+            'fyle_slack_app.fyle.report_approvals.tasks.process_report_approval',
+            report_id,
+            user_id,
+            team_id,
+            message_ts
+        )
 
         return JsonResponse({}, status=200)

@@ -109,8 +109,11 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
     access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
     cluster_domain = fyle_utils.get_cluster_domain(access_token)
 
-    # pylint: disable=line-too-long
-    REPORT_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(cluster_domain, approver_report['id'], approver_report['org_id'])
+    REPORT_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(
+        cluster_domain,
+        approver_report['id'],
+        approver_report['org_id']
+    )
 
     actions_block = {
         'type': 'actions',
