@@ -34,6 +34,39 @@ class FyleReportApproval:
         pass
 
 
+    @staticmethod
+    def check_report_approval_states(report, approver_id):
+
+        report_approved_states = ['PAYMENT_PENDING', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']
+
+        is_report_approved = False
+        is_report_approvable = True
+
+        if report['state'] == 'APPROVER_INQUIRY':
+            is_report_approvable = False
+            message = 'This report can\'t be approved as it is sent back to the employee :x:'
+
+        if report['state'] in report_approved_states and is_report_approvable is True:
+            is_report_approved = True
+            message = 'This report is already approved :white_check_mark:'
+
+        if is_report_approved is False and is_report_approvable is True:
+
+            for approver in report['approvals']:
+
+                if approver['approver_id'] == approver_id:
+
+                    if approver['state'] == 'APPROVAL_DONE':
+                        is_report_approved = True
+                        message = 'This report is already approved by you :white_check_mark:'
+
+                    if approver['state'] == 'APPROVAL_DISABLED':
+                        is_report_approvable = False
+                        message = 'Your approval is disabled on this report :x:'
+
+        return is_report_approved, is_report_approvable, message
+
+
 class FyleReportPolling(View):
 
     @method_decorator(csrf_exempt)

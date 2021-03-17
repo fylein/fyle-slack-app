@@ -92,32 +92,10 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
     approver_report = FyleReportApproval.get_approver_reports(user, query_params)['data'][0]
     # approver_report = FyleReportApproval.get_approver_report_by_id(user, report_id)['data']
 
-    report_approved_states = ['PAYMENT_PENDING', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']
-
-    is_report_approved = False
-    is_report_approvable = True
-
-    if approver_report['state'] == 'APPROVER_INQUIRY':
-        is_report_approvable = False
-        message = 'This report can\'t be approved as it is sent back to the employee :x:'
-
-    if approver_report['state'] in report_approved_states and is_report_approvable is True:
-        is_report_approved = True
-        message = 'This report is already approved :white_check_mark:'
-
-    if is_report_approved is False and is_report_approvable is True:
-
-        for approver in approver_report['approvals']:
-
-            if approver['approver_id'] == user.fyle_employee_id:
-
-                if approver['state'] == 'APPROVAL_DONE':
-                    is_report_approved = True
-                    message = 'This report is already approved by you :white_check_mark:'
-
-                if approver['state'] == 'APPROVAL_DISABLED':
-                    is_report_approvable = False
-                    message = 'Your approval is disabled on this report :x:'
+    is_report_approved, is_report_approvable, message = FyleReportApproval.check_report_approval_states(
+        approver_report,
+        user.fyle_employee_id
+    )
 
     employee_display_name = slack_utils.get_report_employee_display_name(slack_client, approver_report['employee'])
 
