@@ -22,6 +22,13 @@ class FyleReportApproval:
         return approver_reports
 
 
+    @staticmethod
+    def get_approver_report_by_id(user, report_id):
+        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
+        approver_report = connection.v1.approver.reports.get(report_id)
+        return approver_report
+
+
 class FyleReportPolling(View):
 
     @method_decorator(csrf_exempt)
