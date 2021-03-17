@@ -103,21 +103,15 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
         employee_display_name
     )
 
-    access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
-    cluster_domain = fyle_utils.get_cluster_domain(access_token)
-
-    REPORT_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(
-        cluster_domain,
-        approver_report['id'],
-        approver_report['org_id']
-    )
+    report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+    report_url = '{}/{}?org_id={}'.format(report_url, approver_report['id'], approver_report['org_id'])
 
     actions_block = {
         'type': 'actions',
         'elements': []
     }
 
-    report_view_in_fyle_section = report_approval_messages.get_report_review_in_fyle_action(REPORT_URL, 'View in Fyle')
+    report_view_in_fyle_section = report_approval_messages.get_report_review_in_fyle_action(report_url, 'View in Fyle')
 
     if is_report_approvable is False or is_report_approved is True:
         message_section = {
