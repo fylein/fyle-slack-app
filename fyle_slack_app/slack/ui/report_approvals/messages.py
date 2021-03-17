@@ -58,8 +58,8 @@ def get_report_review_in_fyle_action(report_url, button_text):
     }
 
 
-def get_report_approval_notification_message(report, employee_display_name, cluster_domain):
-    REPORT_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(cluster_domain, report['id'], report['org_id'])
+def get_report_approval_notification_message(report, employee_display_name, report_url):
+    report_url = '{}/{}?org_id={}'.format(report_url, report['id'], report['org_id'])
 
     report_approval_message = get_report_section_blocks(report, employee_display_name)
 
@@ -80,7 +80,7 @@ def get_report_approval_notification_message(report, employee_display_name, clus
         ]
     }
 
-    report_review_action_element = get_report_review_in_fyle_action(REPORT_URL, 'Review in Fyle')
+    report_review_action_element = get_report_review_in_fyle_action(report_url, 'Review in Fyle')
 
     actions_block['elements'].append(report_review_action_element)
 

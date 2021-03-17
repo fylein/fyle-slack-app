@@ -68,3 +68,9 @@ def get_fyle_profile(refresh_token):
     connection = get_fyle_sdk_connection(refresh_token)
     fyle_profile_response = connection.v1.fyler.my_profile.get()
     return fyle_profile_response['data']
+
+
+def get_fyle_report_url(fyle_refresh_token):
+    access_token = get_fyle_access_token(fyle_refresh_token)
+    cluster_domain = get_cluster_domain(access_token)
+    return '{}/app/main/#/enterprise/reports'.format(cluster_domain)
