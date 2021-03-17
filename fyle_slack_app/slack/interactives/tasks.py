@@ -68,6 +68,11 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
     # pylint: disable=line-too-long
     REPORT_URL = '{}/app/main/#/enterprise/reports/{}?org_id={}'.format(cluster_domain, approver_report['id'], approver_report['org_id'])
 
+    actions_block = {
+        'type': 'actions',
+        'elements': []
+    }
+
     report_view_in_fyle_section = report_approval_messages.get_report_review_in_fyle_action(REPORT_URL, 'View in Fyle')
 
     if is_report_approvable is False or is_report_approved is True:
@@ -80,7 +85,8 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
         }
 
         report_section_block.append(message_section)
-        report_section_block.append(report_view_in_fyle_section)
+        actions_block['elements'].append(report_view_in_fyle_section)
+        report_section_block.append(actions_block)
 
         slack_client.chat_update(
             channel=user.slack_dm_channel_id,
