@@ -47,10 +47,7 @@ def poll_report_approvals():
         except NoPrivilegeError:
             return None
 
-        fyle_access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
-
-        # Cluster domain for view report url
-        cluster_domain = fyle_utils.get_cluster_domain(fyle_access_token)
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
         if approver_reports['count'] > 0:
             # Save current timestamp as last_successful_poll_at
@@ -65,7 +62,7 @@ def poll_report_approvals():
                 report_notification_message = get_report_approval_notification_message(
                     report,
                     employee_display_name,
-                    cluster_domain
+                    report_url
                 )
 
                 slack_client.chat_postMessage(
