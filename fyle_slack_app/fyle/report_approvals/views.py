@@ -29,6 +29,11 @@ class FyleReportApproval:
         return approver_report
 
 
+    @staticmethod
+    def process_report_approval():
+        pass
+
+
 class FyleReportPolling(View):
 
     @method_decorator(csrf_exempt)
