@@ -11,8 +11,11 @@ def get_report_section_blocks(report, employee_display_name):
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                # pylint: disable=line-too-long
-                'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(employee_display_name, report['employee']['user']['email'], report['claim_number'])
+                'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(
+                    employee_display_name,
+                    report['employee']['user']['email'],
+                    report['claim_number']
+                )
             }
         },
         {
@@ -27,8 +30,11 @@ def get_report_section_blocks(report, employee_display_name):
             'fields': [
                 {
                     'type': 'mrkdwn',
-                    # pylint: disable=line-too-long
-                    'text': '*Amount:* {} {} \n *No. of expenses:* {}'.format(report['currency'], report['amount'], report['num_expenses'])
+                    'text': '*Amount:* {} {} \n *No. of expenses:* {}'.format(
+                        report['currency'],
+                        report['amount'],
+                        report['num_expenses']
+                    )
                 },
                 {
                     'type': 'mrkdwn',
