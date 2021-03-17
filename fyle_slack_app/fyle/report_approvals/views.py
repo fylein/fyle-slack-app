@@ -49,7 +49,7 @@ class FyleReportApproval:
             is_report_approvable = False
             report_state_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
 
-        if report['state'] in report_approved_states and is_report_approvable is True:
+        if report['state'] in report_approved_states:
             is_report_approved = True
             report_state_message = 'This expense report is already approved :white_check_mark:'
 
