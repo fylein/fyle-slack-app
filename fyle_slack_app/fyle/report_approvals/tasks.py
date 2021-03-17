@@ -3,7 +3,6 @@ from django.utils import timezone
 from slack_sdk.web import WebClient
 from fyle.platform.exceptions import NoPrivilegeError
 
-from ...slack.ui.report_approvals.messages import get_report_approval_notification_message
 from ...slack import utils as slack_utils
 from ...models import ReportPollingDetail, Team, User
 from .views import FyleReportApproval
@@ -59,7 +58,7 @@ def poll_report_approvals():
 
                 employee_display_name = slack_utils.get_report_employee_display_name(slack_client, report['employee'])
 
-                report_notification_message = get_report_approval_notification_message(
+                report_notification_message = report_approval_messages.get_report_approval_notification_message(
                     report,
                     employee_display_name,
                     report_url
@@ -98,36 +97,19 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
 
     employee_display_name = slack_utils.get_report_employee_display_name(slack_client, approver_report['employee'])
 
-    report_section_block = report_approval_messages.get_report_section_blocks(
-        approver_report,
-        employee_display_name
-    )
-
     report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
     report_url = '{}/{}?org_id={}'.format(report_url, approver_report['id'], approver_report['org_id'])
 
-    actions_block = {
-        'type': 'actions',
-        'elements': []
-    }
-
-    report_view_in_fyle_section = report_approval_messages.get_report_review_in_fyle_action(report_url, 'View in Fyle')
-
     if is_report_approvable is False or is_report_approved is True:
-        message_section = {
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': message
-            }
-        }
-
-        report_section_block.append(message_section)
-        actions_block['elements'].append(report_view_in_fyle_section)
-        report_section_block.append(actions_block)
+        report_approval_message_block = report_approval_messages.get_report_approval_notification_message(
+            approver_report,
+            employee_display_name,
+            report_url,
+            message
+        )
 
         slack_client.chat_update(
             channel=user.slack_dm_channel_id,
-            blocks=report_section_block,
+            blocks=report_approval_message_block,
             ts=message_ts
         )
