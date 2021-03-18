@@ -44,32 +44,38 @@ def poll_report_approvals():
         }
 
         # Since not all users will be approvers so the sdk api call with throw exception
+        is_approver = True
         try:
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
         except NoPrivilegeError as error:
             logger.error('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_employee_id)
             logger.error('API call error %s ', error)
-            return None
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+            is_approver = False
 
-        if approver_reports['count'] > 0:
-            # Save current timestamp as last_successful_poll_at
-            # This will fetch new reports in next poll
-            report_polling_detail.last_successful_poll_at = timezone.now()
-            report_polling_detail.save()
+        if is_approver:
 
-            for report in approver_reports['data']:
+            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
-                employee_display_name = slack_utils.get_report_employee_display_name(slack_client, report['employee'])
+            if approver_reports['count'] > 0:
+                # Save current timestamp as last_successful_poll_at
+                # This will fetch new reports in next poll
+                report_polling_detail.last_successful_poll_at = timezone.now()
+                report_polling_detail.save()
 
-                report_notification_message = get_report_approval_notification_message(
-                    report,
-                    employee_display_name,
-                    report_url
-                )
+                for report in approver_reports['data']:
 
-                slack_client.chat_postMessage(
-                    channel=user.slack_dm_channel_id,
-                    blocks=report_notification_message
-                )
+                    employee_display_name = slack_utils.get_report_employee_display_name(
+                        slack_client,report['employee']
+                    )
+
+                    report_notification_message = get_report_approval_notification_message(
+                        report,
+                        employee_display_name,
+                        report_url
+                    )
+
+                    slack_client.chat_postMessage(
+                        channel=user.slack_dm_channel_id,
+                        blocks=report_notification_message
+                    )
