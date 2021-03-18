@@ -13,7 +13,7 @@ class BlockActionHandler():
     def _initialize_block_action_handlers(self):
         self._block_action_handlers = {
             'link_fyle_account': self.link_fyle_account,
-            'report_review_in_fyle': self.review_report_in_fyle,
+            'review_report_in_fyle': self.review_report_in_fyle,
             'report_approve': self.report_approve
         }
 
