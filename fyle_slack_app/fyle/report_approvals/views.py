@@ -41,7 +41,7 @@ class FyleReportApproval:
 
         report_approved_states = ['PAYMENT_PENDING', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']
 
-        report_state_message = ''
+        report_state_message = None
         is_report_approved = False
         is_report_approvable = True
 
