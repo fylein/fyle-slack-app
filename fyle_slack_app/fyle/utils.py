@@ -7,10 +7,13 @@ from django.conf import settings
 from ..libs import http, assertions
 
 
+FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
+
+
 def get_fyle_sdk_connection(refresh_token):
     return Platform(
         server_url=settings.FYLE_PLATFORM_URL,
-        token_url='{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL),
+        token_url=FYLE_TOKEN_URL,
         client_id=settings.FYLE_CLIENT_ID,
         client_secret=settings.FYLE_CLIENT_SECRET,
         refresh_token=refresh_token

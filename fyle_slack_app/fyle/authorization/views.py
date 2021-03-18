@@ -86,6 +86,7 @@ class FyleAuthorization(View):
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
+    # pylint: disable=fixme
     # TODO: Refactor `create_user` this takes in `slack_client` which doesn't define the purpose of this function
     # pylint: disable=line-too-long
     def create_user(self, slack_client, slack_team, user_id, slack_user_dm_channel_id, fyle_refresh_token, fyle_employee_id):
