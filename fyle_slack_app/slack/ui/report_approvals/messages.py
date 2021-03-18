@@ -1,20 +1,26 @@
-import datetime
+from ....libs import utils
 
 
 def get_report_section_blocks(report, employee_display_name):
 
-    submitted_at = datetime.datetime.fromisoformat(report['submitted_at'])
-    readable_submitted_at = submitted_at.strftime('%B %d, %Y')
+    readable_submitted_at = utils.get_formatted_datetime(report['submitted_at'], '%B %d, %Y')
 
-    return [
+    employee_email = report['employee']['user']['email']
+
+    report_claim_number = report['claim_number']
+    report_curreny = report['currency']
+    report_amount = report['amount']
+    report_expenses = report['num_expenses']
+
+    report_section_block = [
         {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
                 'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(
                     employee_display_name,
-                    report['employee']['user']['email'],
-                    report['claim_number']
+                    employee_email,
+                    report_claim_number
                 )
             }
         },
@@ -31,9 +37,9 @@ def get_report_section_blocks(report, employee_display_name):
                 {
                     'type': 'mrkdwn',
                     'text': '*Amount:* {} {} \n *No. of expenses:* {}'.format(
-                        report['currency'],
-                        report['amount'],
-                        report['num_expenses']
+                        report_curreny,
+                        report_amount,
+                        report_expenses
                     )
                 },
                 {
@@ -44,18 +50,23 @@ def get_report_section_blocks(report, employee_display_name):
         }
     ]
 
+    return report_section_block
+
 
 def get_report_review_in_fyle_action(report_url, button_text):
-    return {
+
+    report_review_in_fyle_action = {
         'type': 'button',
         'text': {
             'type': 'plain_text',
             'text': button_text,
             'emoji': True
         },
-        'action_id': 'report_review_in_fyle',
+        'action_id': 'review_report_in_fyle',
         'url': report_url
     }
+
+    return report_review_in_fyle_action
 
 
 def get_report_approval_notification_message(report, employee_display_name, report_url):

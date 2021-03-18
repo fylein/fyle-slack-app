@@ -7,7 +7,11 @@ from ...slack.ui.report_approvals.messages import get_report_approval_notificati
 from ...slack import utils as slack_utils
 from ...models.report_polling_details import ReportPollingDetail
 from .views import FyleReportApproval
+from ...libs import logger
 from .. import utils as fyle_utils
+
+
+logger = logger.get_logger(__name__)
 
 
 def poll_report_approvals():
@@ -34,7 +38,7 @@ def poll_report_approvals():
             'submitted_at': 'gte.{}'.format(submitted_at),
 
             # Mandatory query params required by sdk
-            'limit': 10, # Assuming no more than 10 reports will be there in 10 min poll
+            'limit': 50, # Assuming no more than 50 reports will be there in 10 min poll
             'offset': 0,
             'order': 'submitted_at.desc'
         }
@@ -42,7 +46,9 @@ def poll_report_approvals():
         # Since not all users will be approvers so the sdk api call with throw exception
         try:
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
-        except NoPrivilegeError:
+        except NoPrivilegeError as error:
+            logger.error('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_employee_id)
+            logger.error('API call error %s ', error)
             return None
 
         report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
