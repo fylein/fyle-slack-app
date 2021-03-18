@@ -3,9 +3,7 @@ import croniter
 
 from django.http.response import JsonResponse
 from django.views.generic.base import View
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth import authenticate
-from django.utils.decorators import method_decorator
 
 from django_q.models import Schedule
 
@@ -23,10 +21,6 @@ class FyleReportApproval:
 
 
 class FyleReportPolling(View):
-
-    @method_decorator(csrf_exempt)
-    def dispatch(self, request, *args, **kwargs):
-        return super().dispatch(request, *args, **kwargs)
 
     # Endpoint to trigger the background cron task for report polling
     # Since this is an endpoint we'll need to protect this
