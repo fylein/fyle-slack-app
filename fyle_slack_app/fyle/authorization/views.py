@@ -1,12 +1,14 @@
 from django.http.response import HttpResponseRedirect
 from django.views import View
 from django.conf import settings
+from django.utils import timezone
 
 from slack_sdk.web.client import WebClient
 
 from ... import tracking
-from ...libs import utils, assertions, http, logger
-from ...models import Team, User
+from .. import utils as fyle_utils
+from ...libs import utils, assertions, logger
+from ...models import Team, User, ReportPollingDetail
 from ...slack.utils import get_slack_user_dm_channel_id, decode_state
 from ...slack.ui.authorization.messages import get_post_authorization_message
 from ...slack.ui.dashboard import messages as dashboad_messages
@@ -16,8 +18,6 @@ logger = logger.get_logger(__name__)
 
 
 class FyleAuthorization(View):
-
-    FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
     def get(self, request):
 
@@ -55,17 +55,23 @@ class FyleAuthorization(View):
         else:
             code = request.GET.get('code')
 
-            fyle_refresh_token = self.get_fyle_refresh_token(code)
-
             user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
 
             if user is not None:
                 # If the user already exists send a message to user indicating they've already linked Fyle account
                 self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+
             else:
+
+                fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
+
+                fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
+
                 # Create user
                 # pylint: disable=line-too-long
-                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token)
+                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['employee_id'])
+
+                self.create_report_polling_entry(user)
 
                 # Send post authorization message to user
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
@@ -80,7 +86,10 @@ class FyleAuthorization(View):
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
-    def create_user(self, slack_client, slack_team, user_id, slack_user_dm_channel_id, fyle_refresh_token):
+    # pylint: disable=fixme
+    # TODO: Refactor `create_user` this takes in `slack_client` which doesn't define the purpose of this function
+    # pylint: disable=line-too-long
+    def create_user(self, slack_client, slack_team, user_id, slack_user_dm_channel_id, fyle_refresh_token, fyle_employee_id):
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
@@ -92,26 +101,11 @@ class FyleAuthorization(View):
             slack_team=slack_team,
             email=slack_user_info['user']['profile']['email'],
             slack_dm_channel_id=slack_user_dm_channel_id,
-            fyle_refresh_token=fyle_refresh_token
+            fyle_refresh_token=fyle_refresh_token,
+            fyle_employee_id=fyle_employee_id
         )
 
         return user
-
-
-    def get_fyle_refresh_token(self, code):
-        oauth_payload = {
-            'grant_type': 'authorization_code',
-            'client_id': settings.FYLE_CLIENT_ID,
-            'client_secret': settings.FYLE_CLIENT_SECRET,
-            'code': code
-        }
-
-        oauth_response = http.post(self.FYLE_OAUTH_TOKEN_URL, oauth_payload)
-        assertions.assert_good(oauth_response.status_code == 200, 'Error while fetching fyle token details')
-
-        oauth_details = oauth_response.json()
-
-        return oauth_details['refresh_token']
 
 
     def send_post_authorization_message(self, slack_client, slack_user_dm_channel_id):
@@ -132,6 +126,13 @@ class FyleAuthorization(View):
     def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
         post_authorization_message_view = dashboad_messages.get_post_authorization_message()
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
+
+
+    def create_report_polling_entry(self, user):
+        ReportPollingDetail.objects.create(
+            user=user,
+            last_successful_poll_at=timezone.now()
+        )
 
 
     def track_fyle_authorization(self, user):

@@ -84,13 +84,14 @@ def test_slack_authorization(track_installation, slack_client, async_task, team,
 
 
 @mock.patch('fyle_slack_app.fyle.authorization.views.utils')
+@mock.patch('fyle_slack_app.fyle.authorization.views.fyle_utils')
 @mock.patch('fyle_slack_app.fyle.authorization.views.get_slack_user_dm_channel_id')
 @mock.patch('fyle_slack_app.fyle.authorization.views.WebClient')
 @mock.patch.object(FyleAuthorization, 'create_user')
+@mock.patch.object(FyleAuthorization, 'create_report_polling_entry')
 @mock.patch.object(FyleAuthorization, 'send_post_authorization_message')
-@mock.patch.object(FyleAuthorization, 'get_fyle_refresh_token')
 @mock.patch.object(FyleAuthorization, 'track_fyle_authorization')
-def test_fyle_authorization(track_fyle_authorization, get_fyle_refresh_token, send_post_authorization_message, create_user, slack_client, slack_user_dm_channel_id, utils):
+def test_fyle_authorization(track_fyle_authorization, send_post_authorization_message, create_report_polling_entry, create_user, slack_client, slack_user_dm_channel_id, fyle_utils, utils):
 
     state_params = {
         'team_id': 'T12345',
@@ -115,9 +116,16 @@ def test_fyle_authorization(track_fyle_authorization, get_fyle_refresh_token, se
     mock_slack_user_dm_channel_id = 'UDM12345'
     slack_user_dm_channel_id.return_value = mock_slack_user_dm_channel_id
 
-    # Mock FyleAuthorization class methods
+    # Mock Fyle utils methods
     mock_fyle_refresh_token = 'fyle-refresh-token'
-    get_fyle_refresh_token.return_value = mock_fyle_refresh_token
+    fyle_utils.get_fyle_refresh_token.return_value = mock_fyle_refresh_token
+
+    mock_fyle_profile = {
+        'employee_id': 'abcd12344'
+    }
+    fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
+
+    create_report_polling_entry.return_value = None
 
     mock_user = mock.Mock(spec=User)
     create_user.return_value = mock_user
@@ -130,11 +138,14 @@ def test_fyle_authorization(track_fyle_authorization, get_fyle_refresh_token, se
     assert isinstance(response, HttpResponseRedirect)
 
     # Checking the required methods have been called
-    get_fyle_refresh_token.assert_called_once()
-    get_fyle_refresh_token.assert_called_with(mock_fyle_secret_code)
+    fyle_utils.get_fyle_refresh_token.assert_called_once()
+    fyle_utils.get_fyle_refresh_token.assert_called_with(mock_fyle_secret_code)
+
+    fyle_utils.get_fyle_profile.assert_called_once()
+    fyle_utils.get_fyle_profile.assert_called_once_with(mock_fyle_refresh_token)
 
     create_user.assert_called()
-    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token)
+    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile['employee_id'])
 
     send_post_authorization_message.assert_called_once()
     send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)

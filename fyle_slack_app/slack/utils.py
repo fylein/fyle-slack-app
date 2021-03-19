@@ -2,6 +2,7 @@ import json
 import base64
 
 from django.conf import settings
+from slack_sdk.errors import SlackApiError
 
 from ..libs import assertions
 
@@ -46,3 +47,13 @@ def get_fyle_oauth_url(user_id, team_id):
     )
 
     return FYLE_OAUTH_URL
+
+
+def get_report_employee_display_name(slack_client, employee_details):
+    try:
+        user_info = slack_client.users_lookupByEmail(email=employee_details['user']['email'])
+        employee_display_name = '<@{}>'.format(user_info['user']['id'])
+    except SlackApiError:
+        employee_display_name = employee_details['user']['full_name']
+
+    return employee_display_name

@@ -49,7 +49,6 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -195,7 +194,7 @@ LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 FYLE_ACCOUNTS_URL = os.environ['FYLE_ACCOUNTS_URL']
 FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
 FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
-FYLE_BASE_URL = os.environ['FYLE_BASE_URL']
+FYLE_PLATFORM_URL = os.environ['FYLE_PLATFORM_URL']
 FYLE_SLACK_APP_SEGMENT_KEY = os.environ['FYLE_SLACK_APP_SEGMENT_KEY']
 
 # Slack Settings
