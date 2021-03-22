@@ -100,7 +100,7 @@ def get_report_approval_notification(report, employee_display_name, report_url, 
                 'text': 'Approve',
                 'emoji': True
             },
-            'action_id': 'report_approve',
+            'action_id': 'approve_report',
             'value': report['id'],
         }
         actions_block['elements'].append(report_approve_action)

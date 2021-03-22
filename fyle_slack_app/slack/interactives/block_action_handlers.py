@@ -14,7 +14,7 @@ class BlockActionHandler():
         self._block_action_handlers = {
             'link_fyle_account': self.link_fyle_account,
             'review_report_in_fyle': self.review_report_in_fyle,
-            'report_approve': self.report_approve
+            'approve_report': self.approve_report
         }
 
 
@@ -58,7 +58,7 @@ class BlockActionHandler():
         return JsonResponse({}, status=200)
 
 
-    def report_approve(self, slack_client, slack_payload, user_id, team_id):
+    def approve_report(self, slack_client, slack_payload, user_id, team_id):
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
