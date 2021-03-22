@@ -69,7 +69,7 @@ def get_report_review_in_fyle_action(report_url, button_text):
     return report_review_in_fyle_action
 
 
-def get_report_approval_notification_message(report, employee_display_name, report_url, message=None):
+def get_report_approval_notification(report, employee_display_name, report_url, message=None):
 
     report_url = '{}/{}?org_id={}'.format(report_url, report['id'], report['org_id'])
 

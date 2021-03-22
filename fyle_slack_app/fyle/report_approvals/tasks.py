@@ -71,7 +71,7 @@ def poll_report_approvals():
                         report['employee']
                     )
 
-                    report_notification_message = report_approval_messages.get_report_approval_notification_message(
+                    report_notification_message = report_approval_messages.get_report_approval_notification(
                         report,
                         employee_display_name,
                         report_url
@@ -83,7 +83,7 @@ def poll_report_approvals():
                     )
 
 
-def process_report_approval(report_id, user_id, team_id, message_ts):
+def process_report_approval(report_id, user_id, team_id, message_timestamp, notification_message):
 
     slack_team = utils.get_or_none(Team, id=team_id)
     assertions.assert_found(slack_team, 'Slack team not registered')
@@ -100,32 +100,47 @@ def process_report_approval(report_id, user_id, team_id, message_ts):
         'offset': 0,
         'order': 'submitted_at.desc'
     }
-    approver_report = FyleReportApproval.get_approver_reports(user, query_params)['data'][0]
-    # approver_report = FyleReportApproval.get_approver_report_by_id(user, report_id)['data']
+    report = FyleReportApproval.get_approver_reports(user, query_params)
+    # approver_report = FyleReportApproval.get_report_by_id(user, report_id)
 
-    is_report_approved, is_report_approvable, report_state_message = FyleReportApproval.check_report_approval_states(
-        approver_report,
-        user.fyle_employee_id
-    )
+    # Removing CTAs from notification message
+    report_notification_message = []
+    for message_block in notification_message:
+        if message_block['type'] != 'actions':
+            report_notification_message.append(message_block)
 
-    employee_display_name = slack_utils.get_report_employee_display_name(slack_client, approver_report['employee'])
+    # Check if report is deleted
+    if report['count'] == 0:
+        report_message = 'Seems like this expense report was deleted :red_circle:'
+        report_notification_message = slack_utils.add_message_section_to_ui_block(
+            report_notification_message,
+            report_message
+        )
+    else:
+        report = report['data'][0]
+        can_approve_report, report_message = FyleReportApproval.can_approve_report(
+            report,
+            user.fyle_employee_id
+        )
 
-    report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+        employee_display_name = slack_utils.get_employee_display_name(slack_client, report['employee'])
 
-    if is_report_approvable is True and is_report_approved is False:
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
-        approver_report = FyleReportApproval.approve_report(user, report_id)
-        report_state_message = 'Expense report approved by you :white_check_mark:'
+        if can_approve_report is True:
 
-    report_approval_message_block = report_approval_messages.get_report_approval_notification_message(
-        approver_report,
-        employee_display_name,
-        report_url,
-        report_state_message
-    )
+            report = FyleReportApproval.approve_report(user, report_id)
+            report_message = 'Expense report approved by you :white_check_mark:'
+
+        report_notification_message = report_approval_messages.get_report_approval_notification(
+            report,
+            employee_display_name,
+            report_url,
+            report_message
+        )
 
     slack_client.chat_update(
         channel=user.slack_dm_channel_id,
-        blocks=report_approval_message_block,
-        ts=message_ts
+        blocks=report_notification_message,
+        ts=message_timestamp
     )

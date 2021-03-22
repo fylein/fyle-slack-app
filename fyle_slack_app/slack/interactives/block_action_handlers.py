@@ -61,13 +61,15 @@ class BlockActionHandler():
     def report_approve(self, slack_client, slack_payload, user_id, team_id):
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
+        message_blocks = slack_payload['message']['blocks']
 
         async_task(
             'fyle_slack_app.fyle.report_approvals.tasks.process_report_approval',
             report_id,
             user_id,
             team_id,
-            message_ts
+            message_ts,
+            message_blocks
         )
 
         return JsonResponse({}, status=200)

@@ -21,7 +21,7 @@ class FyleReportApproval:
 
 
     @staticmethod
-    def get_approver_report_by_id(user, report_id):
+    def get_report_by_id(user, report_id):
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
         approver_report = connection.v1.approver.reports.get(report_id)
         return approver_report
@@ -35,37 +35,38 @@ class FyleReportApproval:
 
 
     @staticmethod
-    def check_report_approval_states(report, approver_id):
+    def can_approve_report(report, approver_id):
 
-        report_approved_states = ['PAYMENT_PENDING', 'APPROVED', 'PAYMENT_PROCESSING', 'PAID']
+        report_approved_states = ['APPROVED', 'PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAID']
 
-        report_state_message = None
-        is_report_approved = False
-        is_report_approvable = True
+        report_message = None
+        can_approve_report = True
 
         if report['state'] == 'APPROVER_INQUIRY':
-            is_report_approvable = False
-            report_state_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
+            can_approve_report = False
+            report_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
 
-        if report['state'] in report_approved_states:
-            is_report_approved = True
-            report_state_message = 'This expense report is already approved :white_check_mark:'
+        elif report['state'] in report_approved_states:
+            can_approve_report = False
+            report_message = 'This expense report is already approved :white_check_mark:'
 
-        if is_report_approved is False and is_report_approvable is True:
+        elif can_approve_report is True:
 
             for approver in report['approvals']:
 
                 if approver['approver_id'] == approver_id:
 
                     if approver['state'] == 'APPROVAL_DONE':
-                        is_report_approved = True
-                        report_state_message = 'This expense report is already approved by you :white_check_mark:'
+                        can_approve_report = False
+                        report_message = 'This expense report is already approved by you :white_check_mark:'
+                        break
 
                     if approver['state'] == 'APPROVAL_DISABLED':
-                        is_report_approvable = False
-                        report_state_message = 'Your approval is disabled on this expense report :x:'
+                        can_approve_report = False
+                        report_message = 'Your approval is disabled on this expense report :x:'
+                        break
 
-        return is_report_approved, is_report_approvable, report_state_message
+        return can_approve_report, report_message
 
 
 class FyleReportPolling(View):
