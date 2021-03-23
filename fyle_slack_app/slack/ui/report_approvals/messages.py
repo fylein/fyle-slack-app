@@ -69,32 +69,45 @@ def get_report_review_in_fyle_action(report_url, button_text):
     return report_review_in_fyle_action
 
 
-def get_report_approval_notification_message(report, employee_display_name, report_url):
+def get_report_approval_notification(report, employee_display_name, report_url, message=None):
+
     report_url = '{}/{}?org_id={}'.format(report_url, report['id'], report['org_id'])
 
-    report_approval_message = get_report_section_blocks(report, employee_display_name)
+    report_section_block = get_report_section_blocks(report, employee_display_name)
 
     actions_block = {
         'type': 'actions',
-        'elements': [
-            {
-                'type': 'button',
-                'style': 'primary',
-                'text': {
-                    'type': 'plain_text',
-                    'text': 'Approve',
-                    'emoji': True
-                },
-                'action_id': 'report_approve',
-                'value': report['id'],
-            }
-        ]
+        'elements': []
     }
 
-    report_review_action_element = get_report_review_in_fyle_action(report_url, 'Review in Fyle')
+    if message is not None:
+        report_view_action_text = 'View in Fyle'
+        message_section = {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': message
+            }
+        }
+        report_section_block.append(message_section)
+    else:
+        report_view_action_text = 'Review in Fyle'
+        report_approve_action = {
+            'type': 'button',
+            'style': 'primary',
+            'text': {
+                'type': 'plain_text',
+                'text': 'Approve',
+                'emoji': True
+            },
+            'action_id': 'approve_report',
+            'value': report['id'],
+        }
+        actions_block['elements'].append(report_approve_action)
 
-    actions_block['elements'].append(report_review_action_element)
+    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_action_text)
 
-    report_approval_message.append(actions_block)
+    actions_block['elements'].append(report_view_in_fyle_section)
+    report_section_block.append(actions_block)
 
-    return report_approval_message
+    return report_section_block

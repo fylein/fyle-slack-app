@@ -49,7 +49,7 @@ def get_fyle_oauth_url(user_id, team_id):
     return FYLE_OAUTH_URL
 
 
-def get_report_employee_display_name(slack_client, employee_details):
+def get_employee_display_name(slack_client, employee_details):
     try:
         user_info = slack_client.users_lookupByEmail(email=employee_details['user']['email'])
         employee_display_name = '<@{}>'.format(user_info['user']['id'])
@@ -57,3 +57,15 @@ def get_report_employee_display_name(slack_client, employee_details):
         employee_display_name = employee_details['user']['full_name']
 
     return employee_display_name
+
+
+def add_message_section_to_ui_block(ui_block, section_message):
+    section = {
+        'type': 'section',
+        'text': {
+            'type': 'mrkdwn',
+            'text': section_message
+        }
+    }
+    ui_block.append(section)
+    return ui_block
