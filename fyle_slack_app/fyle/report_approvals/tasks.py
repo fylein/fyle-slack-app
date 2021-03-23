@@ -66,7 +66,7 @@ def poll_report_approvals():
 
                 for report in approver_reports['data']:
 
-                    employee_display_name = slack_utils.get_report_employee_display_name(
+                    employee_display_name = slack_utils.get_employee_display_name(
                         slack_client,
                         report['employee']
                     )
