@@ -20,6 +20,55 @@ class FyleReportApproval:
         return approver_reports
 
 
+    @staticmethod
+    def get_report_by_id(user, report_id):
+        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
+        approver_report = connection.v1.approver.reports.get(report_id)
+        return approver_report
+
+
+    @staticmethod
+    def approve_report(user, report_id):
+        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
+        approved_report = connection.v1.approver.reports.post(report_id)
+        return approved_report
+
+
+    @staticmethod
+    def can_approve_report(report, approver_id):
+
+        report_approved_states = ['APPROVED', 'PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAID']
+
+        report_message = None
+        can_approve_report = True
+
+        if report['state'] == 'APPROVER_INQUIRY':
+            can_approve_report = False
+            report_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
+
+        elif report['state'] in report_approved_states:
+            can_approve_report = False
+            report_message = 'This expense report is already approved :white_check_mark:'
+
+        elif can_approve_report is True:
+
+            for approver in report['approvals']:
+
+                if approver['approver_id'] == approver_id:
+
+                    if approver['state'] == 'APPROVAL_DONE':
+                        can_approve_report = False
+                        report_message = 'This expense report is already approved by you :white_check_mark:'
+                        break
+
+                    if approver['state'] == 'APPROVAL_DISABLED':
+                        can_approve_report = False
+                        report_message = 'Your approval is disabled on this expense report :x:'
+                        break
+
+        return can_approve_report, report_message
+
+
 class FyleReportPolling(View):
 
     # Endpoint to trigger the background cron task for report polling

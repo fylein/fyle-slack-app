@@ -3,12 +3,13 @@ from django.utils import timezone
 from slack_sdk.web import WebClient
 from fyle.platform.exceptions import NoPrivilegeError
 
-from ...slack.ui.report_approvals.messages import get_report_approval_notification_message
 from ...slack import utils as slack_utils
-from ...models.report_polling_details import ReportPollingDetail
+from ...models import ReportPollingDetail, Team, User
 from .views import FyleReportApproval
 from ...libs import logger
 from .. import utils as fyle_utils
+from ...libs import utils, assertions
+from ...slack.ui.report_approvals import messages as report_approval_messages
 
 
 logger = logger.get_logger(__name__)
@@ -66,10 +67,11 @@ def poll_report_approvals():
                 for report in approver_reports['data']:
 
                     employee_display_name = slack_utils.get_report_employee_display_name(
-                        slack_client,report['employee']
+                        slack_client,
+                        report['employee']
                     )
 
-                    report_notification_message = get_report_approval_notification_message(
+                    report_notification_message = report_approval_messages.get_report_approval_notification(
                         report,
                         employee_display_name,
                         report_url
@@ -79,3 +81,66 @@ def poll_report_approvals():
                         channel=user.slack_dm_channel_id,
                         blocks=report_notification_message
                     )
+
+
+def process_report_approval(report_id, user_id, team_id, message_timestamp, notification_message):
+
+    slack_team = utils.get_or_none(Team, id=team_id)
+    assertions.assert_found(slack_team, 'Slack team not registered')
+
+    slack_client = WebClient(token=slack_team.bot_access_token)
+
+    user = utils.get_or_none(User, slack_user_id=user_id)
+    assertions.assert_found(user, 'Approver not found')
+
+    query_params = {
+        'id': 'eq.{}'.format(report_id),
+        # Mandatory query params required by sdk
+        'limit': 1,
+        'offset': 0,
+        'order': 'submitted_at.desc'
+    }
+    report = FyleReportApproval.get_approver_reports(user, query_params)
+    # approver_report = FyleReportApproval.get_report_by_id(user, report_id)
+
+    # Removing CTAs from notification message
+    report_notification_message = []
+    for message_block in notification_message:
+        if message_block['type'] != 'actions':
+            report_notification_message.append(message_block)
+
+    # Check if report is deleted
+    if report['count'] == 0:
+        report_message = 'Seems like this expense report was deleted :red_circle:'
+        report_notification_message = slack_utils.add_message_section_to_ui_block(
+            report_notification_message,
+            report_message
+        )
+    else:
+        report = report['data'][0]
+        can_approve_report, report_message = FyleReportApproval.can_approve_report(
+            report,
+            user.fyle_employee_id
+        )
+
+        employee_display_name = slack_utils.get_employee_display_name(slack_client, report['employee'])
+
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+
+        if can_approve_report is True:
+
+            report = FyleReportApproval.approve_report(user, report_id)
+            report_message = 'Expense report approved by you :white_check_mark:'
+
+        report_notification_message = report_approval_messages.get_report_approval_notification(
+            report,
+            employee_display_name,
+            report_url,
+            report_message
+        )
+
+    slack_client.chat_update(
+        channel=user.slack_dm_channel_id,
+        blocks=report_notification_message,
+        ts=message_timestamp
+    )
