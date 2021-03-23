@@ -17,14 +17,14 @@ logger = logger.get_logger(__name__)
 
 def poll_report_approvals():
     # select_related joins the two table with foriegn key column
-    # 1st join -> `report_polling_details` table with `users` table with `user` field
+    # 1st join -> `report_polling_details` table with `users` table with `slack_user` field
     # 2nd join -> `__slack_team` joins `users` table with `teams` table
 
     # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
-    report_polling_details = ReportPollingDetail.objects.select_related('user__slack_team').all()
+    report_polling_details = ReportPollingDetail.objects.select_related('slack_user__slack_team').all()
 
     for report_polling_detail in report_polling_details:
-        user = report_polling_detail.user
+        user = report_polling_detail.slack_user
 
         slack_client = WebClient(token=user.slack_team.bot_access_token)
 
