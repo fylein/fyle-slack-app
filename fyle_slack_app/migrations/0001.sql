@@ -27,7 +27,7 @@ create index idx_users_slack_team_id on users using btree (slack_team_id);
 
 create table report_polling_details (
     id serial primary key,
-    user_id character varying(120) not null references users(slack_user_id) on delete cascade,
+    slack_user_id character varying(120) not null references users(slack_user_id) on delete cascade,
     last_successful_poll_at timestamp with time zone NOT NULL,
     created_at timestamp with time zone NOT NULL,
     updated_at timestamp with time zone NOT NULL
