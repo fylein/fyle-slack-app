@@ -8,7 +8,7 @@ class Team(models.Model):
     id = models.CharField(max_length=120, primary_key=True)
     name = models.CharField(max_length=120)
     bot_user_id = models.CharField(max_length=120)
-    bot_access_token = models.CharField(max_length=256, db_index=True)
+    bot_access_token = models.CharField(max_length=256)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
