@@ -33,5 +33,5 @@ create table report_polling_details (
     updated_at timestamp with time zone NOT NULL
 );
 
-create index idx_report_polling_details_user_id on report_polling_details using btree (user_id);
+create index idx_report_polling_details_user_id on report_polling_details using btree (slack_user_id);
 create index idx_report_polling_details_last_successful_poll_at on report_polling_details using btree (last_successful_poll_at);
