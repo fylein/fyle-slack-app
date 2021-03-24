@@ -130,7 +130,7 @@ class FyleAuthorization(View):
 
     def create_report_polling_entry(self, user):
         ReportPollingDetail.objects.create(
-            user=user,
+            slack_user=user,
             last_successful_poll_at=timezone.now()
         )
 
