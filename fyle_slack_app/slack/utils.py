@@ -4,7 +4,7 @@ import base64
 from django.conf import settings
 from slack_sdk.errors import SlackApiError
 
-from fyle_slack_app.libs import assertions
+from ..libs import assertions
 
 
 def get_slack_user_dm_channel_id(slack_client, user_id):

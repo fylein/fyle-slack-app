@@ -5,10 +5,10 @@ from django.utils import timezone
 from django_q.tasks import schedule
 from django_q.models import Schedule
 
-from fyle_slack_app.models import Team, User
-from fyle_slack_app.slack.utils import get_fyle_oauth_url
-from fyle_slack_app.libs import utils, assertions
-from fyle_slack_app.slack.ui.dashboard import messages
+from ...models import Team, User
+from ...slack.utils import get_fyle_oauth_url
+from ...libs import utils, assertions
+from ..ui.dashboard import messages
 
 
 class SlackEventHandler:

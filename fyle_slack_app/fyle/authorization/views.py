@@ -5,13 +5,13 @@ from django.utils import timezone
 
 from slack_sdk.web.client import WebClient
 
-from fyle_slack_app import tracking
-from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.libs import utils, assertions, logger
-from fyle_slack_app.models import Team, User, ReportPollingDetail
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, decode_state
-from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
-from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
+from ... import tracking
+from .. import utils as fyle_utils
+from ...libs import utils, assertions, logger
+from ...models import Team, User, ReportPollingDetail
+from ...slack.utils import get_slack_user_dm_channel_id, decode_state
+from ...slack.ui.authorization.messages import get_post_authorization_message
+from ...slack.ui.dashboard import messages as dashboad_messages
 
 
 logger = logger.get_logger(__name__)
@@ -124,7 +124,7 @@ class FyleAuthorization(View):
 
 
     def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
-        post_authorization_message_view = dashboard_messages.get_post_authorization_message()
+        post_authorization_message_view = dashboad_messages.get_post_authorization_message()
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
 
 

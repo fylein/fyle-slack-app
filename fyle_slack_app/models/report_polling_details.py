@@ -1,6 +1,6 @@
 from django.db import models
 
-from fyle_slack_app.models.users import User
+from .users import User
 
 
 class ReportPollingDetail(models.Model):

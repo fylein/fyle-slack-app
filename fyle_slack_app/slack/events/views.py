@@ -4,10 +4,10 @@ from slack_sdk.web import WebClient
 
 from django.http.response import JsonResponse
 
-from fyle_slack_app.slack import SlackView
-from fyle_slack_app.models import Team
-from fyle_slack_app.libs import utils, assertions
-from fyle_slack_app.slack.events.handlers import SlackEventHandler
+from ...slack import SlackView
+from ...models import Team
+from ...libs import utils, assertions
+from .handlers import SlackEventHandler
 
 
 class SlackEventView(SlackView, SlackEventHandler):

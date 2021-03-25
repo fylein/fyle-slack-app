@@ -7,8 +7,8 @@ from django.contrib.auth import authenticate
 
 from django_q.models import Schedule
 
-from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.libs import assertions
+from .. import utils as fyle_utils
+from ...libs import assertions
 
 
 class FyleReportApproval:

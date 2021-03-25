@@ -4,7 +4,7 @@ from fyle.platform import Platform
 
 from django.conf import settings
 
-from fyle_slack_app.libs import http, assertions
+from ..libs import http, assertions
 
 
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)

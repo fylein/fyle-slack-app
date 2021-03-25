@@ -1,10 +1,9 @@
 from django.http.response import JsonResponse
 
-from fyle_slack_app.libs import utils, assertions
-from fyle_slack_app.slack.utils import get_fyle_oauth_url
-from fyle_slack_app.models import User
-from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
-
+from ...libs import utils, assertions
+from ..utils import get_fyle_oauth_url
+from ...models import User
+from ..ui.dashboard import messages as dashboard_messages
 
 class SlackCommandHandler:
 

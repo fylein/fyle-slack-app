@@ -1,6 +1,6 @@
 from django.db import models
 
-from fyle_slack_app.models.teams import Team
+from .teams import Team
 
 class User(models.Model):
 

@@ -1,4 +1,4 @@
-from fyle_slack_app.slack.ui.authorization import messages
+from ..authorization import messages
 
 
 def get_pre_authorization_message(user_name, fyle_oauth_url):
