@@ -9,7 +9,7 @@ from fyle_slack_app import tracking
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, ReportPollingDetail
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, decode_state
+from fyle_slack_app.slack.utils import get_fyle_oauth_url, get_slack_user_dm_channel_id, decode_state
 from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 
@@ -126,6 +126,20 @@ class FyleAuthorization(View):
     def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
         post_authorization_message_view = dashboard_messages.get_post_authorization_message()
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
+
+
+    def update_home_tab_with_pre_auth_message(self, slack_client, user_id, team_id):
+        user_info = slack_client.users_info(user=user_id)
+        assertions.assert_good(user_info['ok'] is True)
+
+        fyle_oauth_url = get_fyle_oauth_url(user_id, team_id)
+
+        pre_auth_message_view = dashboard_messages.get_pre_authorization_message(
+            user_info['user']['real_name'],
+            fyle_oauth_url
+        )
+
+        slack_client.views_publish(user_id=user_id, view=pre_auth_message_view)
 
 
     def create_report_polling_entry(self, user):
