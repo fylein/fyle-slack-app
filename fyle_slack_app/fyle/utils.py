@@ -3,6 +3,8 @@ import requests
 from fyle.platform import Platform
 from fyle.platform import exceptions
 
+from slack_sdk.web import WebClient
+
 from django.conf import settings
 
 from fyle_slack_app.libs import http, assertions, utils, logger
@@ -31,12 +33,20 @@ def get_fyle_sdk_connection(refresh_token):
         logger.error('Error : %s', error)
         logger.error('Token expired for user %s - %s', user.slack_user_id, user.fyle_employee_id)
 
+        # Sending a message to user to start fyle auth process again
+        slack_client = WebClient(token=user.slack_team.bot_access_token)
+
+        slack_client.chat_postMessage(
+            channel=user.slack_dm_channel_id,
+            text='Hey buddy, you\'ll need to link your Fyle account again'
+        )
+
         # Deleting user
         # To fetch new token user will start fyle auth process again
         user.delete()
 
         # Raising assertion error to stop the request here
-        assertions.assert_true(False, 'Fyle token expired', status=498)
+        assertions.assert_true(False, 'Fyle token expired', status_code=498)
 
     return connection
 
