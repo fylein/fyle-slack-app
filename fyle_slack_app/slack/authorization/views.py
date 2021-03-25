@@ -5,10 +5,10 @@ from django_q.tasks import async_task
 
 from slack_sdk.web import WebClient
 
-from ...models import Team
-from ...libs import utils, assertions, logger
-from .tasks import get_slack_user_dm_channel_id
-from ... import tracking
+from fyle_slack_app.models import Team
+from fyle_slack_app.libs import utils, assertions, logger
+from fyle_slack_app.slack.authorization.tasks import get_slack_user_dm_channel_id
+from fyle_slack_app import tracking
 
 
 logger = logger.get_logger(__name__)

@@ -2,10 +2,10 @@ from slack_sdk.web import WebClient
 
 from django.http.response import HttpResponse
 
-from ...slack import SlackView
-from ...models import Team
-from ...libs import utils, assertions
-from .handlers import SlackCommandHandler
+from fyle_slack_app.slack import SlackView
+from fyle_slack_app.models import Team
+from fyle_slack_app.libs import utils, assertions
+from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 
 
 class SlackCommandView(SlackView, SlackCommandHandler):
