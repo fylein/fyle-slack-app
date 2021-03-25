@@ -31,7 +31,7 @@ def get_fyle_sdk_connection(refresh_token):
         assertions.assert_found(user, 'User not found')
 
         logger.error('Error : %s', error)
-        logger.error('Token expired for user %s - %s', user.slack_user_id, user.fyle_employee_id)
+        logger.error('Invalid token for user %s - %s', user.slack_user_id, user.fyle_employee_id)
 
         # Sending a message to user to start fyle auth process again
         slack_client = WebClient(token=user.slack_team.bot_access_token)
