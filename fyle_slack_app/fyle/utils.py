@@ -9,7 +9,6 @@ from django.conf import settings
 
 from fyle_slack_app.libs import http, assertions, utils, logger
 from fyle_slack_app.models import User
-from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 
 
 logger = logger.get_logger(__name__)
