@@ -39,12 +39,9 @@ def get_fyle_sdk_connection(refresh_token):
 
         slack_client.chat_postMessage(
             channel=user.slack_dm_channel_id,
-            text='Hey buddy, you\'ll need to link your Fyle account again'
+            text='Hey buddy, you\'ll need to link your Fyle account again \n' \
+                'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
         )
-
-        # pylint: disable=fixme
-        # TODO: Move this function out of SlackCommandHandler
-        SlackCommandHandler().update_home_tab_with_pre_auth_message(slack_client, user.slack_user_id, user.slack_team.id)
 
         # Deleting user
         # To fetch new token user will start fyle auth process again
