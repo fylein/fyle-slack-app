@@ -9,7 +9,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.views import View
 from django.utils.decorators import method_decorator
 
-from ..libs import assertions
+from fyle_slack_app.libs import assertions
 
 
 def verify_slack_signature(request):

@@ -1,4 +1,4 @@
-from ....libs import utils
+from fyle_slack_app.libs import utils
 
 
 def get_report_section_blocks(report, employee_display_name):
