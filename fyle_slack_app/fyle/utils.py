@@ -1,23 +1,57 @@
 import requests
 
 from fyle.platform import Platform
+from fyle.platform import exceptions
+
+from slack_sdk.web import WebClient
 
 from django.conf import settings
 
-from fyle_slack_app.libs import http, assertions
+from fyle_slack_app.libs import http, assertions, utils, logger
+from fyle_slack_app.models import User
+
+
+logger = logger.get_logger(__name__)
 
 
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
 
 def get_fyle_sdk_connection(refresh_token):
-    return Platform(
-        server_url=settings.FYLE_PLATFORM_URL,
-        token_url=FYLE_TOKEN_URL,
-        client_id=settings.FYLE_CLIENT_ID,
-        client_secret=settings.FYLE_CLIENT_SECRET,
-        refresh_token=refresh_token
-    )
+    try:
+        connection = Platform(
+            server_url=settings.FYLE_PLATFORM_URL,
+            token_url=FYLE_TOKEN_URL,
+            client_id=settings.FYLE_CLIENT_ID,
+            client_secret=settings.FYLE_CLIENT_SECRET,
+            refresh_token=refresh_token
+        )
+    except exceptions.InvalidTokenError as error:
+        user = utils.get_or_none(User, fyle_refresh_token=refresh_token)
+        assertions.assert_found(user, 'User not found')
+
+        logger.error('Error : %s', error)
+        logger.error('Invalid token for user %s - %s', user.slack_user_id, user.fyle_employee_id)
+
+        # Sending a message to user to start fyle auth process again
+        slack_client = WebClient(token=user.slack_team.bot_access_token)
+
+        slack_client.chat_postMessage(
+            channel=user.slack_dm_channel_id,
+            text='Hey buddy, seems like the Fyle Org you were linked to is deactivated :face_with_head_bandage: \n' \
+                'You\'ll need to link your Fyle account again \n ' \
+                'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
+        )
+
+        # Deleting user
+        # To fetch new token user will start fyle auth process again
+        user.delete()
+
+        # Raising assertion error to stop the request here
+        # Status code 200 because slack will retry the events if it doesn't receive 200 status in response
+        assertions.assert_true(False, 'Fyle token error', status_code=200)
+
+    return connection
 
 
 def get_cluster_domain(access_token):
