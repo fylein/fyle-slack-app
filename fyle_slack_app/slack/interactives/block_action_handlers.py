@@ -2,10 +2,10 @@ from django.http.response import JsonResponse
 
 from django_q.tasks import async_task
 
-from ...slack.utils import get_slack_user_dm_channel_id
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 
 
-class BlockActionHandler():
+class BlockActionHandler:
 
     _block_action_handlers = {}
 

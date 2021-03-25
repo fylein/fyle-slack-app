@@ -1,7 +1,7 @@
 import json
 import requests
 
-from . import logger
+from fyle_slack_app.libs import logger
 
 
 logger = logger.get_logger(__name__)

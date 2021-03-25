@@ -1,9 +1,10 @@
 from slack_sdk import WebClient
 
-from ...libs import utils, assertions
-from ...models import Team, User
-from ..utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
-from ..ui.authorization import messages
+from fyle_slack_app.libs import utils, assertions
+from fyle_slack_app.models import Team, User
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
+from fyle_slack_app.slack.ui.authorization import messages
+
 
 def new_user_joined_pre_auth_message(user_id, team_id):
     # Check if the user has already authorized Fyle account
