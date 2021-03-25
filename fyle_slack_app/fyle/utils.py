@@ -38,7 +38,8 @@ def get_fyle_sdk_connection(refresh_token):
 
         slack_client.chat_postMessage(
             channel=user.slack_dm_channel_id,
-            text='Hey buddy, you\'ll need to link your Fyle account again \n' \
+            text='Hey buddy, seems like the Fyle Org you were linked to is deactivated :face_with_head_bandage: \n' \
+                'You\'ll need to link your Fyle account again \n ' \
                 'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
         )
 
@@ -47,7 +48,8 @@ def get_fyle_sdk_connection(refresh_token):
         user.delete()
 
         # Raising assertion error to stop the request here
-        assertions.assert_true(False, 'Fyle token expired', status_code=498)
+        # Status code 200 because slack will retry the events if it doesn't receive 200 status in response
+        assertions.assert_true(False, 'Fyle token error', status_code=200)
 
     return connection
 
