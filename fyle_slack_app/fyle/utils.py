@@ -9,7 +9,7 @@ from django.conf import settings
 
 from fyle_slack_app.libs import http, assertions, utils, logger
 from fyle_slack_app.models import User
-from fyle_slack_app.fyle.authorization.views import FyleAuthorization
+from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 
 
 logger = logger.get_logger(__name__)
@@ -39,11 +39,10 @@ def get_fyle_sdk_connection(refresh_token):
 
         slack_client.chat_postMessage(
             channel=user.slack_dm_channel_id,
-            text='Hey buddy, you\'ll need to link your Fyle account again \n' \
-                'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
+            text='Hey buddy, you\'ll need to link your Fyle account again'
         )
 
-        FyleAuthorization().update_home_tab_with_pre_auth_message(slack_client, user.slack_user_id, user.slack_team.id)
+        SlackCommandHandler().update_home_tab_with_pre_auth_message(slack_client, user.slack_user_id, user.slack_team.id)
 
         # Deleting user
         # To fetch new token user will start fyle auth process again
