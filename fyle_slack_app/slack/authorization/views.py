@@ -1,4 +1,4 @@
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpRequest
 from django.conf import settings
 from django.views import View
 from django_q.tasks import async_task
@@ -16,7 +16,7 @@ logger = logger.get_logger(__name__)
 
 class SlackAuthorization(View):
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponseRedirect:
 
         error = request.GET.get('error')
 
@@ -77,14 +77,14 @@ class SlackAuthorization(View):
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
 
 
-    def send_bot_already_installed_message(self, slack_client, slack_user_dm_channel_id):
+    def send_bot_already_installed_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
             text='Hey buddy, Fyle app has already been installed on your workspace :rainbow:'
         )
 
 
-    def track_installation(self, user_id, slack_team, slack_client):
+    def track_installation(self, user_id: str, slack_team: Team, slack_client: WebClient) -> None:
         user_info = slack_client.users_info(user=user_id)
         assertions.assert_good(user_info['ok'] is True)
 

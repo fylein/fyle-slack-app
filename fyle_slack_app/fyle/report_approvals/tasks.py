@@ -1,3 +1,5 @@
+from typing import Dict, List
+
 from django.utils import timezone
 
 from slack_sdk.web import WebClient
@@ -15,7 +17,7 @@ from fyle_slack_app.slack.ui.report_approvals import messages as report_approval
 logger = logger.get_logger(__name__)
 
 
-def poll_report_approvals():
+def poll_report_approvals() -> None:
     # select_related joins the two table with foreign key column
     # 1st join -> `report_polling_details` table with `users` table with `user` field
     # 2nd join -> `__slack_team` joins `users` table with `teams` table
@@ -83,7 +85,7 @@ def poll_report_approvals():
                     )
 
 
-def process_report_approval(report_id, user_id, team_id, message_timestamp, notification_message):
+def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
 
     slack_team = utils.get_or_none(Team, id=team_id)
     assertions.assert_found(slack_team, 'Slack team not registered')

@@ -1,4 +1,4 @@
-from django.http.response import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
 from django.utils import timezone
@@ -19,7 +19,7 @@ logger = logger.get_logger(__name__)
 
 class FyleAuthorization(View):
 
-    def get(self, request):
+    def get(self, request: HttpRequest) -> HttpResponseRedirect:
 
         error = request.GET.get('error')
         state = request.GET.get('state')
@@ -45,7 +45,6 @@ class FyleAuthorization(View):
 
             # Error when user declines Fyle authorization
             if error == 'access_denied':
-                # pylint: disable=line-too-long
                 error_message = 'Sad to see you decline us :white_frowning_face: \n Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
 
             slack_client.chat_postMessage(
@@ -68,7 +67,6 @@ class FyleAuthorization(View):
                 fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
                 # Create user
-                # pylint: disable=line-too-long
                 user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['employee_id'])
 
                 self.create_report_polling_entry(user)
@@ -88,8 +86,7 @@ class FyleAuthorization(View):
 
     # pylint: disable=fixme
     # TODO: Refactor `create_user` this takes in `slack_client` which doesn't define the purpose of this function
-    # pylint: disable=line-too-long
-    def create_user(self, slack_client, slack_team, user_id, slack_user_dm_channel_id, fyle_refresh_token, fyle_employee_id):
+    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str, fyle_employee_id: str) -> User:
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
@@ -108,7 +105,7 @@ class FyleAuthorization(View):
         return user
 
 
-    def send_post_authorization_message(self, slack_client, slack_user_dm_channel_id):
+    def send_post_authorization_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
         post_authorization_message = get_post_authorization_message()
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
@@ -116,26 +113,26 @@ class FyleAuthorization(View):
         )
 
 
-    def send_linked_account_message(self, slack_client, slack_user_dm_channel_id):
+    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
             text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
         )
 
 
-    def update_user_home_tab_with_post_auth_message(self, slack_client, user_id):
+    def update_user_home_tab_with_post_auth_message(self, slack_client: WebClient, user_id: str) -> None:
         post_authorization_message_view = dashboard_messages.get_post_authorization_message()
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
 
 
-    def create_report_polling_entry(self, user):
+    def create_report_polling_entry(self, user: User) -> None:
         ReportPollingDetail.objects.create(
             user=user,
             last_successful_poll_at=timezone.now()
         )
 
 
-    def track_fyle_authorization(self, user):
+    def track_fyle_authorization(self, user: User) -> None:
         event_data = {
             'slack_user_id': user.slack_user_id,
             'email': user.email,
