@@ -26,7 +26,7 @@ def get_fyle_sdk_connection(refresh_token):
             client_secret=settings.FYLE_CLIENT_SECRET,
             refresh_token=refresh_token
         )
-    except exceptions.ExpiredTokenError as error:
+    except exceptions.InvalidTokenError as error:
         user = utils.get_or_none(User, fyle_refresh_token=refresh_token)
         assertions.assert_found(user, 'User not found')
 
