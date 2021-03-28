@@ -16,6 +16,7 @@ jobs:
       FYLE_CLIENT_SECRET: fakefyleclientsecret
       FYLE_PLATFORM_URL: fakefyleplatformurl
       FYLE_ACCOUNTS_URL: fakefyleaccounturl
+      FYLE_BRANCHIO_BASE_URI: fakefylebranchiobaseuri
       SLACK_CLIENT_ID: fakeslackclientid
       SLACK_CLIENT_SECRET: fakeslackclientsecret
       SLACK_APP_TOKEN: fakeslackapptoken
