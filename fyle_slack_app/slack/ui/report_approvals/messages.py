@@ -71,7 +71,9 @@ def get_report_review_in_fyle_action(report_url, button_text):
 
 def get_report_approval_notification(report, employee_display_name, report_url, message=None):
 
-    report_url = '{}/{}?org_id={}'.format(report_url, report['id'], report['org_id'])
+    report_url = '{}/{}'.format(report_url, report['id'])
+    branchio_report_url = utils.convert_to_branchio_url(report_url)
+    report_url = '{}?org_id={}'.format(branchio_report_url, report['org_id'])
 
     report_section_block = get_report_section_blocks(report, employee_display_name)
 
