@@ -1,12 +1,15 @@
+from typing import Dict, Tuple
+
 import json
 import croniter
 
-from django.http.response import JsonResponse
+from django.http import JsonResponse, HttpRequest
 from django.views.generic.base import View
 from django.contrib.auth import authenticate
 
 from django_q.models import Schedule
 
+from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import assertions
 
@@ -14,28 +17,28 @@ from fyle_slack_app.libs import assertions
 class FyleReportApproval:
 
     @staticmethod
-    def get_approver_reports(user, query_params):
+    def get_approver_reports(user: User, query_params: Dict) -> Dict:
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
         approver_reports = connection.v1.approver.reports.list(query_params=query_params)
         return approver_reports
 
 
     @staticmethod
-    def get_report_by_id(user, report_id):
+    def get_report_by_id(user: User, report_id: str) -> Dict:
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
         approver_report = connection.v1.approver.reports.get(report_id)
         return approver_report
 
 
     @staticmethod
-    def approve_report(user, report_id):
+    def approve_report(user: Dict, report_id: str) -> Dict:
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
         approved_report = connection.v1.approver.reports.post(report_id)
         return approved_report
 
 
     @staticmethod
-    def can_approve_report(report, approver_id):
+    def can_approve_report(report: Dict, approver_id: str) -> Tuple[bool, str]:
 
         report_approved_states = ['APPROVED', 'PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAID']
 
@@ -74,7 +77,7 @@ class FyleReportPolling(View):
     # Endpoint to trigger the background cron task for report polling
     # Since this is an endpoint we'll need to protect this
     # Only django's superuser will be able to create the cron task
-    def post(self, request):
+    def post(self, request: HttpRequest) -> JsonResponse:
         payload = json.loads(request.body)
         superuser_username = payload['superuser_username']
         superuser_password = payload['superuser_password']

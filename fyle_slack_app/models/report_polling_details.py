@@ -13,5 +13,5 @@ class ReportPollingDetail(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
+    def __str__(self) -> str:
         return '{} - {}'.format(self.user, self.last_successful_poll_at)

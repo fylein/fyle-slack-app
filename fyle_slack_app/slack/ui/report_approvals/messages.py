@@ -1,7 +1,9 @@
+from typing import Dict, List
+
 from fyle_slack_app.libs import utils
 
 
-def get_report_section_blocks(report, employee_display_name):
+def get_report_section_blocks(report: Dict, employee_display_name: str) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['submitted_at'], '%B %d, %Y')
 
@@ -53,7 +55,7 @@ def get_report_section_blocks(report, employee_display_name):
     return report_section_block
 
 
-def get_report_review_in_fyle_action(report_url, button_text):
+def get_report_review_in_fyle_action(report_url: str, button_text: str) -> Dict:
 
     report_review_in_fyle_action = {
         'type': 'button',
@@ -69,7 +71,7 @@ def get_report_review_in_fyle_action(report_url, button_text):
     return report_review_in_fyle_action
 
 
-def get_report_approval_notification(report, employee_display_name, report_url, message=None):
+def get_report_approval_notification(report: Dict, employee_display_name: str, report_url: str, message: str = None) -> List[Dict]:
 
     report_url = '{}/{}?org_id={}'.format(report_url, report['id'], report['org_id'])
 

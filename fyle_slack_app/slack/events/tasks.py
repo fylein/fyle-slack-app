@@ -6,7 +6,7 @@ from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_fyle_oa
 from fyle_slack_app.slack.ui.authorization import messages
 
 
-def new_user_joined_pre_auth_message(user_id, team_id):
+def new_user_joined_pre_auth_message(user_id: str, team_id: str) -> None:
     # Check if the user has already authorized Fyle account
     # If already authorized, no need to send pre auth message
     user = utils.get_or_none(User, slack_user_id=user_id)

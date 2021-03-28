@@ -1,3 +1,5 @@
+from typing import Dict
+
 import requests
 
 from fyle.platform import Platform
@@ -10,7 +12,7 @@ from fyle_slack_app.libs import http, assertions
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
 
-def get_fyle_sdk_connection(refresh_token):
+def get_fyle_sdk_connection(refresh_token: str) -> Platform:
     return Platform(
         server_url=settings.FYLE_PLATFORM_URL,
         token_url=FYLE_TOKEN_URL,
@@ -20,7 +22,7 @@ def get_fyle_sdk_connection(refresh_token):
     )
 
 
-def get_cluster_domain(access_token):
+def get_cluster_domain(access_token: str) -> str:
     cluster_domain_url = '{}/oauth/cluster'.format(settings.FYLE_ACCOUNTS_URL)
     headers = {
         'content-type': 'application/json',
@@ -33,7 +35,7 @@ def get_cluster_domain(access_token):
     return response.json()['cluster_domain']
 
 
-def get_fyle_access_token(fyle_refresh_token):
+def get_fyle_access_token(fyle_refresh_token: str) -> str:
     payload = {
         'grant_type': 'refresh_token',
         'refresh_token': fyle_refresh_token,
@@ -51,7 +53,7 @@ def get_fyle_access_token(fyle_refresh_token):
     return oauth_response.json()['access_token']
 
 
-def get_fyle_refresh_token(code):
+def get_fyle_refresh_token(code: str) -> str:
     FYLE_OAUTH_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
     oauth_payload = {
@@ -67,13 +69,13 @@ def get_fyle_refresh_token(code):
     return oauth_response.json()['refresh_token']
 
 
-def get_fyle_profile(refresh_token):
+def get_fyle_profile(refresh_token: str) -> Dict:
     connection = get_fyle_sdk_connection(refresh_token)
     fyle_profile_response = connection.v1.fyler.my_profile.get()
     return fyle_profile_response['data']
 
 
-def get_fyle_report_url(fyle_refresh_token):
+def get_fyle_report_url(fyle_refresh_token: str) -> str:
     access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain = get_cluster_domain(access_token)
     return '{}/app/main/#/enterprise/reports'.format(cluster_domain)

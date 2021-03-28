@@ -23,7 +23,6 @@ def get_logger(name):
     logger = logging.getLogger(name)
     logger.level = logging.__dict__[settings.LOG_LEVEL]
     handler = logging.StreamHandler()
-    # pylint: disable=line-too-long
     handler.setFormatter(logging.Formatter("%(levelname)s %(asctime)s %(name)s: %(message)s \nrequest_id:%(request_id)s"))
     handler.addFilter(ContextFilter())
     logger.addHandler(handler)
