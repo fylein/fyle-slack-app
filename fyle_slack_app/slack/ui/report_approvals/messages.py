@@ -74,8 +74,10 @@ def get_report_review_in_fyle_action(report_url: str, button_text: str) -> Dict:
 def get_report_approval_notification(report: Dict, employee_display_name: str, report_url: str, message: str = None) -> List[Dict]:
 
     report_url = '{}/{}'.format(report_url, report['id'])
-    branchio_report_url = utils.convert_to_branchio_url(report_url)
-    report_url = '{}?org_id={}'.format(branchio_report_url, report['org_id'])
+    report_query_params = {
+        'org_id': report['org_id']
+    }
+    report_url = utils.convert_to_branchio_url(report_url, report_query_params)
 
     report_section_block = get_report_section_blocks(report, employee_display_name)
 
