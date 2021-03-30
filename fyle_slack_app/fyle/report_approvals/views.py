@@ -31,14 +31,14 @@ class FyleReportApproval:
 
 
     @staticmethod
-    def approve_report(user: Dict, report_id: str) -> Dict:
+    def approve_report(user: User, report_id: str) -> Dict:
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
         approved_report = connection.v1.approver.reports.post(report_id)
         return approved_report
 
 
     @staticmethod
-    def can_approve_report(report: Dict, approver_id: str) -> Tuple[bool, str]:
+    def can_approve_report(report: Dict, approver_user_id: str) -> Tuple[bool, str]:
 
         report_approved_states = ['APPROVED', 'PAYMENT_PENDING', 'PAYMENT_PROCESSING', 'PAID']
 
@@ -57,7 +57,7 @@ class FyleReportApproval:
 
             for approver in report['approvals']:
 
-                if approver['approver_id'] == approver_id:
+                if approver['approver_user_id'] == approver_user_id:
 
                     if approver['state'] == 'APPROVAL_DONE':
                         can_approve_report = False

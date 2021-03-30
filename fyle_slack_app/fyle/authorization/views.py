@@ -67,7 +67,7 @@ class FyleAuthorization(View):
                 fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
                 # Create user
-                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['employee_id'])
+                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
 
                 self.create_report_polling_entry(user)
 
@@ -86,7 +86,7 @@ class FyleAuthorization(View):
 
     # pylint: disable=fixme
     # TODO: Refactor `create_user` this takes in `slack_client` which doesn't define the purpose of this function
-    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str, fyle_employee_id: str) -> User:
+    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str, fyle_user_id: str) -> User:
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
@@ -99,7 +99,7 @@ class FyleAuthorization(View):
             email=slack_user_info['user']['profile']['email'],
             slack_dm_channel_id=slack_user_dm_channel_id,
             fyle_refresh_token=fyle_refresh_token,
-            fyle_employee_id=fyle_employee_id
+            fyle_user_id=fyle_user_id
         )
 
         return user

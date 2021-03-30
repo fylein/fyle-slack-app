@@ -14,4 +14,4 @@ class ReportPollingDetail(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return '{} - {}'.format(self.user, self.last_successful_poll_at)
+        return '{} - {}'.format(self.slack_user, self.last_successful_poll_at)

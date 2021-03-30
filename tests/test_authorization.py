@@ -121,7 +121,7 @@ def test_fyle_authorization(track_fyle_authorization, send_post_authorization_me
     fyle_utils.get_fyle_refresh_token.return_value = mock_fyle_refresh_token
 
     mock_fyle_profile = {
-        'employee_id': 'abcd12344'
+        'user_id': 'abcd12344'
     }
     fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
 
@@ -145,7 +145,7 @@ def test_fyle_authorization(track_fyle_authorization, send_post_authorization_me
     fyle_utils.get_fyle_profile.assert_called_once_with(mock_fyle_refresh_token)
 
     create_user.assert_called()
-    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile['employee_id'])
+    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile['user_id'])
 
     send_post_authorization_message.assert_called_once()
     send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)
