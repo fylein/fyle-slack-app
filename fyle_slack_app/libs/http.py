@@ -1,13 +1,15 @@
+from typing import Any, Callable, Dict, Tuple
+
 import json
 import requests
 
-from . import logger
+from fyle_slack_app.libs import logger
 
 
 logger = logger.get_logger(__name__)
 
 
-def http_request(method, url, headers=None, **kwargs):
+def http_request(method: str, url: str, headers: Dict = None, **kwargs: Any) -> requests.Response:
     headers = requests.structures.CaseInsensitiveDict(headers)
 
     resp = requests.request(
@@ -20,7 +22,7 @@ def http_request(method, url, headers=None, **kwargs):
     return resp
 
 
-def process_data_and_headers(data, headers):
+def process_data_and_headers(data: Dict, headers: Dict) -> Tuple[Dict, Dict]:
     headers = requests.structures.CaseInsensitiveDict(headers)
 
     if isinstance(data, dict):
@@ -30,20 +32,20 @@ def process_data_and_headers(data, headers):
     return data, headers
 
 
-def post(url, data=None, headers=None, **kwargs):
+def post(url: str, data: Dict = None, headers: Dict = None, **kwargs: Any) -> Callable:
     data, headers = process_data_and_headers(data, headers)
     return http_request('POST', url, headers=headers, data=data, **kwargs)
 
 
-def put(url, data=None, headers=None, **kwargs):
+def put(url: str, data: Dict = None, headers: Dict = None, **kwargs: Any) -> Callable:
     data, headers = process_data_and_headers(data, headers)
     return http_request('PUT', url, headers=headers, data=data, **kwargs)
 
 
-def get(url, *args, **kwargs):
+def get(url: str, *args: Any, **kwargs: Any) -> Callable:
     kwargs.setdefault('allow_redirects', True)
     return http_request('GET', url, **kwargs)
 
 
-def delete(url, *args, **kwargs):
+def delete(url: str, *args: Any, **kwargs: Any) -> Callable:
     return http_request('DELETE', url, **kwargs)

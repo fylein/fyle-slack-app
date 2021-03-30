@@ -10,17 +10,26 @@
 * Create an .env file in the root directory with the following entries:
 
     ```
-    SECRET_KEY=thisisafakedjangosecretkey
-    FYLE_CLIENT_ID=abcd
-    FYLE_CLIENT_SECRET=abcd
-    FYLE_BASE_URL=abcd
-    FYLE_ACCOUNTS_URL=abcd
-    FYLE_SLACK_APP_SEGMENT_KEY=abcd
-    SLACK_CLIENT_ID=abcd
-    SLACK_CLIENT_ID=abcd
-    SLACK_APP_ID=abcd
-    SLACK_APP_TOKEN=abcd
-    ALLOWED_HOSTS=abcd
+    SECRET_KEY=fakedjangosecretkey
+    FYLE_CLIENT_ID=fakefyleclientid
+    FYLE_CLIENT_SECRET=fakefyleclientsecret
+    FYLE_PLATFORM_URL=fakefyleplatformurl
+    FYLE_ACCOUNTS_URL=fakefyleaccounturl
+    FYLE_BRANCHIO_BASE_URI=fakefylebranchiobaseuri
+    SLACK_CLIENT_ID=fakeslackclientid
+    SLACK_CLIENT_SECRET=fakeslackclientsecret
+    SLACK_APP_TOKEN=fakeslackapptoken
+    SLACK_SIGNING_SECRET=fakeslacksigningsecret
+    SLACK_APP_ID=fakeslackappid
+    SLACK_SERVICE_BASE_URL=akeslackservicebaseurl
+    FYLEHQ_SLACK_URL=fakefylehqurl
+    FYLE_SLACK_APP_SEGMENT_KEY=fakesegmentkey
+    ALLOWED_HOSTS=fakeallowedhosts
+    DB_NAME=database
+    DB_USER=slack_user
+    DB_PASSWORD=slack12345
+    DB_HOST=database
+    DB_PORT=5432
     ```
 
 ### Bringing up via Docker Compose ###
@@ -55,5 +64,5 @@
 
 * Ensure that you have services up and running. Then run the following command to connect to the PostgreSQL DB.
     ```
-    PGPASSWORD=slack12345 psql -h database -U slack_user slack_db
+    PGPASSWORD=slack12345 psql -h localhost -U slack_user slack_db
     ```

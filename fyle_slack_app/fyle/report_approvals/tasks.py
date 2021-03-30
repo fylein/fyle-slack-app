@@ -1,23 +1,25 @@
+from typing import Dict, List
+
 from django.utils import timezone
 
 from slack_sdk.web import WebClient
 from fyle.platform.exceptions import NoPrivilegeError
 
-from ...slack import utils as slack_utils
-from ...models import ReportPollingDetail, Team, User
-from .views import FyleReportApproval
-from ...libs import logger
-from .. import utils as fyle_utils
-from ...libs import utils, assertions
-from ...slack.ui.report_approvals import messages as report_approval_messages
+from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app.models import ReportPollingDetail, Team, User
+from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
+from fyle_slack_app.libs import logger
+from fyle_slack_app.fyle import utils as fyle_utils
+from fyle_slack_app.libs import utils, assertions
+from fyle_slack_app.slack.ui.report_approvals import messages as report_approval_messages
 
 
 logger = logger.get_logger(__name__)
 
 
-def poll_report_approvals():
-    # select_related joins the two table with foriegn key column
-    # 1st join -> `report_polling_details` table with `users` table with `slack_user` field
+def poll_report_approvals() -> None:
+    # select_related joins the two table with foreign key column
+    # 1st join -> `report_polling_details` table with `users` table with `user` field
     # 2nd join -> `__slack_team` joins `users` table with `teams` table
 
     # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
@@ -83,7 +85,7 @@ def poll_report_approvals():
                     )
 
 
-def process_report_approval(report_id, user_id, team_id, message_timestamp, notification_message):
+def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
 
     slack_team = utils.get_or_none(Team, id=team_id)
     assertions.assert_found(slack_team, 'Slack team not registered')

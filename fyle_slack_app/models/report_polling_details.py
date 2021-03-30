@@ -1,6 +1,6 @@
 from django.db import models
 
-from .users import User
+from fyle_slack_app.models.users import User
 
 
 class ReportPollingDetail(models.Model):
@@ -13,5 +13,5 @@ class ReportPollingDetail(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return '{} - {}'.format(self.slack_user, self.last_successful_poll_at)
+    def __str__(self) -> str:
+        return '{} - {}'.format(self.user, self.last_successful_poll_at)

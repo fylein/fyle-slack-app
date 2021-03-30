@@ -1,3 +1,5 @@
+from typing import Any, Callable
+
 import hashlib
 import hmac
 import time
@@ -5,14 +7,15 @@ import time
 from functools import wraps
 
 from django.conf import settings
+from django.http import HttpRequest, HttpResponse
 from django.core.exceptions import ImproperlyConfigured
 from django.views import View
 from django.utils.decorators import method_decorator
 
-from ..libs import assertions
+from fyle_slack_app.libs import assertions
 
 
-def verify_slack_signature(request):
+def verify_slack_signature(request: HttpRequest) -> bool:
     '''
         Slack creates a unique string for our app and shares it with us.
         This verifies requests from Slack with confidence by verifying signatures using your signing secret.
@@ -21,7 +24,6 @@ def verify_slack_signature(request):
         The signature is created by combining the signing secret with the body of the request slack sends.
 
         The signature sent by slack in request is checked against the signature we build from the request body.
-        # pylint: disable=line-too-long
         Reference: https://api.slack.com/authentication/verifying-requests-from-slack#verifying-requests-from-slack-using-signing-secrets__app-management-updates
     '''
     slack_signature = request.META.get('HTTP_X_SLACK_SIGNATURE')
@@ -56,9 +58,9 @@ def verify_slack_signature(request):
     return is_signature_verified
 
 
-def verify_slack_request(function):
+def verify_slack_request(function: Callable) -> Callable:
     @wraps(function)
-    def function_wrapper(request, *args, **kwargs):
+    def function_wrapper(request: HttpRequest, *args: Any, **kwargs: Any):
         if not verify_slack_signature(request):
             assertions.assert_true(False, 'Invalid slack request')
         return function(request, *args, **kwargs)
@@ -70,5 +72,5 @@ def verify_slack_request(function):
 class SlackView(View):
 
     @method_decorator(verify_slack_request)
-    def dispatch(self, request, *args, **kwargs):
+    def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return super().dispatch(request, *args, **kwargs)
