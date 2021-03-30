@@ -23,27 +23,27 @@ def poll_report_approvals() -> None:
     # 2nd join -> `__slack_team` joins `users` table with `teams` table
 
     # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
-    report_polling_details = ReportPollingDetail.objects.select_related('user__slack_team').all()
+    report_polling_details = ReportPollingDetail.objects.select_related('slack_user__slack_team').all()
 
     for report_polling_detail in report_polling_details:
-        user = report_polling_detail.user
+        user = report_polling_detail.slack_user
 
         slack_client = WebClient(token=user.slack_team.bot_access_token)
 
-        approver_id = user.fyle_employee_id
+        approver_user_id = user.fyle_user_id
 
-        submitted_at = report_polling_detail.last_successful_poll_at.isoformat()
+        last_submitted_at = report_polling_detail.last_successful_poll_at.isoformat()
 
         # Fetch approver reports to approve - i.e. report state -> APPROVER_PENDING & approval state -> APPROVAL_PENDING
         query_params = {
             'state': 'eq.APPROVER_PENDING',
-            'approvals': 'cs.[{{ "approver_id": {}, "state": "APPROVAL_PENDING" }}]'.format(approver_id),
-            'submitted_at': 'gte.{}'.format(submitted_at),
+            'approvals': 'cs.[{{ "approver_user_id": {}, "state": "APPROVAL_PENDING" }}]'.format(approver_user_id),
+            'last_submitted_at': 'gte.{}'.format(last_submitted_at),
 
             # Mandatory query params required by sdk
             'limit': 50, # Assuming no more than 50 reports will be there in 10 min poll
             'offset': 0,
-            'order': 'submitted_at.desc'
+            'order': 'last_submitted_at.desc'
         }
 
         # Since not all users will be approvers so the sdk api call with throw exception
@@ -51,7 +51,7 @@ def poll_report_approvals() -> None:
         try:
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
         except NoPrivilegeError as error:
-            logger.error('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_employee_id)
+            logger.error('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_user_id)
             logger.error('API call error %s ', error)
 
             is_approver = False
@@ -68,14 +68,14 @@ def poll_report_approvals() -> None:
 
                 for report in approver_reports['data']:
 
-                    employee_display_name = slack_utils.get_employee_display_name(
+                    user_display_name = slack_utils.get_user_display_name(
                         slack_client,
-                        report['employee']
+                        report['user']
                     )
 
                     report_notification_message = report_approval_messages.get_report_approval_notification(
                         report,
-                        employee_display_name,
+                        user_display_name,
                         report_url
                     )
 
@@ -100,7 +100,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         # Mandatory query params required by sdk
         'limit': 1,
         'offset': 0,
-        'order': 'submitted_at.desc'
+        'order': 'last_submitted_at.desc'
     }
     report = FyleReportApproval.get_approver_reports(user, query_params)
     # approver_report = FyleReportApproval.get_report_by_id(user, report_id)
@@ -122,10 +122,10 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         report = report['data'][0]
         can_approve_report, report_message = FyleReportApproval.can_approve_report(
             report,
-            user.fyle_employee_id
+            user.fyle_user_id
         )
 
-        employee_display_name = slack_utils.get_employee_display_name(slack_client, report['employee'])
+        user_display_name = slack_utils.get_user_display_name(slack_client, report['user'])
 
         report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
@@ -136,7 +136,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
         report_notification_message = report_approval_messages.get_report_approval_notification(
             report,
-            employee_display_name,
+            user_display_name,
             report_url,
             report_message
         )

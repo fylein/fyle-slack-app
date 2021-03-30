@@ -53,14 +53,14 @@ def get_fyle_oauth_url(user_id: str, team_id: str) -> str:
     return FYLE_OAUTH_URL
 
 
-def get_employee_display_name(slack_client: WebClient, employee_details: Dict) -> str:
+def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
     try:
-        user_info = slack_client.users_lookupByEmail(email=employee_details['user']['email'])
-        employee_display_name = '<@{}>'.format(user_info['user']['id'])
+        user_info = slack_client.users_lookupByEmail(email=user_details['email'])
+        user_display_name = '<@{}>'.format(user_info['user']['id'])
     except SlackApiError:
-        employee_display_name = employee_details['user']['full_name']
+        user_display_name = user_details['full_name']
 
-    return employee_display_name
+    return user_display_name
 
 
 def add_message_section_to_ui_block(ui_block: List, section_message: str) -> List[Dict]:

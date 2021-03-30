@@ -3,11 +3,11 @@ from typing import Dict, List
 from fyle_slack_app.libs import utils
 
 
-def get_report_section_blocks(report: Dict, employee_display_name: str) -> List[Dict]:
+def get_report_section_blocks(report: Dict, user_display_name: str) -> List[Dict]:
 
-    readable_submitted_at = utils.get_formatted_datetime(report['submitted_at'], '%B %d, %Y')
+    readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
 
-    employee_email = report['employee']['user']['email']
+    user_email = report['user']['email']
 
     report_claim_number = report['claim_number']
     report_curreny = report['currency']
@@ -20,8 +20,8 @@ def get_report_section_blocks(report: Dict, employee_display_name: str) -> List[
             'text': {
                 'type': 'mrkdwn',
                 'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(
-                    employee_display_name,
-                    employee_email,
+                    user_display_name,
+                    user_email,
                     report_claim_number
                 )
             }
@@ -71,7 +71,7 @@ def get_report_review_in_fyle_action(report_url: str, button_text: str) -> Dict:
     return report_review_in_fyle_action
 
 
-def get_report_approval_notification(report: Dict, employee_display_name: str, report_url: str, message: str = None) -> List[Dict]:
+def get_report_approval_notification(report: Dict, user_display_name: str, report_url: str, message: str = None) -> List[Dict]:
 
     report_url = '{}/{}'.format(report_url, report['id'])
     report_query_params = {
@@ -79,7 +79,7 @@ def get_report_approval_notification(report: Dict, employee_display_name: str, r
     }
     report_url = utils.convert_to_branchio_url(report_url, report_query_params)
 
-    report_section_block = get_report_section_blocks(report, employee_display_name)
+    report_section_block = get_report_section_blocks(report, user_display_name)
 
     actions_block = {
         'type': 'actions',
