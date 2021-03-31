@@ -103,15 +103,14 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         # None here means report is deleted/doesn't exist
         report = None
 
-
-    # Removing CTAs from notification message
-    report_notification_message = []
-    for message_block in notification_message:
-        if message_block['type'] != 'actions':
-            report_notification_message.append(message_block)
-
     # Check if report is deleted
     if report is None:
+        # Removing CTAs from notification message for deleted report
+        report_notification_message = []
+        for message_block in notification_message:
+            if message_block['type'] != 'actions':
+                report_notification_message.append(message_block)
+
         report_message = 'Seems like this expense report was deleted :red_circle:'
         report_notification_message = slack_utils.add_message_section_to_ui_block(
             report_notification_message,
