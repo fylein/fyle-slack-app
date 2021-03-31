@@ -133,7 +133,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 report = report['data']
                 report_message = 'Expense report approved by you :white_check_mark:'
             except exceptions.PlatformError as error:
-                logger.error('Error while processing request -> %s', error)
+                logger.error('Error while processing report approve -> %s', error)
 
                 message = 'Seems like an error occured while approving this report :face_with_head_bandage: \n' \
                     'Please try approving again or `View in Fyle` to approve directly from Fyle :zap:'
