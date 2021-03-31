@@ -7,8 +7,6 @@ from django_q.tasks import async_task
 from slack_sdk.web.client import WebClient
 
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
-from fyle_slack_app.models import User
-from fyle_slack_app.libs import utils, assertions
 
 
 class BlockActionHandler:
@@ -68,16 +66,6 @@ class BlockActionHandler:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
-
-        user = utils.get_or_none(User, slack_user_id=user_id)
-        assertions.assert_found(user)
-
-        message = 'Your request to approve this expense report is being processed :zap: \n We\'ll update the message once it is approved :white_check_mark: '
-        slack_client.chat_postMessage(
-            channel=user.slack_dm_channel_id,
-            text=message,
-            thread_ts=slack_payload['message']['ts']
-        )
 
         async_task(
             'fyle_slack_app.fyle.report_approvals.tasks.process_report_approval',
