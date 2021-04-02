@@ -136,7 +136,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 logger.error('Error while processing report approve -> %s', error)
 
                 message = 'Seems like an error occured while approving this report :face_with_head_bandage: \n' \
-                    'Please try approving again or `View in Fyle` to approve directly from Fyle :zap:'
+                    'Please try approving again or `Review in Fyle` to approve directly from Fyle :zap:'
 
                 # Sending an error message in thread of notification message
                 # With this CTAs are visible if approver wants to approve again
