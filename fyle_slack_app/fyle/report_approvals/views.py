@@ -33,7 +33,7 @@ class FyleReportApproval:
     @staticmethod
     def approve_report(user: User, report_id: str) -> Dict:
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
-        approved_report = connection.v1.approver.reports.post(report_id)
+        approved_report = connection.v1.approver.reports.approve(report_id)
         return approved_report
 
 
