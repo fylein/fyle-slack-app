@@ -3,6 +3,7 @@ from typing import Callable, Dict
 from django.http.response import JsonResponse
 from slack_sdk.web.client import WebClient
 
+from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.slack.utils import get_fyle_oauth_url
 from fyle_slack_app.models import User
@@ -52,6 +53,9 @@ class SlackCommandHandler:
             # Update home tab with pre auth message
             self.update_home_tab_with_pre_auth_message(slack_client, user_id, team_id)
 
+            # Track Fyle account unlinked
+            self.track_fyle_account_unlinked(user)
+
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
             text=text
@@ -71,3 +75,18 @@ class SlackCommandHandler:
         )
 
         slack_client.views_publish(user_id=user_id, view=pre_auth_message_view)
+
+
+    def track_fyle_account_unlinked(self, user: User) -> None:
+        event_data = {
+            'asset': 'SLACK_APP',
+            'slack_user_id': user.slack_user_id,
+            'fyle_user_id': user.fyle_user_id,
+            'email': user.email,
+            'slack_team_id': user.slack_team.id,
+            'slack_team_name': user.slack_team.name
+        }
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, 'Fyle Account Unlinked From Slack', event_data)

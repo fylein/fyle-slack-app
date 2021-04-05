@@ -84,6 +84,9 @@ def poll_report_approvals() -> None:
                         blocks=report_notification_message
                     )
 
+                    # Track report approval notification received
+                    FyleReportApproval.track_report_notification_received(user, report)
+
 
 def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
 
@@ -132,6 +135,10 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 report = FyleReportApproval.approve_report(user, report_id)
                 report = report['data']
                 report_message = 'Expense report approved by you :white_check_mark:'
+
+                # Track report approved
+                FyleReportApproval.track_report_approved(user, report)
+
             except exceptions.PlatformError as error:
                 logger.error('Error while processing report approve -> %s', error)
 
