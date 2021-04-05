@@ -1,4 +1,3 @@
-import logging
 from typing import Callable, Dict
 
 from django.http import JsonResponse
