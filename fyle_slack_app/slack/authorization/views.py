@@ -93,6 +93,7 @@ class SlackAuthorization(View):
         tracking.identify_user(user_email)
 
         event_data = {
+            'asset': 'SLACK_APP',
             'slack_user_id': user_id,
             'slack_team_id': slack_team.id,
             'slack_team_name': slack_team.name,

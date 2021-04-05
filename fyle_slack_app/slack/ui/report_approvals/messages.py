@@ -55,7 +55,7 @@ def get_report_section_blocks(report: Dict, user_display_name: str) -> List[Dict
     return report_section_block
 
 
-def get_report_review_in_fyle_action(report_url: str, button_text: str) -> Dict:
+def get_report_review_in_fyle_action(report_url: str, button_text: str, report_id: str) -> Dict:
 
     report_review_in_fyle_action = {
         'type': 'button',
@@ -65,7 +65,8 @@ def get_report_review_in_fyle_action(report_url: str, button_text: str) -> Dict:
             'emoji': True
         },
         'action_id': 'review_report_in_fyle',
-        'url': report_url
+        'url': report_url,
+        'value': report_id,
     }
 
     return report_review_in_fyle_action
@@ -111,7 +112,7 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         actions_block['elements'].append(report_approve_action)
 
-    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_action_text)
+    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_action_text, report['id'])
 
     actions_block['elements'].append(report_view_in_fyle_section)
     report_section_block.append(actions_block)

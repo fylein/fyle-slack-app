@@ -134,7 +134,9 @@ class FyleAuthorization(View):
 
     def track_fyle_authorization(self, user: User) -> None:
         event_data = {
+            'asset': 'SLACK_APP',
             'slack_user_id': user.slack_user_id,
+            'fyle_user_id': user.fyle_user_id,
             'email': user.email,
             'slack_team_id': user.slack_team.id,
             'slack_team_name': user.slack_team.name

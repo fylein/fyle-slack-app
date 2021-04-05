@@ -1,3 +1,4 @@
+import logging
 from typing import Callable, Dict
 
 from django.http import JsonResponse
@@ -6,7 +7,15 @@ from django_q.tasks import async_task
 
 from slack_sdk.web.client import WebClient
 
+from fyle.platform import exceptions
+
+from fyle_slack_app.models.users import User
+from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
+from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
+
+
+logger = logger.get_logger(__name__)
 
 
 class BlockActionHandler:
@@ -58,7 +67,20 @@ class BlockActionHandler:
 
 
     def review_report_in_fyle(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        # Empty function because slack still sends an interactive event on button click and expects a 200 response
+        report_id = slack_payload['actions'][0]['value']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user)
+
+        try:
+            report = FyleReportApproval.get_report_by_id(user, report_id)
+
+            # Tracking report reviewed in Fyle
+            FyleReportApproval.track_report_reviewed_in_fyle(user, report['data'])
+
+        except exceptions.NotFoundItemError as error:
+            logger.error('Error while fetching report -> %s', error)
+
         return JsonResponse({}, status=200)
 
 
