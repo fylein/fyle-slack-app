@@ -79,7 +79,7 @@ class BlockActionHandler:
             FyleReportApproval.track_report_reviewed_in_fyle(user, report['data'])
 
         except exceptions.NotFoundItemError as error:
-            logger.error('Error while fetching report -> %s', error)
+            logger.error('Error while fetching report of id: %s \n %s', report_id, error)
 
         return JsonResponse({}, status=200)
 
