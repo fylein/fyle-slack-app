@@ -6,7 +6,7 @@ from fyle.platform import Platform
 
 from django.conf import settings
 
-from fyle_slack_app.libs import http, assertions
+from fyle_slack_app.libs import http, assertions, utils
 
 
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
@@ -79,3 +79,23 @@ def get_fyle_report_url(fyle_refresh_token: str) -> str:
     access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain = get_cluster_domain(access_token)
     return '{}/app/main/#/enterprise/reports'.format(cluster_domain)
+
+
+def get_fyle_oauth_url(user_id: str, team_id: str) -> str:
+    state_params = {
+        'user_id': user_id,
+        'team_id': team_id
+    }
+
+    base64_encoded_state = utils.encode_state(state_params)
+
+    redirect_uri = '{}/fyle/authorization'.format(settings.SLACK_SERVICE_BASE_URL)
+
+    FYLE_OAUTH_URL = '{}/app/developers/#/oauth/authorize?client_id={}&response_type=code&state={}&redirect_uri={}'.format(
+        settings.FYLE_ACCOUNTS_URL,
+        settings.FYLE_CLIENT_ID,
+        base64_encoded_state,
+        redirect_uri
+    )
+
+    return FYLE_OAUTH_URL

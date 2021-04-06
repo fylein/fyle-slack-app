@@ -1,8 +1,9 @@
 from slack_sdk import WebClient
 
+from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.models import Team, User
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization import messages
 
 

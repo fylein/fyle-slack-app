@@ -5,7 +5,7 @@ from slack_sdk.web.client import WebClient
 
 from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions
-from fyle_slack_app.slack.utils import get_fyle_oauth_url
+from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.models import User
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 

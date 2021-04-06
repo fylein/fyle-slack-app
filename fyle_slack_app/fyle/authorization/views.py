@@ -9,7 +9,7 @@ from fyle_slack_app import tracking
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, ReportPollingDetail
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, decode_state
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 
@@ -24,7 +24,7 @@ class FyleAuthorization(View):
         error = request.GET.get('error')
         state = request.GET.get('state')
 
-        state_params = decode_state(state)
+        state_params = utils.decode_state(state)
 
         # Fetch the slack team
         slack_team = utils.get_or_none(Team, id=state_params['team_id'])
