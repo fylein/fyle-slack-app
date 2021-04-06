@@ -150,7 +150,7 @@ LOGGING = {
             'style': '{',
         },
         'requests': {
-            'format': 'request {levelname} %s {asctime} {message}' % 'fyle-slack-service',
+            'format': 'request {levelname} %s {message}' % 'fyle-slack-service',
             'style': '{'
         }
     },
@@ -183,6 +183,11 @@ LOGGING = {
         'fyle_slack_app ': {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
+            'propagate': False
+        },
+        'gunicorn': {
+            'handlers': ['request_logs'],
+            'level': 'INFO',
             'propagate': False
         }
     }
