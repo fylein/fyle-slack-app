@@ -31,6 +31,8 @@ urlpatterns = [
     # Slack routes
     path('slack/authorization', slack_auth_views.SlackAuthorization.as_view()),
 
+    path('slack/direct_install', slack_auth_views.SlackDirectInstall.as_view()),
+
     # Fyle routes
     path('fyle/authorization', fyle_auth_views.FyleAuthorization.as_view()),
 
