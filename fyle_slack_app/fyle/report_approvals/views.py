@@ -48,11 +48,11 @@ class FyleReportApproval:
 
         if report['state'] == 'APPROVER_INQUIRY':
             can_approve_report = False
-            report_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
+            report_message = 'This expense report has been sent back to the employee'
 
         elif report['state'] in report_approved_states:
             can_approve_report = False
-            report_message = 'This expense report is already approved :white_check_mark:'
+            report_message = 'This expense report has already been approved :white_check_mark:'
 
         elif can_approve_report is True:
 
@@ -62,12 +62,12 @@ class FyleReportApproval:
 
                     if approver['state'] == 'APPROVAL_DONE':
                         can_approve_report = False
-                        report_message = 'This expense report is already approved by you :white_check_mark:'
+                        report_message = 'Looks like you\'ve already approved this expense report :see_no_evil:'
                         break
 
                     if approver['state'] == 'APPROVAL_DISABLED':
                         can_approve_report = False
-                        report_message = 'Your approval is disabled on this expense report :x:'
+                        report_message = 'Looks like you no longer have permission to approve this expense report :see_no_evil:'
                         break
 
         return can_approve_report, report_message

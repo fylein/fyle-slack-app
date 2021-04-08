@@ -114,7 +114,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
             if message_block['type'] != 'actions':
                 report_notification_message.append(message_block)
 
-        report_message = 'Seems like this expense report was deleted :red_circle:'
+        report_message = 'Looks like this expense report has been deleted :no_mouth:'
         report_notification_message = slack_utils.add_message_section_to_ui_block(
             report_notification_message,
             report_message
@@ -134,7 +134,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
             try:
                 report = FyleReportApproval.approve_report(user, report_id)
                 report = report['data']
-                report_message = 'Expense report approved by you :white_check_mark:'
+                report_message = 'Expense report approved :rocket:'
 
                 # Track report approved
                 FyleReportApproval.track_report_approved(user, report)
