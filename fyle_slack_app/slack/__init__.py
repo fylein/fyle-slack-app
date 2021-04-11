@@ -34,7 +34,7 @@ def verify_slack_signature(request: HttpRequest) -> bool:
     if not slack_signature or not slack_request_timestamp:
         is_signature_verified = False
 
-    if time.time() - int(slack_request_timestamp) > 60 * 5:
+    if slack_request_timestamp is not None and time.time() - int(slack_request_timestamp) > 60 * 5:
         # The request timestamp is more than five minutes from local time.
         # It could be a replay attack, so let's ignore it.
         is_signature_verified = False
