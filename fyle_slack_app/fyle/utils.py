@@ -13,8 +13,13 @@ FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
 
 def get_fyle_sdk_connection(refresh_token: str) -> Platform:
+    access_token = get_fyle_access_token(refresh_token)
+    cluster_domain = get_cluster_domain(access_token)
+
+    FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
+
     return Platform(
-        server_url=settings.FYLE_PLATFORM_URL,
+        server_url=FYLE_PLATFORM_URL,
         token_url=FYLE_TOKEN_URL,
         client_id=settings.FYLE_CLIENT_ID,
         client_secret=settings.FYLE_CLIENT_SECRET,

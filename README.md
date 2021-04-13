@@ -13,7 +13,6 @@
     SECRET_KEY=fakedjangosecretkey
     FYLE_CLIENT_ID=fakefyleclientid
     FYLE_CLIENT_SECRET=fakefyleclientsecret
-    FYLE_PLATFORM_URL=fakefyleplatformurl
     FYLE_ACCOUNTS_URL=fakefyleaccounturl
     FYLE_BRANCHIO_BASE_URI=fakefylebranchiobaseuri
     SLACK_CLIENT_ID=fakeslackclientid
