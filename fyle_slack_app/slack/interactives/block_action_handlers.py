@@ -6,12 +6,8 @@ from django_q.tasks import async_task
 
 from slack_sdk.web.client import WebClient
 
-from fyle.platform import exceptions
-
-from fyle_slack_app.models.users import User
-from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, add_message_section_to_ui_block
-from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
+from fyle_slack_app.libs import logger
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 
 
 logger = logger.get_logger(__name__)
@@ -70,35 +66,14 @@ class BlockActionHandler:
         message_timestamp = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
 
-        user = utils.get_or_none(User, slack_user_id=user_id)
-        assertions.assert_found(user)
-
-        try:
-            report = FyleReportApproval.get_report_by_id(user, report_id)
-
-            # Tracking report reviewed in Fyle
-            FyleReportApproval.track_report_reviewed_in_fyle(user, report['data'])
-
-        except exceptions.NotFoundItemError as error:
-            logger.error('Error while fetching report of id: %s \n %s', report_id, error)
-
-            # Removing CTAs from notification message for deleted report
-            report_notification_message = []
-            for message_block in message_blocks:
-                if message_block['type'] != 'actions':
-                    report_notification_message.append(message_block)
-
-            report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-            report_notification_message = add_message_section_to_ui_block(
-                report_notification_message,
-                report_message
-            )
-
-            slack_client.chat_update(
-                channel=user.slack_dm_channel_id,
-                blocks=report_notification_message,
-                ts=message_timestamp
-            )
+        async_task(
+            'fyle_slack_app.fyle.report_approvals.tasks.process_review_report_in_fyle',
+            team_id,
+            user_id,
+            report_id,
+            message_blocks,
+            message_timestamp
+        )
 
         return JsonResponse({}, status=200)
 

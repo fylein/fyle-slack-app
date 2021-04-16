@@ -166,3 +166,40 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         blocks=report_notification_message,
         ts=message_timestamp
     )
+
+
+def process_review_report_in_fyle(team_id: str, user_id: str, report_id: str, message_blocks: Dict, message_timestamp: str) -> None:
+    team = utils.get_or_none(Team, id=team_id)
+    assertions.assert_found(team)
+
+    slack_client = WebClient(token=team.bot_access_token)
+
+    user = utils.get_or_none(User, slack_user_id=user_id)
+    assertions.assert_found(user)
+
+    try:
+        report = FyleReportApproval.get_report_by_id(user, report_id)
+
+        # Tracking report reviewed in Fyle
+        FyleReportApproval.track_report_reviewed_in_fyle(user, report['data'])
+
+    except exceptions.NotFoundItemError as error:
+        logger.error('Error while fetching report of id: %s \n %s', report_id, error)
+
+        # Removing CTAs from notification message for deleted report
+        report_notification_message = []
+        for message_block in message_blocks:
+            if message_block['type'] != 'actions':
+                report_notification_message.append(message_block)
+
+        report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
+        report_notification_message = slack_utils.add_message_section_to_ui_block(
+            report_notification_message,
+            report_message
+        )
+
+        slack_client.chat_update(
+            channel=user.slack_dm_channel_id,
+            blocks=report_notification_message,
+            ts=message_timestamp
+        )
