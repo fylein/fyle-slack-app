@@ -11,8 +11,11 @@ from slack_sdk.web.client import WebClient
 
 from fyle_slack_app.models import Team, User
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
-from fyle_slack_app.libs import utils, assertions
+from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack.ui.dashboard import messages
+
+
+logger = logger.get_logger(__name__)
 
 
 class SlackEventHandler:
@@ -21,7 +24,6 @@ class SlackEventHandler:
 
     def _initialize_event_callback_handlers(self):
         self._event_callback_handlers = {
-            'app_uninstalled': self.handle_app_uninstalled,
             'team_join': self.handle_new_user_joined,
             'app_home_opened': self.handle_app_home_opened
         }
@@ -37,6 +39,8 @@ class SlackEventHandler:
 
 
     def handle_event_callback(self, slack_client: WebClient, event_type: str, slack_payload: Dict, team_id: str) -> Callable:
+
+        logger.info('Slack Event Received -> %s', event_type)
 
         self._initialize_event_callback_handlers()
 
