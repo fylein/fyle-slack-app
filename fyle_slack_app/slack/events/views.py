@@ -25,9 +25,6 @@ class SlackEventView(SlackView, SlackEventHandler):
             subevent_type = slack_payload['event']['type']
             team_id = slack_payload['team_id']
 
-            # Set slack client
-            self._set_slack_client(team_id)
-
             self.handle_event_callback(subevent_type, slack_payload, team_id)
 
         return JsonResponse(event_response, status=200)

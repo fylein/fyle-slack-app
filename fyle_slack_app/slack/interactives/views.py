@@ -16,9 +16,6 @@ class SlackInteractiveView(SlackView, BlockActionHandler):
         user_id = slack_payload['user']['id']
         team_id = slack_payload['team']['id']
 
-        # Set slack client
-        self._set_slack_client(team_id)
-
         event_type = slack_payload['type']
 
         # Check interactive event type and call it's respective handler

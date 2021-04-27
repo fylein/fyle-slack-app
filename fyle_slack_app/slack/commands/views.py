@@ -11,8 +11,6 @@ class SlackCommandView(SlackView, SlackCommandHandler):
         user_id = request.POST['user_id']
         user_dm_channel_id = request.POST['channel_id']
 
-        self._set_slack_client(team_id)
-
         self.handle_slack_command(command, user_id, team_id, user_dm_channel_id)
 
         # Empty "" HttpResponse beacause for slash commands slack return the response as message to user
