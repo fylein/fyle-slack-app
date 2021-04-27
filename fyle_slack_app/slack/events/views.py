@@ -1,24 +1,12 @@
 import json
 
-from slack_sdk.web import WebClient
-
 from django.http import JsonResponse, HttpRequest
 
 from fyle_slack_app.slack import SlackView
-from fyle_slack_app.models import Team
-from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.slack.events.handlers import SlackEventHandler
 
 
 class SlackEventView(SlackView, SlackEventHandler):
-
-    slack_client: WebClient = None
-
-    def _set_slack_client(self, team_id: str) -> None:
-        slack_team = utils.get_or_none(Team, id=team_id)
-        assertions.assert_found(slack_team, 'Slack team not registered')
-        self.slack_client = WebClient(token=slack_team.bot_access_token)
-
 
     def post(self, request: HttpRequest) -> JsonResponse:
         slack_payload = json.loads(request.body)
@@ -40,6 +28,6 @@ class SlackEventView(SlackView, SlackEventHandler):
             # Set slack client
             self._set_slack_client(team_id)
 
-            self.handle_event_callback(self.slack_client, subevent_type, slack_payload, team_id)
+            self.handle_event_callback(subevent_type, slack_payload, team_id)
 
         return JsonResponse(event_response, status=200)

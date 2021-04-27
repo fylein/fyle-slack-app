@@ -4,13 +4,11 @@ from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
-from slack_sdk.web.client import WebClient
-
 from fyle.platform import exceptions
 
 from fyle_slack_app.models.users import User
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, add_message_section_to_ui_block
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, add_message_section_to_ui_block, get_slack_client
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 
 
@@ -31,7 +29,9 @@ class BlockActionHandler:
 
 
     # Gets called when function with an action is not found
-    def _handle_invalid_block_actions(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def _handle_invalid_block_actions(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        slack_client = get_slack_client(team_id)
+
         user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
@@ -41,7 +41,7 @@ class BlockActionHandler:
 
 
     # Handle all the block actions from slack
-    def handle_block_actions(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> Callable:
+    def handle_block_actions(self, slack_payload: Dict, user_id: str, team_id: str) -> Callable:
         '''
             Check if any function is associated with the action
             If present handler will call the respective function
@@ -55,17 +55,17 @@ class BlockActionHandler:
 
         handler = self._block_action_handlers.get(action_id, self._handle_invalid_block_actions)
 
-        return handler(slack_client, slack_payload, user_id, team_id)
+        return handler(slack_payload, user_id, team_id)
 
 
     # Define all the action handlers below this
 
-    def link_fyle_account(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def link_fyle_account(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
 
 
-    def review_report_in_fyle(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def review_report_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         report_id = slack_payload['actions'][0]['value']
         message_timestamp = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
@@ -94,6 +94,8 @@ class BlockActionHandler:
                 report_message
             )
 
+            slack_client = get_slack_client(team_id)
+
             slack_client.chat_update(
                 channel=user.slack_dm_channel_id,
                 blocks=report_notification_message,
@@ -103,7 +105,7 @@ class BlockActionHandler:
         return JsonResponse({}, status=200)
 
 
-    def approve_report(self, slack_client: WebClient, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def approve_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
