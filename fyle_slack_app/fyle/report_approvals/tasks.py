@@ -51,8 +51,8 @@ def poll_report_approvals() -> None:
         try:
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
         except exceptions.NoPrivilegeError as error:
-            logger.error('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_user_id)
-            logger.error('API call error %s ', error)
+            logger.info('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_user_id)
+            logger.info('API call error %s ', error)
 
             is_approver = False
 

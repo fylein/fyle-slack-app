@@ -4,10 +4,10 @@ from datetime import timedelta
 
 from django.http import JsonResponse
 from django.utils import timezone
-from django_q.tasks import schedule
+from django_q.tasks import schedule, async_task
 from django_q.models import Schedule
 
-from fyle_slack_app.models import Team, User
+from fyle_slack_app.models import User
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack.ui.dashboard import messages
@@ -24,7 +24,8 @@ class SlackEventHandler:
     def _initialize_event_callback_handlers(self):
         self._event_callback_handlers = {
             'team_join': self.handle_new_user_joined,
-            'app_home_opened': self.handle_app_home_opened
+            'app_home_opened': self.handle_app_home_opened,
+            'app_uninstalled': self.handle_app_uninstalled
         }
 
 
@@ -49,13 +50,19 @@ class SlackEventHandler:
 
 
     def handle_app_uninstalled(self, slack_payload: Dict, team_id: str) -> JsonResponse:
-        team = utils.get_or_none(Team, id=team_id)
-        assertions.assert_found(team, 'Slack team not registered')
 
-        # Deleting team :)
-        team.delete()
+        # Deleting team details in background task
+        async_task(
+            'fyle_slack_app.slack.events.tasks.uninstall_app',
+            team_id
+        )
 
-        return JsonResponse({}, status=200)
+        response = JsonResponse({}, status=200)
+
+        # Passing this for slack not to retry `app_uninstalled` event again
+        response['X-Slack-No-Retry'] = 1
+
+        return response
 
 
     def handle_new_user_joined(self, slack_payload: Dict, team_id: str) -> None:
