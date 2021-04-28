@@ -21,16 +21,18 @@ def new_user_joined_pre_auth_message(user_id: str, team_id: str) -> None:
         user_info = slack_client.users_info(user=user_id)
         assertions.assert_good(user_info['ok'] is True)
 
-        user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+        if user_info['user']['deleted'] is False and user_info['user']['is_bot'] is False:
 
-        fyle_oauth_url = get_fyle_oauth_url(user_id, team_id)
+            user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
 
-        pre_auth_message = messages.get_pre_authorization_message(user_info['user']['real_name'], fyle_oauth_url)
+            fyle_oauth_url = get_fyle_oauth_url(user_id, team_id)
 
-        slack_client.chat_postMessage(
-            channel=user_dm_channel_id,
-            blocks=pre_auth_message
-        )
+            pre_auth_message = messages.get_pre_authorization_message(user_info['user']['real_name'], fyle_oauth_url)
+
+            slack_client.chat_postMessage(
+                channel=user_dm_channel_id,
+                blocks=pre_auth_message
+            )
 
 
 def uninstall_app(team_id: str) -> None:
