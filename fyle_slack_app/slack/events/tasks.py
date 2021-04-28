@@ -31,3 +31,11 @@ def new_user_joined_pre_auth_message(user_id: str, team_id: str) -> None:
             channel=user_dm_channel_id,
             blocks=pre_auth_message
         )
+
+
+def uninstall_app(team_id: str) -> None:
+    team = utils.get_or_none(Team, id=team_id)
+
+    if team is not None:
+        # Deleting team :)
+        team.delete()
