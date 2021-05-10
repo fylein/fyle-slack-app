@@ -10,7 +10,7 @@ from fyle_slack_app.fyle.report_approvals.tasks import poll_report_approvals
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.fyle_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.slack_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.report_approval_messages')
-def test_report_polling(report_approval_messages, slack_utils, fyle_utils, fyle_report_approval, slack_client, report_polling_detail):
+def test_report_polling(report_approval_messages, slack_utils, fyle_utils, fyle_report_approval, slack_client, report_polling_detail, mock_fyle):
     mock_user = mock.Mock(spec=User)
     mock_user.fyle_user_id = 'mock-fyle-approver-user-id'
 
@@ -41,46 +41,9 @@ def test_report_polling(report_approval_messages, slack_utils, fyle_utils, fyle_
         'order': 'last_submitted_at.desc'
     }
 
-    mock_report_details = {
-        'id': 'mock-user-id',
-        'org_id': 'orwruogwnngg',
-        'created_at': '2020-06-01T13:14:54.804+00:00',
-        'updated_at': '2020-06-11T13:14:55.201598+00:00',
-        'user_id': 'mock-user-id',
-        'user': mock_user_details,
-        'purpose': 'Business trip to London',
-        'currency': 'INR',
-        'amount': 47.99,
-        'tax': 18.23,
-        'state': 'APPROVER_PENDING',
-        'num_expenses': 3,
-        'is_manually_flagged': True,
-        'is_policy_flagged': True,
-        'reimbursed_at': '2020-06-11T13:14:55.201598+00:00',
-        'approved_at': '2020-06-11T13:14:55.201598+00:00',
-        'submitted_at': '2020-06-11T13:14:55.201598+00:00',
-        'claim_number': 'C/2021/02/R/907',
-        'source': 'string',
-        'approvals': [
-            {
-                "approver_user_id": "mock-user-id",
-                "approver_user": {
-                    "id": "mock-user-id",
-                    "email": "john.doe@example.com",
-                    "full_name": "John Doe"
-                },
-                "state": "APPROVAL_PENDING"
-            }
-        ]
-    }
+    mock_approver_reports = mock_fyle.approver.reports.list()
 
-    fyle_report_approval.get_approver_reports.return_value = {
-        'count': 1,
-        'offset': 0,
-        'data': [
-            mock_report_details
-        ]
-    }
+    fyle_report_approval.get_approver_reports.return_value = mock_approver_reports
 
     mock_report_url = 'mock-report-url'
     fyle_utils.get_fyle_report_url.return_value = mock_report_url
@@ -112,4 +75,4 @@ def test_report_polling(report_approval_messages, slack_utils, fyle_utils, fyle_
     slack_utils.get_user_display_name.assert_called_with(slack_client(), mock_user_details)
 
     report_approval_messages.get_report_approval_notification.assert_called()
-    report_approval_messages.get_report_approval_notification.assert_called_with(mock_report_details, mock_user_display_name, mock_report_url)
+    report_approval_messages.get_report_approval_notification.assert_called_with(mock_approver_reports['data'][0], mock_user_display_name, mock_report_url)

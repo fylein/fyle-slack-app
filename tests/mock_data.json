@@ -1,0 +1,48 @@
+{
+    "approver": {
+        "reports": {
+            "list": {
+                "count": 1,
+                "offset": 0,
+                "data": [
+                    {
+                        "id": "mock-user-id",
+                        "org_id": "orwruogwnngg",
+                        "created_at": "2020-06-01T13:14:54.804+00:00",
+                        "updated_at": "2020-06-11T13:14:55.201598+00:00",
+                        "user_id": "mock-user-id",
+                        "user": {
+                            "id": "mock-user-id",
+                            "email": "john.doe@example.com",
+                            "full_name": "John Doe"
+                        },
+                        "purpose": "Business trip to London",
+                        "currency": "INR",
+                        "amount": 47.99,
+                        "tax": 18.23,
+                        "state": "APPROVER_PENDING",
+                        "num_expenses": 3,
+                        "is_manually_flagged": false,
+                        "is_policy_flagged": false,
+                        "reimbursed_at": null,
+                        "approved_at": null,
+                        "submitted_at": "2020-06-11T13:14:55.201598+00:00",
+                        "claim_number": "C/2021/02/R/907",
+                        "source": "WEBAPP",
+                        "approvals": [
+                            {
+                                "approver_user_id": "mock-user-id",
+                                "approver_user": {
+                                    "id": "mock-user-id",
+                                    "email": "john.doe@example.com",
+                                    "full_name": "John Doe"
+                                },
+                                "state": "APPROVAL_PENDING"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    }
+}
