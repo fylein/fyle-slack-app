@@ -3,7 +3,7 @@ from typing import Dict, List
 from django.utils import timezone
 
 from slack_sdk.web import WebClient
-from fyle.platform.exceptions import NoPrivilegeError
+from fyle.platform import exceptions
 
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.models import ReportPollingDetail, Team, User
@@ -50,9 +50,9 @@ def poll_report_approvals() -> None:
         is_approver = True
         try:
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
-        except NoPrivilegeError as error:
-            logger.error('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_user_id)
-            logger.error('API call error %s ', error)
+        except exceptions.NoPrivilegeError as error:
+            logger.info('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_user_id)
+            logger.info('API call error %s ', error)
 
             is_approver = False
 
@@ -84,6 +84,9 @@ def poll_report_approvals() -> None:
                         blocks=report_notification_message
                     )
 
+                    # Track report approval notification received
+                    FyleReportApproval.track_report_notification_received(user, report)
+
 
 def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
 
@@ -95,31 +98,29 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
     user = utils.get_or_none(User, slack_user_id=user_id)
     assertions.assert_found(user, 'Approver not found')
 
-    query_params = {
-        'id': 'eq.{}'.format(report_id),
-        # Mandatory query params required by sdk
-        'limit': 1,
-        'offset': 0,
-        'order': 'last_submitted_at.desc'
-    }
-    report = FyleReportApproval.get_approver_reports(user, query_params)
-    # approver_report = FyleReportApproval.get_report_by_id(user, report_id)
-
-    # Removing CTAs from notification message
-    report_notification_message = []
-    for message_block in notification_message:
-        if message_block['type'] != 'actions':
-            report_notification_message.append(message_block)
+    try:
+        report = FyleReportApproval.get_report_by_id(user, report_id)
+    except exceptions.NotFoundItemError as error:
+        logger.error('Report not found with id -> %s', report_id)
+        logger.error('Error -> %s', error)
+        # None here means report is deleted/doesn't exist
+        report = None
 
     # Check if report is deleted
-    if report['count'] == 0:
-        report_message = 'Seems like this expense report was deleted :red_circle:'
+    if report is None:
+        # Removing CTAs from notification message for deleted report
+        report_notification_message = []
+        for message_block in notification_message:
+            if message_block['type'] != 'actions':
+                report_notification_message.append(message_block)
+
+        report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
         report_notification_message = slack_utils.add_message_section_to_ui_block(
             report_notification_message,
             report_message
         )
     else:
-        report = report['data'][0]
+        report = report['data']
         can_approve_report, report_message = FyleReportApproval.can_approve_report(
             report,
             user.fyle_user_id
@@ -130,9 +131,28 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
         if can_approve_report is True:
+            try:
+                report = FyleReportApproval.approve_report(user, report_id)
+                report = report['data']
+                report_message = 'Expense report approved :rocket:'
 
-            report = FyleReportApproval.approve_report(user, report_id)
-            report_message = 'Expense report approved by you :white_check_mark:'
+                # Track report approved
+                FyleReportApproval.track_report_approved(user, report)
+
+            except exceptions.PlatformError as error:
+                logger.error('Error while processing report approve -> %s', error)
+
+                message = 'Seems like an error occured while approving this report :face_with_head_bandage: \n' \
+                    'Please try approving again or `Review in Fyle` to approve directly from Fyle :zap:'
+
+                # Sending an error message in thread of notification message
+                # With this CTAs are visible if approver wants to approve again
+                slack_client.chat_postMessage(
+                    channel=user.slack_dm_channel_id,
+                    message=message,
+                    thread_ts=message_timestamp
+                )
+                return None
 
         report_notification_message = report_approval_messages.get_report_approval_notification(
             report,

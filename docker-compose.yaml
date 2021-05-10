@@ -3,7 +3,7 @@ version: '3.7'
 services:
   database:
     image: postgres
-    restart: always
+    restart: unless-stopped
     environment:
       POSTGRES_DB: slack_db
       POSTGRES_USER: slack_user
@@ -14,7 +14,7 @@ services:
       - database-slack:/var/lib/postgresql/data/
   slack-app-service:
     build: .
-    restart: always
+    restart: unless-stopped
     environment: 
       DEBUG: "True"
       DB_NAME: slack_db
@@ -33,7 +33,7 @@ services:
       - database
   slack-app-qcluster:
     build: .
-    restart: always
+    restart: unless-stopped
     environment: 
       DEBUG: "True"
       DB_NAME: slack_db

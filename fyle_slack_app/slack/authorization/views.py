@@ -93,6 +93,7 @@ class SlackAuthorization(View):
         tracking.identify_user(user_email)
 
         event_data = {
+            'asset': 'SLACK_APP',
             'slack_user_id': user_id,
             'slack_team_id': slack_team.id,
             'slack_team_name': slack_team.name,
@@ -102,3 +103,10 @@ class SlackAuthorization(View):
         }
 
         tracking.track_event(user_email, 'Slack Bot Installed', event_data)
+
+
+class SlackDirectInstall(View):
+
+    def get(self, request: HttpRequest) -> HttpResponseRedirect:
+        redirect_uri = 'https://slack.com/oauth/v2/authorize?client_id={}&scope=app_mentions:read,chat:write,commands,files:read,groups:read,im:history,im:read,im:write,team:read,users:read,users:read.email&user_scope=users:read'.format(settings.SLACK_CLIENT_ID)
+        return HttpResponseRedirect(redirect_uri)

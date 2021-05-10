@@ -133,7 +133,7 @@ Q_CLUSTER = {
     'name': 'fyle_slack_service',
     'compress': True,
     'save_limit': 0,
-    'workers': 1,
+    'workers': 4,
     'queue_limit': 50,
     'orm': 'default',
     'ack_failures': True,
@@ -150,7 +150,7 @@ LOGGING = {
             'style': '{',
         },
         'requests': {
-            'format': 'request {levelname} %s {asctime} {message}' % 'fyle-slack-service',
+            'format': 'request {levelname} %s {message}' % 'fyle-slack-service',
             'style': '{'
         }
     },
@@ -184,6 +184,11 @@ LOGGING = {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
             'propagate': False
+        },
+        'gunicorn': {
+            'handlers': ['request_logs'],
+            'level': 'INFO',
+            'propagate': False
         }
     }
 }
@@ -194,7 +199,6 @@ LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 FYLE_ACCOUNTS_URL = os.environ['FYLE_ACCOUNTS_URL']
 FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
 FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
-FYLE_PLATFORM_URL = os.environ['FYLE_PLATFORM_URL']
 FYLE_SLACK_APP_SEGMENT_KEY = os.environ['FYLE_SLACK_APP_SEGMENT_KEY']
 FYLE_BRANCHIO_BASE_URI = os.environ['FYLE_BRANCHIO_BASE_URI']
 

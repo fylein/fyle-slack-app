@@ -5,7 +5,7 @@ from django.test import RequestFactory
 from django.conf import settings
 
 from fyle_slack_app.models import Team, User
-from fyle_slack_app.slack.utils import encode_state
+from fyle_slack_app.libs.utils import encode_state, decode_state
 from fyle_slack_app.slack.authorization.views import SlackAuthorization
 from fyle_slack_app.fyle.authorization.views import FyleAuthorization
 
@@ -112,6 +112,8 @@ def test_fyle_authorization(track_fyle_authorization, send_post_authorization_me
     # in function which is to be tested
     mock_team = mock.Mock(spec=Team)
     utils.get_or_none.side_effect = [mock_team, None]
+
+    utils.decode_state = decode_state
 
     mock_slack_user_dm_channel_id = 'UDM12345'
     slack_user_dm_channel_id.return_value = mock_slack_user_dm_channel_id

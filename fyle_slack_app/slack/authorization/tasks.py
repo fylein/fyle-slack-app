@@ -1,9 +1,10 @@
 from slack_sdk import WebClient
 
+from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.models import Team
 from fyle_slack_app.slack.ui.authorization import messages
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_fyle_oauth_url
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 
 
 def broadcast_installation_message(slack_team_id: str) -> None:
@@ -18,7 +19,7 @@ def broadcast_installation_message(slack_team_id: str) -> None:
     for workspace_user in slack_workspace_users['members']:
         if workspace_user['deleted'] is False and workspace_user['is_bot'] is False:
 
-            fyle_oauth_url = get_fyle_oauth_url(workspace_user['id'], workspace_user['team_id'])
+            fyle_oauth_url = fyle_utils.get_fyle_oauth_url(workspace_user['id'], workspace_user['team_id'])
 
             workspace_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, workspace_user['id'])
 

@@ -9,6 +9,7 @@ from django.contrib.auth import authenticate
 
 from django_q.models import Schedule
 
+from fyle_slack_app import tracking
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import assertions
@@ -33,7 +34,7 @@ class FyleReportApproval:
     @staticmethod
     def approve_report(user: User, report_id: str) -> Dict:
         connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
-        approved_report = connection.v1.approver.reports.post(report_id)
+        approved_report = connection.v1.approver.reports.approve(report_id)
         return approved_report
 
 
@@ -47,11 +48,11 @@ class FyleReportApproval:
 
         if report['state'] == 'APPROVER_INQUIRY':
             can_approve_report = False
-            report_message = 'This expense report can\'t be approved as it is sent back to the employee :x:'
+            report_message = 'This expense report has been sent back to the employee'
 
         elif report['state'] in report_approved_states:
             can_approve_report = False
-            report_message = 'This expense report is already approved :white_check_mark:'
+            report_message = 'This expense report has already been approved :white_check_mark:'
 
         elif can_approve_report is True:
 
@@ -61,15 +62,57 @@ class FyleReportApproval:
 
                     if approver['state'] == 'APPROVAL_DONE':
                         can_approve_report = False
-                        report_message = 'This expense report is already approved by you :white_check_mark:'
+                        report_message = 'Looks like you\'ve already approved this expense report :see_no_evil:'
                         break
 
                     if approver['state'] == 'APPROVAL_DISABLED':
                         can_approve_report = False
-                        report_message = 'Your approval is disabled on this expense report :x:'
+                        report_message = 'Looks like you no longer have permission to approve this expense report :see_no_evil:'
                         break
 
         return can_approve_report, report_message
+
+
+    @staticmethod
+    def get_tracking_event_data(user: User, report: Dict) -> Dict:
+        event_data = {
+            'asset': 'SLACK_APP',
+            'slack_user_id': user.slack_user_id,
+            'fyle_user_id': user.fyle_user_id,
+            'email': user.email,
+            'slack_team_id': user.slack_team.id,
+            'slack_team_name': user.slack_team.name,
+            'report_id': report['id'],
+            'org_id': report['org_id']
+        }
+
+        return event_data
+
+    @staticmethod
+    def track_report_notification_received(user: User, report: Dict) -> None:
+        event_data = FyleReportApproval.get_tracking_event_data(user, report)
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, 'Report Approval Notification Received', event_data)
+
+
+    @staticmethod
+    def track_report_approved(user: User, report: Dict) -> None:
+        event_data = FyleReportApproval.get_tracking_event_data(user, report)
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, 'Report Approved From Slack', event_data)
+
+
+    @staticmethod
+    def track_report_reviewed_in_fyle(user: User, report: Dict) -> None:
+        event_data = FyleReportApproval.get_tracking_event_data(user, report)
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, 'Report Reviewed In Fyle', event_data)
 
 
 class FyleReportPolling(View):

@@ -1,6 +1,9 @@
 from typing import Any, Dict, Union
 
+import base64
 import datetime
+import json
+
 from urllib.parse import quote_plus, urlencode
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -30,3 +33,18 @@ def convert_to_branchio_url(url: str, query_params: Dict = None) -> str:
         encoded_query_params = urlencode(query_params)
         branchio_url = '{}?{}'.format(branchio_url, encoded_query_params)
     return branchio_url
+
+
+def encode_state(state_params: Dict) -> str:
+    state = json.dumps(state_params)
+
+    encoded_state = state.encode()
+    base64_encoded_state = base64.urlsafe_b64encode(encoded_state).decode()
+
+    return base64_encoded_state
+
+
+def decode_state(state: str) -> Dict:
+    decoded_state = base64.urlsafe_b64decode(state.encode())
+    state_params = json.loads(decoded_state.decode())
+    return state_params

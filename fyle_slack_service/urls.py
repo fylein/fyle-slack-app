@@ -24,12 +24,19 @@ from fyle_slack_app.slack.commands import views as slack_command_views
 from fyle_slack_app.fyle.authorization import views as fyle_auth_views
 from fyle_slack_app.fyle.report_approvals import views as fyle_report_approval_views
 
+from fyle_slack_service import ready
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
+    #Kubernetes ready call
+    path('ready', ready),
+
     # Slack routes
     path('slack/authorization', slack_auth_views.SlackAuthorization.as_view()),
+
+    path('slack/direct_install', slack_auth_views.SlackDirectInstall.as_view()),
 
     # Fyle routes
     path('fyle/authorization', fyle_auth_views.FyleAuthorization.as_view()),
