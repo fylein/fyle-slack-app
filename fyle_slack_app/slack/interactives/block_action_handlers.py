@@ -139,7 +139,7 @@ class BlockActionHandler:
 
         notification_type = ACTION_NOTIFICATION_PREFERENCE_MAPPING[action_id]
 
-        notification_preference = utils.get_or_none(NotificationPreference, slack_user_id=user_id, notification_type=notification_type)
+        notification_preference = NotificationPreference.objects.get(slack_user_id=user_id, notification_type=notification_type)
         notification_preference.is_enabled = is_enabled
         notification_preference.save()
 
