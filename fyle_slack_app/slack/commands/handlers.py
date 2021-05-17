@@ -5,8 +5,9 @@ from django.http.response import JsonResponse
 from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
-from fyle_slack_app.models import User
+from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
+from fyle_slack_app.slack.ui.notification_preferences import messages as notification_preference_messages
 from fyle_slack_app.slack import utils as slack_utils
 
 
@@ -16,7 +17,8 @@ class SlackCommandHandler:
 
     def _initialize_command_handlers(self):
         self._command_handlers = {
-            'fyle_unlink_account': self.handle_fyle_unlink_account
+            'fyle_unlink_account': self.handle_fyle_unlink_account,
+            'fyle_notification_preferences': self.handle_fyle_notification_preferences
         }
 
     def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
@@ -81,6 +83,24 @@ class SlackCommandHandler:
         )
 
         slack_client.views_publish(user_id=user_id, view=pre_auth_message_view)
+
+
+    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user, 'Slack user not found')
+
+        user_notification_preferences = NotificationPreference.objects.values_list('notification_type', flat=True).filter(slack_user_id=user_id)
+
+        notification_preference_blocks = notification_preference_messages.get_notification_preferences_blocks(user_notification_preferences)
+
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        slack_client.chat_postMessage(
+            blocks=notification_preference_blocks,
+            channel=user_dm_channel_id
+        )
+
+        return JsonResponse({}, status=200)
 
 
     def track_fyle_account_unlinked(self, user: User) -> None:
