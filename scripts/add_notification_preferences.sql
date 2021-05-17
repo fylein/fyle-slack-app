@@ -22,7 +22,7 @@ begin
             is_enabled
         ) select slack_user_id,
         _notification_type as notification_type,
-        true as is_enabled 
+        true as is_enabled
         from users
         on conflict (slack_user_id, notification_type) do nothing;
     end loop;

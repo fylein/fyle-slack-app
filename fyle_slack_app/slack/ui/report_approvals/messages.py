@@ -19,7 +19,7 @@ def get_report_section_blocks(report: Dict, user_display_name: str) -> List[Dict
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': ':envelope_with_arrow: *{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(
+                'text': '*{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(
                     user_display_name,
                     user_email,
                     report_claim_number
