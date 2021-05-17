@@ -60,7 +60,7 @@ class ShortcutHandler:
 
         user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
 
-        user_notification_preferences = NotificationPreference.objects.values_list('notification_type', flat=True).filter(slack_user_id=user_id)
+        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id)
 
         notification_preference_blocks = notification_preference_messages.get_notification_preferences_blocks(user_notification_preferences)
 

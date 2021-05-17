@@ -89,7 +89,7 @@ class SlackCommandHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Slack user not found')
 
-        user_notification_preferences = NotificationPreference.objects.values_list('notification_type', flat=True).filter(slack_user_id=user_id)
+        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id)
 
         notification_preference_blocks = notification_preference_messages.get_notification_preferences_blocks(user_notification_preferences)
 
