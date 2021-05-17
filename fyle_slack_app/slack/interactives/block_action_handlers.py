@@ -135,7 +135,7 @@ class BlockActionHandler:
             'approver_report_approval_notification_preference': NotificationType.APPROVER_REPORT_APPROVAL.value
         }
 
-        is_enabled = True if value == 'enabled' else False
+        is_enabled = True if value == 'enable' else False
 
         notification_type = ACTION_NOTIFICATION_PREFERENCE_MAPPING[action_id]
 

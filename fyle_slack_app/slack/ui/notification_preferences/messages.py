@@ -37,12 +37,7 @@ NOTIFICATION_TYPE_UI_DETAILS = {
 
 
 def get_notification_preference_option(is_enabled: bool) -> Dict:
-    option_text = 'Disable'
-    option_value = 'disable'
-
-    if is_enabled:
-        option_text = 'Enable'
-        option_value = 'enable'
+    option_text, option_value = ('Enable', 'enable') if is_enabled is True else ('Disable', 'disable')
 
     option = {
         "text": {
