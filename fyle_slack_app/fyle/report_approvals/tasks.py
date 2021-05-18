@@ -28,64 +28,68 @@ def poll_report_approvals() -> None:
     for report_polling_detail in report_polling_details:
         user = report_polling_detail.slack_user
 
-        slack_client = WebClient(token=user.slack_team.bot_access_token)
-
-        approver_user_id = user.fyle_user_id
-
-        last_submitted_at = report_polling_detail.last_successful_poll_at.isoformat()
-
-        # Fetch approver reports to approve - i.e. report state -> APPROVER_PENDING & approval state -> APPROVAL_PENDING
-        query_params = {
-            'state': 'eq.APPROVER_PENDING',
-            'approvals': 'cs.[{{ "approver_user_id": {}, "state": "APPROVAL_PENDING" }}]'.format(approver_user_id),
-            'last_submitted_at': 'gte.{}'.format(last_submitted_at),
-
-            # Mandatory query params required by sdk
-            'limit': 50, # Assuming no more than 50 reports will be there in 10 min poll
-            'offset': 0,
-            'order': 'last_submitted_at.desc'
-        }
-
-        # Since not all users will be approvers so the sdk api call with throw exception
-        is_approver = True
         try:
+            fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
+        except exceptions.NotFoundItemError as error:
+            logger.info('Fyle profile not found for user %s - %s', user.slack_user_id, user.fyle_user_id)
+            logger.info('API call error %s', error)
+
+            return None
+
+        if 'APPROVER' in fyle_profile['roles']:
+
+            slack_client = WebClient(token=user.slack_team.bot_access_token)
+
+            approver_user_id = user.fyle_user_id
+
+            last_submitted_at = report_polling_detail.last_successful_poll_at.isoformat()
+
+            # Fetch approver reports to approve - i.e. report state -> APPROVER_PENDING & approval state -> APPROVAL_PENDING
+            query_params = {
+                'state': 'eq.APPROVER_PENDING',
+                'approvals': 'cs.[{{ "approver_user_id": {}, "state": "APPROVAL_PENDING" }}]'.format(approver_user_id),
+                'last_submitted_at': 'gte.{}'.format(last_submitted_at),
+
+                # Mandatory query params required by sdk
+                'limit': 50, # Assuming no more than 50 reports will be there in 10 min poll
+                'offset': 0,
+                'order': 'last_submitted_at.desc'
+            }
+
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
-        except exceptions.NoPrivilegeError as error:
-            logger.info('Get approver reports call failed for %s - %s', user.slack_user_id, user.fyle_user_id)
-            logger.info('API call error %s ', error)
 
             is_approver = False
 
-        if is_approver:
+            if is_approver:
 
-            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+                report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
-            if approver_reports['count'] > 0:
-                # Save current timestamp as last_successful_poll_at
-                # This will fetch new reports in next poll
-                report_polling_detail.last_successful_poll_at = timezone.now()
-                report_polling_detail.save()
+                if approver_reports['count'] > 0:
+                    # Save current timestamp as last_successful_poll_at
+                    # This will fetch new reports in next poll
+                    report_polling_detail.last_successful_poll_at = timezone.now()
+                    report_polling_detail.save()
 
-                for report in approver_reports['data']:
+                    for report in approver_reports['data']:
 
-                    user_display_name = slack_utils.get_user_display_name(
-                        slack_client,
-                        report['user']
-                    )
+                        user_display_name = slack_utils.get_user_display_name(
+                            slack_client,
+                            report['user']
+                        )
 
-                    report_notification_message = report_approval_messages.get_report_approval_notification(
-                        report,
-                        user_display_name,
-                        report_url
-                    )
+                        report_notification_message = report_approval_messages.get_report_approval_notification(
+                            report,
+                            user_display_name,
+                            report_url
+                        )
 
-                    slack_client.chat_postMessage(
-                        channel=user.slack_dm_channel_id,
-                        blocks=report_notification_message
-                    )
+                        slack_client.chat_postMessage(
+                            channel=user.slack_dm_channel_id,
+                            blocks=report_notification_message
+                        )
 
-                    # Track report approval notification received
-                    FyleReportApproval.track_report_notification_received(user, report)
+                        # Track report approval notification received
+                        FyleReportApproval.track_report_notification_received(user, report)
 
 
 def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
