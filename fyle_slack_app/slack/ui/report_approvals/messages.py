@@ -30,7 +30,7 @@ def get_report_section_blocks(report: Dict, user_display_name: str) -> List[Dict
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '*{}*'.format(report['purpose'])
+                'text': '*Report Name:* {}'.format(report['purpose'])
             }
         },
         {
