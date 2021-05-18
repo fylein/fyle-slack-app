@@ -120,5 +120,15 @@
                 }
             }
         }
+    },
+    "fyler": {
+        "my_profile": {
+            "get": {
+                "data": {
+                    "user_id": "abcd12344",
+                    "roles": ["ABCD"]
+                }
+            }
+        }
     }
 }

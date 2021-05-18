@@ -58,38 +58,34 @@ def poll_report_approvals() -> None:
 
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
 
-            is_approver = False
+            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
-            if is_approver:
+            if approver_reports['count'] > 0:
+                # Save current timestamp as last_successful_poll_at
+                # This will fetch new reports in next poll
+                report_polling_detail.last_successful_poll_at = timezone.now()
+                report_polling_detail.save()
 
-                report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+                for report in approver_reports['data']:
 
-                if approver_reports['count'] > 0:
-                    # Save current timestamp as last_successful_poll_at
-                    # This will fetch new reports in next poll
-                    report_polling_detail.last_successful_poll_at = timezone.now()
-                    report_polling_detail.save()
+                    user_display_name = slack_utils.get_user_display_name(
+                        slack_client,
+                        report['user']
+                    )
 
-                    for report in approver_reports['data']:
+                    report_notification_message = report_approval_messages.get_report_approval_notification(
+                        report,
+                        user_display_name,
+                        report_url
+                    )
 
-                        user_display_name = slack_utils.get_user_display_name(
-                            slack_client,
-                            report['user']
-                        )
+                    slack_client.chat_postMessage(
+                        channel=user.slack_dm_channel_id,
+                        blocks=report_notification_message
+                    )
 
-                        report_notification_message = report_approval_messages.get_report_approval_notification(
-                            report,
-                            user_display_name,
-                            report_url
-                        )
-
-                        slack_client.chat_postMessage(
-                            channel=user.slack_dm_channel_id,
-                            blocks=report_notification_message
-                        )
-
-                        # Track report approval notification received
-                        FyleReportApproval.track_report_notification_received(user, report)
+                    # Track report approval notification received
+                    FyleReportApproval.track_report_notification_received(user, report)
 
 
 def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
