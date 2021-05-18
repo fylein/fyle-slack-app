@@ -18,6 +18,8 @@ logger = logger.get_logger(__name__)
 
 
 def poll_report_approvals() -> None:
+    polling_start_time = timezone.now()
+    logger.info('Report polling started %s', polling_start_time)
     # select_related joins the two table with foreign key column
     # 1st join -> `report_polling_details` table with `users` table with `user` field
     # 2nd join -> `__slack_team` joins `users` table with `teams` table
@@ -86,6 +88,10 @@ def poll_report_approvals() -> None:
 
                     # Track report approval notification received
                     FyleReportApproval.track_report_notification_received(user, report)
+
+    polling_end_time = timezone.now()
+    logger.info('Report polling ended %s', polling_end_time)
+    logger.info('Polling time taken: %s', polling_end_time - polling_start_time)
 
 
 def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
