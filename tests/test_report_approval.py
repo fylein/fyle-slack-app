@@ -22,6 +22,11 @@ def test_report_polling(report_approval_messages, slack_utils, fyle_utils, fyle_
     ]
     report_polling_detail.objects.select_related.return_value.all.return_value = mock_report_polling_objects
 
+    mock_fyle_profile = mock_fyle.fyler.my_profile.get()['data']
+    # Adding APPROVER role for testing
+    mock_fyle_profile['roles'].append('APPROVER')
+    fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
+
     mock_user_details = {
         'id': 'mock-user-id',
         'email': 'john.doe@example.com',
@@ -64,6 +69,9 @@ def test_report_polling(report_approval_messages, slack_utils, fyle_utils, fyle_
     report_polling_detail.objects.select_related.assert_called_once()
     report_polling_detail.objects.select_related.assert_called_once_with('slack_user__slack_team')
     report_polling_detail.objects.select_related.return_value.all.assert_called_once()
+
+    fyle_utils.get_fyle_profile.assert_called()
+    fyle_utils.get_fyle_profile.assert_called_with(mock_user.fyle_refresh_token)
 
     fyle_report_approval.get_approver_reports.assert_called()
     fyle_report_approval.get_approver_reports.assert_called_with(mock_user, mock_query_params)
