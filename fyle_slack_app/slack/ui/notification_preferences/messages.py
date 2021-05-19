@@ -36,7 +36,7 @@ def get_notification_preference_option(is_enabled: bool) -> Dict:
     return option
 
 
-def check_notification_roles_allowed(role_required, user_roles):
+def check_notification_roles_allowed(role_required: str, user_roles: List[str]) -> bool:
     allowed = False
 
     if role_required in user_roles:
