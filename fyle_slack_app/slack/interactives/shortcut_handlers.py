@@ -6,6 +6,7 @@ from fyle_slack_app.models import NotificationPreference, User
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.notification_preferences import messages as notification_preference_messages
+from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 
 
 logger = logger.get_logger(__name__)
@@ -53,19 +54,11 @@ class ShortcutHandler:
 
 
     def handle_notification_preferences(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        user = utils.get_or_none(User, slack_user_id=user_id)
-        assertions.assert_found(user, 'Slack user not found')
 
         slack_client = slack_utils.get_slack_client(team_id)
 
         user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
 
-        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id)
+        SlackCommandHandler().handle_fyle_notification_preferences(user_id, team_id, user_dm_channel_id)
 
-        notification_preference_blocks = notification_preference_messages.get_notification_preferences_blocks(user_notification_preferences)
-
-        slack_client.chat_postMessage(
-            blocks=notification_preference_blocks,
-            channel=user_dm_channel_id
-        )
         return JsonResponse({}, status=200)
