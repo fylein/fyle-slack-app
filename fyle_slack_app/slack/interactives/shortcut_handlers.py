@@ -2,10 +2,8 @@ from typing import Callable, Dict
 
 from django.http import JsonResponse
 
-from fyle_slack_app.models import NotificationPreference, User
-from fyle_slack_app.libs import assertions, utils, logger
+from fyle_slack_app.libs import logger
 from fyle_slack_app.slack import utils as slack_utils
-from fyle_slack_app.slack.ui.notification_preferences import messages as notification_preference_messages
 from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 
 
