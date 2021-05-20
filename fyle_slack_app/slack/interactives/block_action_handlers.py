@@ -37,7 +37,7 @@ class BlockActionHandler:
         user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
-            text='Seems like something bad happened :zipper_mouth_face: \n Please try again'
+            text='Looks like something went wrong :zipper_mouth_face: \n Please try again'
         )
         return JsonResponse({}, status=200)
 

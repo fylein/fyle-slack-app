@@ -23,12 +23,12 @@ def poll_report_approvals() -> None:
     logger.info('Report polling started %s', polling_start_time)
 
     # Fetching only those users who have enabled report approval notifications
-    report_approvl_notification_preferences = NotificationPreference.objects.select_related('slack_user').filter(
+    report_approval_notification_preferences = NotificationPreference.objects.select_related('slack_user').filter(
         notification_type=NotificationType.APPROVER_REPORT_APPROVAL.value,
         is_enabled=True
     )
 
-    for user_notification_preference in report_approvl_notification_preferences:
+    for user_notification_preference in report_approval_notification_preferences:
         user = user_notification_preference.slack_user
 
         try:

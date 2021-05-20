@@ -11,10 +11,10 @@ def create_notification_preference(sender, instance, created, **kwargs):
     if created:
         # Creating notification preferences list for bulk create
         notification_preferences = []
-        for _notification_type in NotificationType:
+        for notification_type in NotificationType:
             notification_preference = NotificationPreference(
                 slack_user=instance,
-                notification_type=_notification_type.value
+                notification_type=notification_type.value
             )
             notification_preferences.append(notification_preference)
 
