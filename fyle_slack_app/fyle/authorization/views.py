@@ -1,3 +1,5 @@
+from typing import Dict
+
 from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
@@ -78,7 +80,7 @@ class FyleAuthorization(View):
                 self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
 
                 # Track fyle account link to slack
-                self.track_fyle_authorization(user)
+                self.track_fyle_authorization(user, fyle_profile)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
@@ -132,14 +134,15 @@ class FyleAuthorization(View):
         )
 
 
-    def track_fyle_authorization(self, user: User) -> None:
+    def track_fyle_authorization(self, user: User, fyle_profile: Dict) -> None:
         event_data = {
             'asset': 'SLACK_APP',
             'slack_user_id': user.slack_user_id,
             'fyle_user_id': user.fyle_user_id,
             'email': user.email,
             'slack_team_id': user.slack_team.id,
-            'slack_team_name': user.slack_team.name
+            'slack_team_name': user.slack_team.name,
+            'fyle_roles': fyle_profile['roles']
         }
 
         tracking.identify_user(user.email)

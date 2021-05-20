@@ -91,7 +91,7 @@ def test_slack_authorization(track_installation, slack_client, async_task, team,
 @mock.patch.object(FyleAuthorization, 'create_report_polling_entry')
 @mock.patch.object(FyleAuthorization, 'send_post_authorization_message')
 @mock.patch.object(FyleAuthorization, 'track_fyle_authorization')
-def test_fyle_authorization(track_fyle_authorization, send_post_authorization_message, create_report_polling_entry, create_user, slack_client, slack_user_dm_channel_id, fyle_utils, utils):
+def test_fyle_authorization(track_fyle_authorization, send_post_authorization_message, create_report_polling_entry, create_user, slack_client, slack_user_dm_channel_id, fyle_utils, utils, mock_fyle):
 
     state_params = {
         'team_id': 'T12345',
@@ -122,9 +122,7 @@ def test_fyle_authorization(track_fyle_authorization, send_post_authorization_me
     mock_fyle_refresh_token = 'fyle-refresh-token'
     fyle_utils.get_fyle_refresh_token.return_value = mock_fyle_refresh_token
 
-    mock_fyle_profile = {
-        'user_id': 'abcd12344'
-    }
+    mock_fyle_profile = mock_fyle.fyler.my_profile.get()['data']
     fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
 
     create_report_polling_entry.return_value = None
@@ -165,4 +163,4 @@ def test_fyle_authorization(track_fyle_authorization, send_post_authorization_me
     utils.get_or_none.assert_has_calls(expected_calls)
 
     track_fyle_authorization.assert_called_once()
-    track_fyle_authorization.assert_called_with(mock_user)
+    track_fyle_authorization.assert_called_with(mock_user, mock_fyle_profile)
