@@ -4,10 +4,9 @@ from django.http import HttpRequest, JsonResponse
 
 from fyle_slack_app.slack import SlackView
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
-from fyle_slack_app.slack.interactives.shortcut_handlers import ShortcutHandler
 
 
-class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler):
+class SlackInteractiveView(SlackView, BlockActionHandler):
 
     def post(self, request: HttpRequest) -> JsonResponse:
         payload = request.POST.get('payload')
@@ -23,9 +22,5 @@ class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler):
         if event_type == 'block_actions':
             # Call handler function from BlockActionHandler
             return self.handle_block_actions(slack_payload, user_id, team_id)
-
-        elif event_type == 'shortcut':
-            # Call handler function from ShortcutHandler
-            return self.handle_shortcuts(slack_payload, user_id, team_id)
 
         return JsonResponse({}, status=200)
