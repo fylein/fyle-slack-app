@@ -6,7 +6,8 @@ from django_q.tasks import async_task
 
 from fyle.platform import exceptions
 
-from fyle_slack_app.models.users import User
+from fyle_slack_app.models import User, NotificationPreference
+from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, add_message_section_to_ui_block, get_slack_client
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
@@ -24,7 +25,8 @@ class BlockActionHandler:
         self._block_action_handlers = {
             'link_fyle_account': self.link_fyle_account,
             'review_report_in_fyle': self.review_report_in_fyle,
-            'approve_report': self.approve_report
+            'approve_report': self.approve_report,
+            'approver_report_approval_notification_preference': self.handle_notification_preference_selection
         }
 
 
@@ -35,7 +37,7 @@ class BlockActionHandler:
         user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
-            text='Seems like something bad happened :zipper_mouth_face: \n Please try again'
+            text='Looks like something went wrong :zipper_mouth_face: \n Please try again'
         )
         return JsonResponse({}, status=200)
 
@@ -118,5 +120,27 @@ class BlockActionHandler:
             message_ts,
             message_blocks
         )
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_notification_preference_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user)
+
+        action_id = slack_payload['actions'][0]['action_id']
+        value = slack_payload['actions'][0]['selected_option']['value']
+
+        ACTION_NOTIFICATION_PREFERENCE_MAPPING = {
+            'approver_report_approval_notification_preference': NotificationType.APPROVER_REPORT_APPROVAL.value
+        }
+
+        is_enabled = True if value == 'enable' else False
+
+        notification_type = ACTION_NOTIFICATION_PREFERENCE_MAPPING[action_id]
+
+        notification_preference = NotificationPreference.objects.get(slack_user_id=user_id, notification_type=notification_type)
+        notification_preference.is_enabled = is_enabled
+        notification_preference.save()
 
         return JsonResponse({}, status=200)

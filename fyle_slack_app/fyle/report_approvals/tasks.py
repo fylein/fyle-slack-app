@@ -6,7 +6,8 @@ from slack_sdk.web import WebClient
 from fyle.platform import exceptions
 
 from fyle_slack_app.slack import utils as slack_utils
-from fyle_slack_app.models import ReportPollingDetail, Team, User
+from fyle_slack_app.models import ReportPollingDetail, Team, User, NotificationPreference
+from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 from fyle_slack_app.libs import logger
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -20,15 +21,15 @@ logger = logger.get_logger(__name__)
 def poll_report_approvals() -> None:
     polling_start_time = timezone.now()
     logger.info('Report polling started %s', polling_start_time)
-    # select_related joins the two table with foreign key column
-    # 1st join -> `report_polling_details` table with `users` table with `user` field
-    # 2nd join -> `__slack_team` joins `users` table with `teams` table
 
-    # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
-    report_polling_details = ReportPollingDetail.objects.select_related('slack_user__slack_team').all()
+    # Fetching only those users who have enabled report approval notifications
+    report_approval_notification_preferences = NotificationPreference.objects.select_related('slack_user').filter(
+        notification_type=NotificationType.APPROVER_REPORT_APPROVAL.value,
+        is_enabled=True
+    )
 
-    for report_polling_detail in report_polling_details:
-        user = report_polling_detail.slack_user
+    for user_notification_preference in report_approval_notification_preferences:
+        user = user_notification_preference.slack_user
 
         try:
             fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
@@ -39,6 +40,15 @@ def poll_report_approvals() -> None:
             return None
 
         if 'APPROVER' in fyle_profile['roles']:
+
+            # select_related joins the two table with foreign key column
+            # 1st join -> `report_polling_details` table with `users` table with `user` field
+            # 2nd join -> `__slack_team` joins `users` table with `teams` table
+
+            # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
+            report_polling_detail = ReportPollingDetail.objects.select_related('slack_user__slack_team').get(slack_user_id=user.slack_user_id)
+
+            user = report_polling_detail.slack_user
 
             slack_client = WebClient(token=user.slack_team.bot_access_token)
 
