@@ -1,6 +1,7 @@
 import mock
 
-from fyle_slack_app.models import ReportPollingDetail, User, Team
+from fyle_slack_app.models import ReportPollingDetail, User, Team, NotificationPreference
+from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.fyle.report_approvals.tasks import poll_report_approvals, process_report_approval
 
 
@@ -10,18 +11,22 @@ from fyle_slack_app.fyle.report_approvals.tasks import poll_report_approvals, pr
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.fyle_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.slack_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.report_approval_messages')
-@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.User')
-def test_report_polling(user, report_approval_messages, slack_utils, fyle_utils, fyle_report_approval, slack_client, report_polling_detail, mock_fyle):
+@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.NotificationPreference')
+def test_report_polling(notification_preference, report_approval_messages, slack_utils, fyle_utils, fyle_report_approval, slack_client, report_polling_detail, mock_fyle):
+
     mock_user = mock.Mock(spec=User)
     mock_user.fyle_user_id = 'mock-fyle-approver-user-id'
 
-    mock_report_polling_detail = mock.Mock(spec=ReportPollingDetail)
-    user.objects.select_related.return_value.get.return_value = mock_user
-
-    mock_report_polling_objects = [
-        mock_report_polling_detail
+    mock_notification_preference = mock.Mock(spec=NotificationPreference)
+    mock_notification_preference.slack_user = mock_user
+    notification_preference.objects.select_related.return_value.filter.return_value = [
+        mock_notification_preference
     ]
-    report_polling_detail.objects.all.return_value = mock_report_polling_objects
+
+    mock_report_polling_detail = mock.Mock(spec=ReportPollingDetail)
+
+    report_polling_detail.objects.select_related.return_value.get.return_value = mock_report_polling_detail
+    report_polling_detail.slack_user = mock_user
 
     mock_fyle_profile = mock_fyle.fyler.my_profile.get()['data']
     # Adding APPROVER role for testing
@@ -38,7 +43,7 @@ def test_report_polling(user, report_approval_messages, slack_utils, fyle_utils,
 
     mock_query_params = {
         'state': 'eq.APPROVER_PENDING',
-        'approvals': 'cs.[{{ "approver_user_id": {}, "state": "APPROVAL_PENDING" }}]'.format(mock_user.fyle_user_id),
+        'approvals': 'cs.[{{ "approver_user_id": {}, "state": "APPROVAL_PENDING" }}]'.format(mock_report_polling_detail.slack_user.fyle_user_id),
         'last_submitted_at': 'gte.{}'.format(last_submitted_at),
 
         # Mandatory query params required by sdk
@@ -67,18 +72,23 @@ def test_report_polling(user, report_approval_messages, slack_utils, fyle_utils,
     poll_report_approvals()
 
     # Assertion check for required methods that have been called
-    report_polling_detail.objects.all.assert_called_once()
+    notification_preference.objects.select_related.assert_called_once()
+    notification_preference.objects.select_related.assert_called_once_with('slack_user')
+    notification_preference.objects.select_related.return_value.filter.asser_called()
+    notification_preference.objects.select_related.return_value.filter.asser_called_with(NotificationType.APPROVER_REPORT_APPROVAL.value, True)
 
-    user.objects.select_related.return_value.get.assert_called()
+    report_polling_detail.objects.select_related.assert_called()
+    report_polling_detail.objects.select_related.assert_called_with('slack_user__slack_team')
+    report_polling_detail.objects.select_related.return_value.get.assert_called()
 
     fyle_utils.get_fyle_profile.assert_called()
     fyle_utils.get_fyle_profile.assert_called_with(mock_user.fyle_refresh_token)
 
     fyle_report_approval.get_approver_reports.assert_called()
-    fyle_report_approval.get_approver_reports.assert_called_with(mock_user, mock_query_params)
+    fyle_report_approval.get_approver_reports.assert_called_with(mock_report_polling_detail.slack_user, mock_query_params)
 
     fyle_utils.get_fyle_report_url.assert_called()
-    fyle_utils.get_fyle_report_url.assert_called_with(mock_user.fyle_refresh_token)
+    fyle_utils.get_fyle_report_url.assert_called_with(mock_report_polling_detail.slack_user.fyle_refresh_token)
 
     slack_utils.get_user_display_name.assert_called()
     slack_utils.get_user_display_name.assert_called_with(slack_client(), mock_user_details)
