@@ -70,9 +70,10 @@ def poll_report_approvals() -> None:
 
             approver_reports = FyleReportApproval.get_approver_reports(user, query_params)
 
-            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
-
             if approver_reports['count'] > 0:
+
+                report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+
                 # Save current timestamp as last_successful_poll_at
                 # This will fetch new reports in next poll
                 report_polling_detail.last_successful_poll_at = timezone.now()
