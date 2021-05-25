@@ -24,9 +24,9 @@ def test_report_polling(notification_preference, report_approval_messages, slack
     ]
 
     mock_report_polling_detail = mock.Mock(spec=ReportPollingDetail)
-    mock_report_polling_detail.slack_user = mock_user
 
     report_polling_detail.objects.select_related.return_value.get.return_value = mock_report_polling_detail
+    report_polling_detail.slack_user = mock_user
 
     mock_fyle_profile = mock_fyle.fyler.my_profile.get()['data']
     # Adding APPROVER role for testing
@@ -85,10 +85,10 @@ def test_report_polling(notification_preference, report_approval_messages, slack
     fyle_utils.get_fyle_profile.assert_called_with(mock_user.fyle_refresh_token)
 
     fyle_report_approval.get_approver_reports.assert_called()
-    fyle_report_approval.get_approver_reports.assert_called_with(mock_user, mock_query_params)
+    fyle_report_approval.get_approver_reports.assert_called_with(mock_report_polling_detail.slack_user, mock_query_params)
 
     fyle_utils.get_fyle_report_url.assert_called()
-    fyle_utils.get_fyle_report_url.assert_called_with(mock_user.fyle_refresh_token)
+    fyle_utils.get_fyle_report_url.assert_called_with(mock_report_polling_detail.slack_user.fyle_refresh_token)
 
     slack_utils.get_user_display_name.assert_called()
     slack_utils.get_user_display_name.assert_called_with(slack_client(), mock_user_details)
