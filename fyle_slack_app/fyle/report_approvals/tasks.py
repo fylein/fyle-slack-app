@@ -20,15 +20,11 @@ logger = logger.get_logger(__name__)
 def poll_report_approvals() -> None:
     polling_start_time = timezone.now()
     logger.info('Report polling started %s', polling_start_time)
-    # select_related joins the two table with foreign key column
-    # 1st join -> `report_polling_details` table with `users` table with `user` field
-    # 2nd join -> `__slack_team` joins `users` table with `teams` table
 
-    # 2 joins because we need user details (from `users` table) and team details (from `teams` table)
-    report_polling_details = ReportPollingDetail.objects.select_related('slack_user__slack_team').all()
+    report_polling_details = ReportPollingDetail.objects.all()
 
     for report_polling_detail in report_polling_details:
-        user = report_polling_detail.slack_user
+        user = User.objects.select_related('slack_team').get(slack_user_id=report_polling_detail.slack_user_id)
 
         try:
             fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
