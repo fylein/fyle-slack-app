@@ -26,7 +26,7 @@ class BlockActionHandler:
             'link_fyle_account': self.link_fyle_account,
             'review_report_in_fyle': self.review_report_in_fyle,
             'approve_report': self.approve_report,
-            'approver_report_approval_notification_preference': self.handle_notification_preference_selection
+            'report_submitted_notification_preference': self.handle_notification_preference_selection
         }
 
 
@@ -132,7 +132,7 @@ class BlockActionHandler:
         value = slack_payload['actions'][0]['selected_option']['value']
 
         ACTION_NOTIFICATION_PREFERENCE_MAPPING = {
-            'approver_report_approval_notification_preference': NotificationType.APPROVER_REPORT_APPROVAL.value
+            'report_submitted_notification_preference': NotificationType.REPORT_SUBMITTED.value
         }
 
         is_enabled = True if value == 'enable' else False

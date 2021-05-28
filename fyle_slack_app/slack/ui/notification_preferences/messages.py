@@ -4,7 +4,7 @@ from fyle_slack_app.models.notification_preferences import NotificationType
 
 
 NOTIFICATION_TYPE_UI_DETAILS = {
-    NotificationType.APPROVER_REPORT_APPROVAL.value: {
+    NotificationType.REPORT_SUBMITTED.value: {
         'role_required': 'APPROVER',
         'ui': {
             "type": "section",
@@ -14,7 +14,7 @@ NOTIFICATION_TYPE_UI_DETAILS = {
             },
             "accessory": {
                 "type": "radio_buttons",
-                "action_id": "approver_report_approval_notification_preference"
+                "action_id": "report_submitted_notification_preference"
             }
         }
     }

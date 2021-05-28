@@ -4,9 +4,16 @@ from django.db import models
 
 from fyle_slack_app.models.users import User
 
-# Defining notification types in <role>_<event_type>
+# Defining notification types in <resource>_<resource_action> format
+# Similar to payload received in webhook to keep it consistent
 class NotificationType(enum.Enum):
-    APPROVER_REPORT_APPROVAL = 'APPROVER_REPORT_APPROVAL'
+    # Report notification types
+    REPORT_SUBMITTED = 'REPORT_SUBMITTED'
+    REPORT_COMMENTED = 'REPORT_COMMENTED'
+    REPORT_APPROVED = 'REPORT_APPROVED'
+    REPORT_PARTIALLY_APPROVED = 'PARTIALLY_APPROVED'
+    REPORT_APPROVER_SENDBACK = 'REPORT_APPROVER_SENDBACK'
+    REPORT_PAYMENT_PROCESSING = 'REPORT_PAYMENT_PROCESSING'
 
 
 class NotificationPreference(models.Model):
