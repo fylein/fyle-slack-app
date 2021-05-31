@@ -3,14 +3,14 @@ from typing import Dict
 from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
-from django.utils import timezone
+from django.db import transaction
 
 from slack_sdk.web.client import WebClient
 
 from fyle_slack_app import tracking
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.libs import utils, assertions, logger
-from fyle_slack_app.models import Team, User, ReportPollingDetail
+from fyle_slack_app.libs import utils, assertions, logger, http
+from fyle_slack_app.models import Team, User
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
@@ -64,14 +64,19 @@ class FyleAuthorization(View):
 
             else:
 
-                fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
+                # Putting below logic inside a transaction block to prevent bad data
+                # If any error occurs in any of the below step, Fyle account link to Slack should not happen
+                with transaction.atomic():
 
-                fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
+                    fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
 
-                # Create user
-                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+                    fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
-                self.create_report_polling_entry(user)
+                    # Creating subscriptions for user
+                    self.create_notification_subscription(fyle_profile, fyle_refresh_token)
+
+                    # Create user
+                    user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
 
                 # Send post authorization message to user
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
@@ -127,11 +132,50 @@ class FyleAuthorization(View):
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
 
 
-    def create_report_polling_entry(self, user: User) -> None:
-        ReportPollingDetail.objects.create(
-            slack_user=user,
-            last_successful_poll_at=timezone.now()
+    def create_notification_subscription(self, fyle_profile: Dict, fyle_refresh_token: str) -> None:
+        access_token = fyle_utils.get_fyle_access_token(fyle_refresh_token)
+        cluster_domain = fyle_utils.get_cluster_domain(access_token)
+
+        FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
+
+        headers = {
+            'content-type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+
+        fyler_subscription_data = {}
+        fyler_subscription_data['data'] = {
+            'webhook_url': '{}/fyle/fyler/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id']),
+            'is_enabled': True
+        }
+        # pylint: disable=unused-variable
+        fyler_subscription = http.post(
+            url='{}/fyler/subscriptions'.format(FYLE_PLATFORM_URL),
+            json=fyler_subscription_data,
+            headers=headers
         )
+
+        if fyler_subscription.status_code != 200:
+            logger.error('Error while creating fyler subscription for user: %s ', fyle_profile['user_id'])
+            assertions.assert_good(False)
+
+        if 'APPROVER' in fyle_profile['roles']:
+            approver_subscription_data = {}
+            approver_subscription_data['data'] = {
+                'webhook_url': '{}/fyle/approver/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id']),
+                'is_enabled': True
+            }
+            # pylint: disable=unused-variable
+            approver_subscription = http.post(
+                url='{}/approver/subscriptions'.format(FYLE_PLATFORM_URL),
+                json=approver_subscription_data,
+                headers=headers
+            )
+
+            if approver_subscription.status_code != 200:
+                logger.error('Error while creating fyler subscription for user: %s ', fyle_profile['user_id'])
+                assertions.assert_good(False)
+
 
 
     def track_fyle_authorization(self, user: User, fyle_profile: Dict) -> None:

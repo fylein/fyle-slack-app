@@ -12,7 +12,7 @@ from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 from fyle_slack_app.libs import logger
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions
-from fyle_slack_app.slack.ui.report_approvals import messages as report_approval_messages
+from fyle_slack_app.slack.ui.notifications import messages as notification_messages
 
 
 logger = logger.get_logger(__name__)
@@ -86,7 +86,7 @@ def poll_report_approvals() -> None:
                         report['user']
                     )
 
-                    report_notification_message = report_approval_messages.get_report_approval_notification(
+                    report_notification_message = notification_messages.get_report_approval_notification(
                         report,
                         user_display_name,
                         report_url
@@ -171,7 +171,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 )
                 return None
 
-        report_notification_message = report_approval_messages.get_report_approval_notification(
+        report_notification_message = notification_messages.get_report_approval_notification(
             report,
             user_display_name,
             report_url,

@@ -9,7 +9,7 @@ from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
-from fyle_slack_app.slack.ui.notification_preferences import messages as notification_preference_messages
+from fyle_slack_app.slack.ui.notifications import preference_messages as notification_preference_messages
 from fyle_slack_app.slack import utils as slack_utils
 
 
