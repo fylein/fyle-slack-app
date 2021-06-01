@@ -1,8 +1,9 @@
 from typing import Dict
 
+from urllib.parse import urlencode
+
 import requests
 
-from urllib.parse import urlencode
 from fyle.platform import Platform
 
 from django.conf import settings

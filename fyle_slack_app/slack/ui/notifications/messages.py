@@ -84,6 +84,19 @@ def get_report_notification(report: Dict, report_url: str, title_text: str) -> L
     actions_block['elements'].append(report_view_in_fyle_section)
     report_section_block.append(actions_block)
 
+    # Adding Notification Preference message as footer
+    report_section_block.append(
+        {
+			"type": "context",
+			"elements": [
+				{
+					"type": "mrkdwn",
+					"text": "Check *Fyle Notification Preferences* in quick actions :zap: to customise notifications you receive from Fyle"
+				}
+			]
+		}
+    )
+
     return report_section_block
 
 
@@ -101,6 +114,18 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
 def get_report_payment_processing_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':moneybag: Payment is being processed for your expense report <{}|[{}]>'.format(
+                    report_url,
+                    report['claim_number']
+                )
+
+    report_section_block = get_report_notification(report, report_url, title_text)
+
+    return report_section_block
+
+
+def get_report_approver_sendback_notification(report: Dict, report_url: str) -> List[Dict]:
+
+    title_text = ':warning: Your expense report <{}|[{}]> is sent back for changes'.format(
                     report_url,
                     report['claim_number']
                 )

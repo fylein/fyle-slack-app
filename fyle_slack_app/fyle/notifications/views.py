@@ -58,7 +58,8 @@ class FyleFylerNotification(FyleNotificationView):
     def _initialize_event_handlers(self) -> None:
         self.event_handlers = {
             NotificationType.REPORT_PARTIALLY_APPROVED.value: self.handle_report_partially_approved,
-            NotificationType.REPORT_PAYMENT_PROCESSING.value: self.handle_report_payment_processing
+            NotificationType.REPORT_PAYMENT_PROCESSING.value: self.handle_report_payment_processing,
+            NotificationType.REPORT_APPROVER_SENDBACK.value: self.handle_report_approver_sendback
         }
 
 
@@ -88,6 +89,25 @@ class FyleFylerNotification(FyleNotificationView):
         report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
         report_notification_message = notification_messages.get_report_payment_processing_notification(
+            report,
+            report_url
+        )
+
+        slack_client.chat_postMessage(
+            channel=user.slack_dm_channel_id,
+            blocks=report_notification_message
+        )
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_report_approver_sendback(self, report: Dict, user: User) -> JsonResponse:
+
+        slack_client = slack_utils.get_slack_client(user.slack_team_id)
+
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+
+        report_notification_message = notification_messages.get_report_approver_sendback_notification(
             report,
             report_url
         )
