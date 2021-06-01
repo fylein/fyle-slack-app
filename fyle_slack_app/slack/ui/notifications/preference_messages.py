@@ -32,6 +32,20 @@ NOTIFICATION_TYPE_UI_DETAILS = {
             }
         }
     },
+    NotificationType.REPORT_APPROVER_SENDBACK.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Report sent back for inquiry :warning: * \n_Get notified when your expense report is sent back for inquiry_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'report_approver_sendback_notification_preference'
+            }
+        }
+    },
     NotificationType.REPORT_PAYMENT_PROCESSING.value: {
         'role_required': 'FYLER',
         'ui': {

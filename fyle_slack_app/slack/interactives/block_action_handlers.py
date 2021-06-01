@@ -28,7 +28,8 @@ class BlockActionHandler:
             'approve_report': self.approve_report,
             'report_submitted_notification_preference': self.handle_notification_preference_selection,
             'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
-            'report_payment_processing_notification_preference': self.handle_notification_preference_selection
+            'report_payment_processing_notification_preference': self.handle_notification_preference_selection,
+            'report_approver_sendback_notification_preference': self.handle_notification_preference_selection
         }
 
 
@@ -136,7 +137,8 @@ class BlockActionHandler:
         ACTION_NOTIFICATION_PREFERENCE_MAPPING = {
             'report_submitted_notification_preference': NotificationType.REPORT_SUBMITTED.value,
             'report_partially_approved_notification_preference': NotificationType.REPORT_PARTIALLY_APPROVED.value,
-            'report_payment_processing_notification_preference': NotificationType.REPORT_PAYMENT_PROCESSING.value
+            'report_payment_processing_notification_preference': NotificationType.REPORT_PAYMENT_PROCESSING.value,
+            'report_approver_sendback_notification_preference': NotificationType.REPORT_APPROVER_SENDBACK.value
         }
 
         is_enabled = True if value == 'enable' else False
