@@ -65,20 +65,12 @@ def get_report_review_in_fyle_action(report_url: str, button_text: str, report_i
     return report_review_in_fyle_action
 
 
-def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict]:
-
+def get_report_notification(report: Dict, report_url: str, title_text: str) -> List[Dict]:
     report_url = '{}/{}'.format(report_url, report['id'])
     report_query_params = {
         'org_id': report['org_id']
     }
     report_url = utils.convert_to_branchio_url(report_url, report_query_params)
-
-    report_claim_number = report['claim_number']
-
-    title_text = ':white_check_mark: Your expense report <{}|[ {} ]> has been approved'.format(
-                    report_url,
-                    report_claim_number
-                )
 
     report_section_block = get_report_section_blocks(title_text, report)
 
@@ -91,6 +83,29 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
 
     actions_block['elements'].append(report_view_in_fyle_section)
     report_section_block.append(actions_block)
+
+    return report_section_block
+
+
+def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict]:
+
+    title_text = ':white_check_mark: Your expense report <{}|[{}]> has been approved'.format(
+                    report_url,
+                    report['claim_number']
+                )
+    report_section_block = get_report_notification(report, report_url, title_text)
+
+    return report_section_block
+
+
+def get_report_payment_processing_notification(report: Dict, report_url: str) -> List[Dict]:
+
+    title_text = ':moneybag: Payment is being processed for your expense report <{}|[{}]>'.format(
+                    report_url,
+                    report['claim_number']
+                )
+
+    report_section_block = get_report_notification(report, report_url, title_text)
 
     return report_section_block
 
@@ -108,9 +123,10 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     report_claim_number = report['claim_number']
 
 
-    title_text = ':envelope_with_arrow: *{}* ( {} ) submitted an expense report [ {} ] for your approval'.format(
+    title_text = ':envelope_with_arrow: *{}* ({}) submitted an expense report <{}|[{}]> for your approval'.format(
                     user_display_name,
                     user_email,
+                    report_url,
                     report_claim_number
                 )
 

@@ -7,14 +7,42 @@ NOTIFICATION_TYPE_UI_DETAILS = {
     NotificationType.REPORT_SUBMITTED.value: {
         'role_required': 'APPROVER',
         'ui': {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "*Report submitted for approval :envelope_with_arrow: * \n _Get notified when an expense report gets submitted for your approval_"
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Report submitted for approval :envelope_with_arrow: * \n _Get notified when an expense report gets submitted for your approval_'
             },
-            "accessory": {
-                "type": "radio_buttons",
-                "action_id": "report_submitted_notification_preference"
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'report_submitted_notification_preference'
+            }
+        }
+    },
+    NotificationType.REPORT_PARTIALLY_APPROVED.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Report approved :white_check_mark: * \n_Get notified when your expense report gets approved_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'report_partially_approved_notification_preference'
+            }
+        }
+    },
+    NotificationType.REPORT_PAYMENT_PROCESSING.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Payment processing :moneybag: * \n_Get notified when payment is being processed for your expense report_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'report_payment_processing_notification_preference'
             }
         }
     }
@@ -25,12 +53,12 @@ def get_notification_preference_option(is_enabled: bool) -> Dict:
     option_text, option_value = ('Enable', 'enable') if is_enabled is True else ('Disable', 'disable')
 
     option = {
-        "text": {
-            "type": "plain_text",
-            "text": option_text,
-            "emoji": True
+        'text': {
+            'type': 'plain_text',
+            'text': option_text,
+            'emoji': True
         },
-        "value": option_value
+        'value': option_value
     }
 
     return option
@@ -48,14 +76,14 @@ def check_notification_roles_allowed(role_required: str, user_roles: List[str]) 
 def get_notification_preferences_blocks(notification_preferences: List[Dict], fyle_roles: List[str]) -> List[Dict]:
     notification_preferences_blocks = [
         {
-            "type": "section",
-            "text": {
-                "type": "mrkdwn",
-                "text": "*Notification Preferences :bell:*"
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Notification Preferences :bell:*'
             }
         },
         {
-            "type": "divider"
+            'type': 'divider'
         }
     ]
 
@@ -87,7 +115,7 @@ def get_notification_preferences_blocks(notification_preferences: List[Dict], fy
 
                 notification_preferences_blocks.append(
                     {
-                    "type": "divider"
+                    'type': 'divider'
                     }
                 )
     return notification_preferences_blocks
