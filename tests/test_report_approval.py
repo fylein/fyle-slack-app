@@ -10,9 +10,9 @@ from fyle_slack_app.fyle.report_approvals.tasks import poll_report_approvals, pr
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.FyleReportApproval')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.fyle_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.slack_utils')
-@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.report_approval_messages')
+@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.notification_messages')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.NotificationPreference')
-def test_report_polling(notification_preference, report_approval_messages, slack_utils, fyle_utils, fyle_report_approval, slack_client, report_polling_detail, mock_fyle):
+def test_report_polling(notification_preference, notification_messages, slack_utils, fyle_utils, fyle_report_approval, slack_client, report_polling_detail, mock_fyle):
 
     mock_user = mock.Mock(spec=User)
     mock_user.fyle_user_id = 'mock-fyle-approver-user-id'
@@ -63,7 +63,7 @@ def test_report_polling(notification_preference, report_approval_messages, slack
     slack_utils.get_user_display_name.return_value = mock_user_display_name
 
     mock_report_approval_notification = 'mock-report-approval-notification-message'
-    report_approval_messages.get_report_approval_notification.return_value = mock_report_approval_notification
+    notification_messages.get_report_approval_notification.return_value = mock_report_approval_notification
 
     mock_chat_post_message = 'chat-post-message'
     slack_client.chat_postMessage.return_value = mock_chat_post_message
@@ -75,7 +75,7 @@ def test_report_polling(notification_preference, report_approval_messages, slack
     notification_preference.objects.select_related.assert_called_once()
     notification_preference.objects.select_related.assert_called_once_with('slack_user')
     notification_preference.objects.select_related.return_value.filter.asser_called()
-    notification_preference.objects.select_related.return_value.filter.asser_called_with(NotificationType.APPROVER_REPORT_APPROVAL.value, True)
+    notification_preference.objects.select_related.return_value.filter.asser_called_with(NotificationType.REPORT_SUBMITTED.value, True)
 
     report_polling_detail.objects.select_related.assert_called()
     report_polling_detail.objects.select_related.assert_called_with('slack_user__slack_team')
@@ -93,8 +93,8 @@ def test_report_polling(notification_preference, report_approval_messages, slack
     slack_utils.get_user_display_name.assert_called()
     slack_utils.get_user_display_name.assert_called_with(slack_client(), mock_user_details)
 
-    report_approval_messages.get_report_approval_notification.assert_called()
-    report_approval_messages.get_report_approval_notification.assert_called_with(mock_approver_reports['data'][0], mock_user_display_name, mock_report_url)
+    notification_messages.get_report_approval_notification.assert_called()
+    notification_messages.get_report_approval_notification.assert_called_with(mock_approver_reports['data'][0], mock_user_display_name, mock_report_url)
 
 
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.utils')
@@ -102,8 +102,8 @@ def test_report_polling(notification_preference, report_approval_messages, slack
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.FyleReportApproval')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.slack_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.fyle_utils')
-@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.report_approval_messages')
-def test_report_approve(report_approval_messages, fyle_utils, slack_utils, fyle_report_approval, slack_client, utils, mock_fyle):
+@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.notification_messages')
+def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_report_approval, slack_client, utils, mock_fyle):
     mock_team = mock.Mock(spec=Team)
     mock_user = mock.Mock(spec=User)
 
@@ -130,7 +130,7 @@ def test_report_approve(report_approval_messages, fyle_utils, slack_utils, fyle_
     mock_approved_report = mock_fyle.approver.reports.approve()
     fyle_report_approval.approve_report.return_value = mock_approved_report
 
-    report_approval_messages.report_approval_messages.return_value = 'mock-report-approval-notification-message'
+    notification_messages.get_report_approval_notification.return_value = 'mock-report-approval-notification-message'
 
     mock_chat_post_message = 'chat-post-message'
     slack_client.chat_postMessage.return_value = mock_chat_post_message
@@ -174,5 +174,5 @@ def test_report_approve(report_approval_messages, fyle_utils, slack_utils, fyle_
     fyle_report_approval.approve_report.assert_called()
     fyle_report_approval.approve_report.assert_called_with(mock_user, mock_report_id)
 
-    report_approval_messages.get_report_approval_notification.assert_called()
-    report_approval_messages.get_report_approval_notification.assert_called_with(mock_approved_report['data'], mock_user_display_name, mock_report_url, report_approved_message)
+    notification_messages.get_report_approval_notification.assert_called()
+    notification_messages.get_report_approval_notification.assert_called_with(mock_approved_report['data'], mock_user_display_name, mock_report_url, report_approved_message)

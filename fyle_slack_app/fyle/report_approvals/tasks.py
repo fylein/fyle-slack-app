@@ -24,7 +24,7 @@ def poll_report_approvals() -> None:
 
     # Fetching only those users who have enabled report approval notifications
     report_approval_notification_preferences = NotificationPreference.objects.select_related('slack_user').filter(
-        notification_type=NotificationType.APPROVER_REPORT_APPROVAL.value,
+        notification_type=NotificationType.REPORT_SUBMITTED.value,
         is_enabled=True
     )
 
