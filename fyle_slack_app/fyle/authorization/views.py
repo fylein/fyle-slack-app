@@ -171,7 +171,7 @@ class FyleAuthorization(View):
 
                 if subscription.status_code != 200:
                     logger.error('Error while creating %s subscription for user: %s ', subscription_role_required, fyle_user_id)
-                    logger.error('Fyler Subscription error %s', subscription.content)
+                    logger.error('%s Subscription error %s', subscription_role_required, subscription.content)
                     assertions.assert_good(False)
 
                 subscription_id = subscription.json()['data']['id']
