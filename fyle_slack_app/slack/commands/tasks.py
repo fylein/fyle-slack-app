@@ -64,7 +64,7 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
                     'is_enabled': False
                 }
 
-                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_role_required)
+                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_type)
 
                 if subscription.status_code != 200:
                     text = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'

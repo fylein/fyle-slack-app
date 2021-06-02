@@ -1,7 +1,5 @@
 from typing import Dict
 
-from urllib.parse import urlencode
-
 import requests
 
 from fyle.platform import Platform
@@ -9,6 +7,7 @@ from fyle.platform import Platform
 from django.conf import settings
 
 from fyle_slack_app.libs import http, assertions, utils
+from fyle_slack_app.models.user_subscription_details import SubscriptionType
 
 
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
@@ -108,25 +107,15 @@ def get_fyle_oauth_url(user_id: str, team_id: str) -> str:
     return FYLE_OAUTH_URL
 
 
-def get_fyle_subscription_url(cluster_domain: str, subscrition_type: str, query_params: Dict = None) -> str:
+def upsert_fyle_subscription(cluster_domain: str, access_token: str, subscription_payload: Dict, subscription_type: SubscriptionType) -> requests.Response:
     FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
 
-    if subscrition_type == 'FYLER':
-        subscrition_url = '{}/fyler/subscriptions'.format(FYLE_PLATFORM_URL)
+    SUBSCRIPTION_TYPE_URL_MAPPINGS = {
+        SubscriptionType.FYLER_SUBSCRIPTION: '{}/fyler/subscriptions'.format(FYLE_PLATFORM_URL),
+        SubscriptionType.APPROVER_SUBSCRIPTION: '{}/approver/subscriptions'.format(FYLE_PLATFORM_URL)
+    }
 
-    elif subscrition_type == 'APPROVER':
-        subscrition_url = '{}/approver/subscriptions'.format(FYLE_PLATFORM_URL)
-
-    if query_params is not None:
-        encoded_query_params = urlencode(query_params)
-        subscrition_url = '{}?{}'.format(subscrition_url, encoded_query_params)
-
-    return subscrition_url
-
-
-def upsert_fyle_subscription(cluster_domain: str, access_token: str, subscription_payload: Dict, subscrition_type: str) -> requests.Response:
-
-    subscrition_url = get_fyle_subscription_url(cluster_domain, subscrition_type)
+    subscrition_url = SUBSCRIPTION_TYPE_URL_MAPPINGS[subscription_type]
 
     headers = {
         'content-type': 'application/json',
@@ -136,23 +125,6 @@ def upsert_fyle_subscription(cluster_domain: str, access_token: str, subscriptio
     subscription = http.post(
         url=subscrition_url,
         json=subscription_payload,
-        headers=headers
-    )
-
-    return subscription
-
-
-def get_fyle_subscription(cluster_domain: str, access_token: str, query_params: Dict, subscrition_type: str) -> requests.Response:
-
-    subscrition_url = get_fyle_subscription_url(cluster_domain, subscrition_type, query_params)
-
-    headers = {
-        'content-type': 'application/json',
-        'Authorization': 'Bearer {}'.format(access_token)
-    }
-
-    subscription = http.get(
-        url=subscrition_url,
         headers=headers
     )
 

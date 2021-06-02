@@ -167,7 +167,7 @@ class FyleAuthorization(View):
                     'is_enabled': True
                 }
 
-                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_role_required)
+                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_type)
 
                 if subscription.status_code != 200:
                     logger.error('Error while creating %s subscription for user: %s ', subscription_role_required, fyle_user_id)
