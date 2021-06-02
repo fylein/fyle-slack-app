@@ -77,7 +77,7 @@ class FyleAuthorization(View):
                     user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
 
                     # Creating subscriptions for user
-                    self.create_notification_subscription(user, fyle_profile, fyle_refresh_token)
+                    self.create_notification_subscription(user, fyle_profile)
 
                 # Send post authorization message to user
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
@@ -133,8 +133,8 @@ class FyleAuthorization(View):
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
 
 
-    def create_notification_subscription(self, user: User, fyle_profile: Dict, fyle_refresh_token: str) -> None:
-        access_token = fyle_utils.get_fyle_access_token(fyle_refresh_token)
+    def create_notification_subscription(self, user: User, fyle_profile: Dict) -> None:
+        access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
         cluster_domain = fyle_utils.get_cluster_domain(access_token)
 
         SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
