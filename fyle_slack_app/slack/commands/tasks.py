@@ -11,6 +11,18 @@ from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 logger = logger.get_logger(__name__)
 
 
+SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
+    SubscriptionType.FYLER_SUBSCRIPTION: {
+        'role_required': 'FYLER',
+        'webhook_url': '{}/fyle/fyler/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+    },
+    SubscriptionType.APPROVER_SUBSCRIPTION: {
+        'role_required': 'APPROVER',
+        'webhook_url': '{}/fyle/approver/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+    }
+}
+
+
 def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> None:
     user = utils.get_or_none(User, slack_user_id=user_id)
 
@@ -29,46 +41,37 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
 
         fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
 
-        if 'FYLER' in fyle_profile['roles']:
-            webhook_url = '{}/fyle/fyler/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id'])
-            fyler_subscription_detail = UserSubscriptionDetail.objects.get(slack_user_id=user_id, subscription_type=SubscriptionType.FYLER_SUBSCRIPTION.value)
+        for subscription_type in SubscriptionType:
+            subscription_webhook_details = SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING[subscription_type]
 
-            fyler_subscription_payload = {}
-            fyler_subscription_payload['data'] = {
-                'id': fyler_subscription_detail.subscription_id,
-                'webhook_url': webhook_url,
-                'is_enabled': False
-            }
+            subscription_role_required = subscription_webhook_details['role_required']
 
-            fyler_subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, fyler_subscription_payload, 'FYLER')
+            if subscription_role_required in fyle_profile['roles']:
+                fyle_user_id = user.fyle_user_id
 
-            if fyler_subscription.status_code != 200:
-                text = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'
-                is_error_occured = True
+                webhook_url = subscription_webhook_details['webhook_url']
+                webhook_url = '{}/{}'.format(webhook_url, fyle_user_id)
 
-                logger.error('Error while disabling fyler subscription for user: %s ', fyle_profile['user_id'])
-                assertions.assert_good(False)
+                subscription_detail = UserSubscriptionDetail.objects.get(
+                    slack_user_id=user_id,
+                    subscription_type=subscription_type.value
+                )
 
+                subscription_payload = {}
+                subscription_payload['data'] = {
+                    'id': subscription_detail.subscription_id,
+                    'webhook_url': webhook_url,
+                    'is_enabled': False
+                }
 
-        if 'APPROVER' in fyle_profile['roles']:
-            webhook_url = '{}/fyle/approver/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id'])
-            approver_subscription_detail = UserSubscriptionDetail.objects.get(slack_user_id=user_id, subscription_type=SubscriptionType.APPROVER_SUBSCRIPTION.value)
+                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_role_required)
 
-            approver_subscription_payload = {}
-            approver_subscription_payload['data'] = {
-                'id': approver_subscription_detail.subscription_id,
-                'webhook_url': webhook_url,
-                'is_enabled': False
-            }
+                if subscription.status_code != 200:
+                    text = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'
+                    is_error_occured = True
 
-            approver_subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, approver_subscription_payload, 'APPROVER')
-
-            if approver_subscription.status_code != 200:
-                text = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'
-                is_error_occured = True
-
-                logger.error('Error while disabling approver subscription for user: %s ', fyle_profile['user_id'])
-                assertions.assert_good(False)
+                    logger.error('Error while disabling %s subscription for user: %s ', subscription_role_required, fyle_user_id)
+                    assertions.assert_good(False)
 
         # Deleting user entry to unlink fyle account
         if is_error_occured is False:

@@ -137,56 +137,52 @@ class FyleAuthorization(View):
         access_token = fyle_utils.get_fyle_access_token(fyle_refresh_token)
         cluster_domain = fyle_utils.get_cluster_domain(access_token)
 
+        SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
+            SubscriptionType.FYLER_SUBSCRIPTION: {
+                'role_required': 'FYLER',
+                'webhook_url': '{}/fyle/fyler/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+            },
+            SubscriptionType.APPROVER_SUBSCRIPTION: {
+                'role_required': 'APPROVER',
+                'webhook_url': '{}/fyle/approver/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+            }
+        }
+
         user_subscription_details = []
 
-        if 'FYLER' in fyle_profile['roles']:
-            fyler_subscription_payload = {}
-            fyler_subscription_payload['data'] = {
-                'webhook_url': '{}/fyle/fyler/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id']),
-                'is_enabled': True
-            }
+        for subscription_type in SubscriptionType:
+            subscription_webhook_details = SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING[subscription_type]
 
-            fyler_subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, fyler_subscription_payload, 'FYLER')
+            subscription_role_required = subscription_webhook_details['role_required']
 
-            if fyler_subscription.status_code != 200:
-                logger.error('Error while creating fyler subscription for user: %s ', fyle_profile['user_id'])
-                logger.error('Fyler Subscription error %s', fyler_subscription.content)
-                assertions.assert_good(False)
+            if subscription_role_required in fyle_profile['roles']:
+                fyle_user_id = user.fyle_user_id
 
-            fyler_subscription_id = fyler_subscription.json()['data']['id']
+                webhook_url = subscription_webhook_details['webhook_url']
+                webhook_url = '{}/{}'.format(webhook_url, fyle_user_id)
 
-            fyler_subscription_detail = UserSubscriptionDetail(
-                slack_user=user,
-                subscription_type=SubscriptionType.FYLER_SUBSCRIPTION.value,
-                subscription_id=fyler_subscription_id
-            )
+                subscription_payload = {}
+                subscription_payload['data'] = {
+                    'webhook_url': webhook_url,
+                    'is_enabled': True
+                }
 
-            user_subscription_details.append(fyler_subscription_detail)
+                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_role_required)
 
+                if subscription.status_code != 200:
+                    logger.error('Error while creating %s subscription for user: %s ', subscription_role_required, fyle_user_id)
+                    logger.error('Fyler Subscription error %s', subscription.content)
+                    assertions.assert_good(False)
 
-        if 'APPROVER' in fyle_profile['roles']:
-            approver_subscription_payload = {}
-            approver_subscription_payload['data'] = {
-                'webhook_url': '{}/fyle/approver/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id']),
-                'is_enabled': True
-            }
+                subscription_id = subscription.json()['data']['id']
 
-            approver_subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, approver_subscription_payload, 'APPROVER')
+                subscription_detail = UserSubscriptionDetail(
+                    slack_user=user,
+                    subscription_type=subscription_type.value,
+                    subscription_id=subscription_id
+                )
 
-            if approver_subscription.status_code != 200:
-                logger.error('Error while creating approver subscription for user: %s ', fyle_profile['user_id'])
-                logger.error('Approver Subscription error %s', approver_subscription.content)
-                assertions.assert_good(False)
-
-            approver_subscription_id = approver_subscription.json()['data']['id']
-
-            approver_subscription_detail = UserSubscriptionDetail(
-                slack_user=user,
-                subscription_type=SubscriptionType.APPROVER_SUBSCRIPTION.value,
-                subscription_id=approver_subscription_id
-            )
-
-            user_subscription_details.append(approver_subscription_detail)
+                user_subscription_details.append(subscription_detail)
 
         # Creating/Inserting subsctiptions in bulk
         UserSubscriptionDetail.objects.bulk_create(user_subscription_details)
