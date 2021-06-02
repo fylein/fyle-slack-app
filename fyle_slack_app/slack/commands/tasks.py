@@ -3,7 +3,8 @@ from django.conf import settings
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.models import User
+from fyle_slack_app.models import User, UserSubscriptionDetail
+from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 
 
@@ -30,18 +31,11 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
 
         if 'FYLER' in fyle_profile['roles']:
             webhook_url = '{}/fyle/fyler/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id'])
-            query_params = {
-                'user_id': 'eq.{}'.format(fyle_profile['user_id']),
-                'is_enabled': 'eq.true',
-                'webhook_url': 'eq.{}'.format(webhook_url)
-            }
-            fyler_subscription = fyle_utils.get_fyle_subscription(cluster_domain, access_token, query_params, 'FYLER')
-
-            fyler_subscription_id = fyler_subscription.json()['data'][0]['id']
+            fyler_subscription_detail = UserSubscriptionDetail.objects.get(slack_user_id=user_id, subscription_type=SubscriptionType.FYLER_SUBSCRIPTION.value)
 
             fyler_subscription_payload = {}
             fyler_subscription_payload['data'] = {
-                'id': fyler_subscription_id,
+                'id': fyler_subscription_detail.subscription_id,
                 'webhook_url': webhook_url,
                 'is_enabled': False
             }
@@ -58,18 +52,11 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
 
         if 'APPROVER' in fyle_profile['roles']:
             webhook_url = '{}/fyle/approver/notifications/{}'.format(settings.SLACK_SERVICE_BASE_URL, fyle_profile['user_id'])
-            query_params = {
-                'approver_user_id': 'eq.{}'.format(fyle_profile['user_id']),
-                'is_enabled': 'eq.true',
-                'webhook_url': 'eq.{}'.format(webhook_url)
-            }
-            approver_subscription = fyle_utils.get_fyle_subscription(cluster_domain, access_token, query_params, 'APPROVER')
-
-            approver_subscription_id = approver_subscription.json()['data'][0]['id']
+            approver_subscription_detail = UserSubscriptionDetail.objects.get(slack_user_id=user_id, subscription_type=SubscriptionType.APPROVER_SUBSCRIPTION.value)
 
             approver_subscription_payload = {}
             approver_subscription_payload['data'] = {
-                'id': approver_subscription_id,
+                'id': approver_subscription_detail.subscription_id,
                 'webhook_url': webhook_url,
                 'is_enabled': False
             }

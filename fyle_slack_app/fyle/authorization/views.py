@@ -10,7 +10,8 @@ from slack_sdk.web.client import WebClient
 from fyle_slack_app import tracking
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions, logger
-from fyle_slack_app.models import Team, User
+from fyle_slack_app.models import Team, User, UserSubscriptionDetail
+from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
@@ -72,11 +73,11 @@ class FyleAuthorization(View):
 
                     fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
-                    # Creating subscriptions for user
-                    self.create_notification_subscription(fyle_profile, fyle_refresh_token)
-
                     # Create user
                     user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+
+                    # Creating subscriptions for user
+                    self.create_notification_subscription(user, fyle_profile, fyle_refresh_token)
 
                 # Send post authorization message to user
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
@@ -132,9 +133,11 @@ class FyleAuthorization(View):
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
 
 
-    def create_notification_subscription(self, fyle_profile: Dict, fyle_refresh_token: str) -> None:
+    def create_notification_subscription(self, user: User, fyle_profile: Dict, fyle_refresh_token: str) -> None:
         access_token = fyle_utils.get_fyle_access_token(fyle_refresh_token)
         cluster_domain = fyle_utils.get_cluster_domain(access_token)
+
+        user_subscription_details = []
 
         if 'FYLER' in fyle_profile['roles']:
             fyler_subscription_payload = {}
@@ -150,6 +153,17 @@ class FyleAuthorization(View):
                 logger.error('Fyler Subscription error %s', fyler_subscription.content)
                 assertions.assert_good(False)
 
+            fyler_subscription_id = fyler_subscription.json()['data']['id']
+
+            fyler_subscription_detail = UserSubscriptionDetail(
+                slack_user=user,
+                subscription_type=SubscriptionType.FYLER_SUBSCRIPTION.value,
+                subscription_id=fyler_subscription_id
+            )
+
+            user_subscription_details.append(fyler_subscription_detail)
+
+
         if 'APPROVER' in fyle_profile['roles']:
             approver_subscription_payload = {}
             approver_subscription_payload['data'] = {
@@ -164,6 +178,18 @@ class FyleAuthorization(View):
                 logger.error('Approver Subscription error %s', approver_subscription.content)
                 assertions.assert_good(False)
 
+            approver_subscription_id = approver_subscription.json()['data']['id']
+
+            approver_subscription_detail = UserSubscriptionDetail(
+                slack_user=user,
+                subscription_type=SubscriptionType.APPROVER_SUBSCRIPTION.value,
+                subscription_id=approver_subscription_id
+            )
+
+            user_subscription_details.append(approver_subscription_detail)
+
+        # Creating/Inserting subsctiptions in bulk
+        UserSubscriptionDetail.objects.bulk_create(user_subscription_details)
 
 
     def track_fyle_authorization(self, user: User, fyle_profile: Dict) -> None:
