@@ -192,4 +192,17 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     actions_block['elements'].append(report_view_in_fyle_section)
     report_section_block.append(actions_block)
 
+    # Adding Notification Preference message as footer
+    report_section_block.append(
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "Check *Fyle Notification Preferences* in quick actions :zap: to customise notifications you receive from Fyle"
+                }
+            ]
+        }
+    )
+
     return report_section_block
