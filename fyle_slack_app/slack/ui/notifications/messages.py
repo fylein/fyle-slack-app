@@ -87,14 +87,14 @@ def get_report_notification(report: Dict, report_url: str, title_text: str) -> L
     # Adding Notification Preference message as footer
     report_section_block.append(
         {
-			"type": "context",
-			"elements": [
-				{
-					"type": "mrkdwn",
-					"text": "Check *Fyle Notification Preferences* in quick actions :zap: to customise notifications you receive from Fyle"
-				}
-			]
-		}
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "Check *Fyle Notification Preferences* in quick actions :zap: to customise notifications you receive from Fyle"
+                }
+            ]
+        }
     )
 
     return report_section_block
