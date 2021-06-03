@@ -147,7 +147,6 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
 
     report_claim_number = report['claim_number']
 
-
     title_text = ':envelope_with_arrow: *{}* ({}) submitted an expense report <{}|[{}]> for your approval'.format(
                     user_display_name,
                     user_email,

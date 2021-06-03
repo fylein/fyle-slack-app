@@ -19,7 +19,6 @@ class FyleNotificationView(View):
 
     event_handlers: Dict = {}
 
-
     def post(self, request: HttpRequest, user_id: str) -> JsonResponse:
         webhook_data = json.loads(request.body)
 
