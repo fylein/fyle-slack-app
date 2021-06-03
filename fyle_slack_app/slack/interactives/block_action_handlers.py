@@ -9,7 +9,7 @@ from fyle.platform import exceptions
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, add_message_section_to_ui_block, get_slack_client
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 
 
@@ -94,10 +94,14 @@ class BlockActionHandler:
                     report_notification_message.append(message_block)
 
             report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-            report_notification_message = add_message_section_to_ui_block(
-                report_notification_message,
-                report_message
-            )
+            report_deleted_section = {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': report_message
+                }
+            }
+            report_notification_message.insert(3, report_deleted_section)
 
             slack_client = get_slack_client(team_id)
 

@@ -42,10 +42,14 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 report_notification_message.append(message_block)
 
         report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-        report_notification_message = slack_utils.add_message_section_to_ui_block(
-            report_notification_message,
-            report_message
-        )
+        report_deleted_section = {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': report_message
+            }
+        }
+        report_notification_message.insert(3, report_deleted_section)
     else:
         report = report['data']
         can_approve_report, report_message = FyleReportApproval.can_approve_report(
