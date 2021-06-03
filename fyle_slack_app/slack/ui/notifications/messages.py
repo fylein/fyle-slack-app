@@ -7,10 +7,6 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
 
-    report_curreny = report['currency']
-    report_amount = report['amount']
-    report_expenses = report['num_expenses']
-
     report_section_block = [
         {
             'type': 'section',
@@ -21,25 +17,30 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
         },
         {
             'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': '*Report Name:* {}'.format(report['purpose'])
-            }
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Report name:*\n {}'.format(report['purpose'])
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Number of expenses:*\n {}'.format(report['num_expenses'])
+                }
+            ]
         },
         {
             'type': 'section',
             'fields': [
                 {
                     'type': 'mrkdwn',
-                    'text': '*Amount:* {} {} \n *No. of expenses:* {}'.format(
-                        report_curreny,
-                        report_amount,
-                        report_expenses
+                    'text': '*Amount:*\n {} {}'.format(
+                        report['currency'],
+                        report['amount']
                     )
                 },
                 {
                     'type': 'mrkdwn',
-                    'text': '*Submitted On:* {}'.format(readable_submitted_at)
+                    'text': '*Submitted on:*\n {}'.format(readable_submitted_at)
                 }
             ]
         }
@@ -100,6 +101,37 @@ def get_report_notification(report: Dict, report_url: str, title_text: str) -> L
     return report_section_block
 
 
+def get_report_approval_state_section(report: Dict) -> Dict:
+    report_approved_by = ''
+    report_approval_pending_from = ''
+
+    for approval in report['approvals']:
+        approver_full_name = approval['approver_user']['full_name']
+        approver_email = approval['approver_user']['email']
+
+        if approval['state'] == 'APPROVAL_DONE':
+            report_approved_by += '{} ({})\n'.format(approver_full_name, approver_email)
+
+        if approval['state'] == 'APPROVAL_PENDING':
+            report_approval_pending_from += '{} ({})\n'.format(approver_full_name, approver_email)
+
+    report_approval_section = {
+        'type': 'section',
+        'fields': [
+            {
+                'type': 'mrkdwn',
+                'text': '*Approved by:*\n {}'.format(report_approved_by)
+            },
+            {
+                'type': 'mrkdwn',
+                'text': '*Approval pending from:*\n {}'.format(report_approval_pending_from)
+            }
+        ]
+    }
+
+    return report_approval_section
+
+
 def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':white_check_mark: Your expense report <{}|[{}]> has been approved'.format(
@@ -107,6 +139,10 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
                     report['claim_number']
                 )
     report_section_block = get_report_notification(report, report_url, title_text)
+
+    report_approval_state_section = get_report_approval_state_section(report)
+
+    report_section_block.insert(3, report_approval_state_section)
 
     return report_section_block
 
@@ -125,12 +161,27 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
 
 def get_report_approver_sendback_notification(report: Dict, report_url: str) -> List[Dict]:
 
-    title_text = ':warning: Your expense report <{}|[{}]> is sent back for changes'.format(
+    title_text = ':bangbang: Your expense report <{}|[{}]> is sent back for changes'.format(
                     report_url,
                     report['claim_number']
                 )
 
     report_section_block = get_report_notification(report, report_url, title_text)
+
+    return report_section_block
+
+
+def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dict]:
+
+    title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted approval'.format(
+                    report_url,
+                    report['claim_number']
+                )
+    report_section_block = get_report_notification(report, report_url, title_text)
+
+    report_approval_state_section = get_report_approval_state_section(report)
+
+    report_section_block.insert(3, report_approval_state_section)
 
     return report_section_block
 
