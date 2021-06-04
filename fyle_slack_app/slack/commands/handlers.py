@@ -78,7 +78,7 @@ class SlackCommandHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Slack user not found')
 
-        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id)
+        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id).order_by('-notification_type')
 
         try:
             fyle_profile = get_fyle_profile(user.fyle_refresh_token)

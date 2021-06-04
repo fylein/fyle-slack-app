@@ -38,7 +38,7 @@ NOTIFICATION_TYPE_UI_DETAILS = {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '*Report sent back for inquiry :warning: * \n_Get notified when your expense report is sent back for inquiry_'
+                'text': '*Report sent back for inquiry :bangbang: * \n_Get notified when your expense report is sent back for inquiry_'
             },
             'accessory': {
                 'type': 'radio_buttons',

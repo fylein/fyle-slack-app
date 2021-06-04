@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
