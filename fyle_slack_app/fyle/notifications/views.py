@@ -149,27 +149,29 @@ class FyleApproverNotification(FyleNotificationView):
 
     def handle_report_submitted(self, report: Dict, user: User) -> JsonResponse:
 
-        slack_client = slack_utils.get_slack_client(user.slack_team_id)
+        if report['state'] == 'APPROVER_PENDING':
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+            slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-        user_display_name = slack_utils.get_user_display_name(
-            slack_client,
-            report['user']
-        )
+            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
 
-        report_notification_message = notification_messages.get_report_approval_notification(
-            report,
-            user_display_name,
-            report_url
-        )
+            user_display_name = slack_utils.get_user_display_name(
+                slack_client,
+                report['user']
+            )
 
-        slack_client.chat_postMessage(
-            channel=user.slack_dm_channel_id,
-            blocks=report_notification_message
-        )
+            report_notification_message = notification_messages.get_report_approval_notification(
+                report,
+                user_display_name,
+                report_url
+            )
 
-        # Track report approval notification received
-        FyleReportApproval.track_report_notification_received(user, report)
+            slack_client.chat_postMessage(
+                channel=user.slack_dm_channel_id,
+                blocks=report_notification_message
+            )
+
+            # Track report approval notification received
+            FyleReportApproval.track_report_notification_received(user, report)
 
         return JsonResponse({}, status=200)
