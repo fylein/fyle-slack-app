@@ -1,18 +1,8 @@
 from typing import Dict, Tuple
 
-import json
-import croniter
-
-from django.http import JsonResponse, HttpRequest
-from django.views.generic.base import View
-from django.contrib.auth import authenticate
-
-from django_q.models import Schedule
-
 from fyle_slack_app import tracking
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.libs import assertions
 
 
 class FyleReportApproval:
@@ -113,32 +103,3 @@ class FyleReportApproval:
         tracking.identify_user(user.email)
 
         tracking.track_event(user.email, 'Report Reviewed In Fyle', event_data)
-
-
-class FyleReportPolling(View):
-
-    # Endpoint to trigger the background cron task for report polling
-    # Since this is an endpoint we'll need to protect this
-    # Only django's superuser will be able to create the cron task
-    def post(self, request: HttpRequest) -> JsonResponse:
-        payload = json.loads(request.body)
-        superuser_username = payload['superuser_username']
-        superuser_password = payload['superuser_password']
-
-        superuser = authenticate(username=superuser_username, password=superuser_password)
-        assertions.assert_found(superuser, 'Invalid superuser credentials')
-        assertions.assert_true(superuser.is_superuser)
-
-        cron_expression = payload['cron_expression']
-        assertions.assert_valid(croniter.croniter.is_valid(cron_expression), 'Invalid cron expression')
-
-        # Info on `get_or_create` method
-        # https://simpleisbetterthancomplex.com/tips/2016/07/14/django-tip-6-get-or-create.html
-        Schedule.objects.get_or_create(
-            func='fyle_slack_app.fyle.report_approvals.tasks.poll_report_approvals',
-            schedule_type=Schedule.CRON,
-            cron=cron_expression
-            # Use '*/1 * * * *' for testing -> cron to run every minute
-            # Use '*/10 * * * *' for 10 min cron
-        )
-        return JsonResponse({'message': 'Report polling task scheduled'})

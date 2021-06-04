@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict
 
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
@@ -27,15 +27,3 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
         user_display_name = user_details['full_name']
 
     return user_display_name
-
-
-def add_message_section_to_ui_block(ui_block: List, section_message: str) -> List[Dict]:
-    section = {
-        'type': 'section',
-        'text': {
-            'type': 'mrkdwn',
-            'text': section_message
-        }
-    }
-    ui_block.append(section)
-    return ui_block

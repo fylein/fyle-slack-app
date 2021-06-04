@@ -7,6 +7,7 @@ from fyle.platform import Platform
 from django.conf import settings
 
 from fyle_slack_app.libs import http, assertions, utils
+from fyle_slack_app.models.user_subscription_details import SubscriptionType
 
 
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
@@ -104,3 +105,27 @@ def get_fyle_oauth_url(user_id: str, team_id: str) -> str:
     )
 
     return FYLE_OAUTH_URL
+
+
+def upsert_fyle_subscription(cluster_domain: str, access_token: str, subscription_payload: Dict, subscription_type: SubscriptionType) -> requests.Response:
+    FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
+
+    SUBSCRIPTION_TYPE_URL_MAPPINGS = {
+        SubscriptionType.FYLER_SUBSCRIPTION: '{}/fyler/subscriptions'.format(FYLE_PLATFORM_URL),
+        SubscriptionType.APPROVER_SUBSCRIPTION: '{}/approver/subscriptions'.format(FYLE_PLATFORM_URL)
+    }
+
+    subscrition_url = SUBSCRIPTION_TYPE_URL_MAPPINGS[subscription_type]
+
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer {}'.format(access_token)
+    }
+
+    subscription = http.post(
+        url=subscrition_url,
+        json=subscription_payload,
+        headers=headers
+    )
+
+    return subscription

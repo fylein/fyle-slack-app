@@ -2,6 +2,8 @@ from typing import Callable, Dict
 
 from django.http.response import JsonResponse
 
+from django_q.tasks import async_task
+
 from fyle.platform import exceptions
 
 from fyle_slack_app import tracking
@@ -9,7 +11,7 @@ from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
-from fyle_slack_app.slack.ui.notification_preferences import messages as notification_preference_messages
+from fyle_slack_app.slack.ui.notifications import preference_messages as notification_preference_messages
 from fyle_slack_app.slack import utils as slack_utils
 
 
@@ -47,29 +49,11 @@ class SlackCommandHandler:
 
 
     def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
-        user = utils.get_or_none(User, slack_user_id=user_id)
-
-        slack_client = slack_utils.get_slack_client(team_id)
-
-        # Text message if user hasn't linked Fyle account
-        text = 'Hey buddy, you haven\'t linked your Fyle account yet :face_with_head_bandage: \n' \
-            'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
-
-        if user is not None:
-            # Deleting user entry to unlink fyle account
-            user.delete()
-            text = 'Hey, you\'ve successfully unlinked your Fyle account with slack :white_check_mark:\n ' \
-                'If you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
-
-            # Update home tab with pre auth message
-            self.update_home_tab_with_pre_auth_message(user_id, team_id)
-
-            # Track Fyle account unlinked
-            self.track_fyle_account_unlinked(user)
-
-        slack_client.chat_postMessage(
-            channel=user_dm_channel_id,
-            text=text
+        async_task(
+            'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
+            user_id,
+            team_id,
+            user_dm_channel_id
         )
         return JsonResponse({}, status=200)
 
@@ -94,7 +78,7 @@ class SlackCommandHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Slack user not found')
 
-        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id)
+        user_notification_preferences = NotificationPreference.objects.values('notification_type', 'is_enabled').filter(slack_user_id=user_id).order_by('-notification_type')
 
         try:
             fyle_profile = get_fyle_profile(user.fyle_refresh_token)

@@ -22,7 +22,7 @@ from fyle_slack_app.slack.events import  views as slack_event_views
 from fyle_slack_app.slack.commands import views as slack_command_views
 
 from fyle_slack_app.fyle.authorization import views as fyle_auth_views
-from fyle_slack_app.fyle.report_approvals import views as fyle_report_approval_views
+from fyle_slack_app.fyle.notifications import views as fyle_notification_views
 
 from fyle_slack_service import ready
 
@@ -41,7 +41,9 @@ urlpatterns = [
     # Fyle routes
     path('fyle/authorization', fyle_auth_views.FyleAuthorization.as_view()),
 
-    path('fyle/schedule_report_polling', fyle_report_approval_views.FyleReportPolling.as_view()),
+    path('fyle/fyler/notifications/<str:user_id>', fyle_notification_views.FyleFylerNotification.as_view()),
+
+    path('fyle/approver/notifications/<str:user_id>', fyle_notification_views.FyleApproverNotification.as_view()),
 
     # Slack interactive routes
     path('slack/interactives', slack_interactive_views.SlackInteractiveView.as_view()),

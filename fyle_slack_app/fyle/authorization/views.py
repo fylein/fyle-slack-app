@@ -3,14 +3,15 @@ from typing import Dict
 from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
-from django.utils import timezone
+from django.db import transaction
 
 from slack_sdk.web.client import WebClient
 
 from fyle_slack_app import tracking
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions, logger
-from fyle_slack_app.models import Team, User, ReportPollingDetail
+from fyle_slack_app.models import Team, User, UserSubscriptionDetail
+from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
@@ -64,14 +65,19 @@ class FyleAuthorization(View):
 
             else:
 
-                fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
+                # Putting below logic inside a transaction block to prevent bad data
+                # If any error occurs in any of the below step, Fyle account link to Slack should not happen
+                with transaction.atomic():
 
-                fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
+                    fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
 
-                # Create user
-                user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+                    fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
-                self.create_report_polling_entry(user)
+                    # Create user
+                    user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+
+                    # Creating subscriptions for user
+                    self.create_notification_subscription(user, fyle_profile)
 
                 # Send post authorization message to user
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
@@ -127,11 +133,59 @@ class FyleAuthorization(View):
         slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
 
 
-    def create_report_polling_entry(self, user: User) -> None:
-        ReportPollingDetail.objects.create(
-            slack_user=user,
-            last_successful_poll_at=timezone.now()
-        )
+    def create_notification_subscription(self, user: User, fyle_profile: Dict) -> None:
+        access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
+        cluster_domain = fyle_utils.get_cluster_domain(access_token)
+
+        SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
+            SubscriptionType.FYLER_SUBSCRIPTION: {
+                'role_required': 'FYLER',
+                'webhook_url': '{}/fyle/fyler/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+            },
+            SubscriptionType.APPROVER_SUBSCRIPTION: {
+                'role_required': 'APPROVER',
+                'webhook_url': '{}/fyle/approver/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+            }
+        }
+
+        user_subscription_details = []
+
+        for subscription_type in SubscriptionType:
+            subscription_webhook_details = SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING[subscription_type]
+
+            subscription_role_required = subscription_webhook_details['role_required']
+
+            if subscription_role_required in fyle_profile['roles']:
+                fyle_user_id = user.fyle_user_id
+
+                webhook_url = subscription_webhook_details['webhook_url']
+                webhook_url = '{}/{}'.format(webhook_url, fyle_user_id)
+
+                subscription_payload = {}
+                subscription_payload['data'] = {
+                    'webhook_url': webhook_url,
+                    'is_enabled': True
+                }
+
+                subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_type)
+
+                if subscription.status_code != 200:
+                    logger.error('Error while creating %s subscription for user: %s ', subscription_role_required, fyle_user_id)
+                    logger.error('%s Subscription error %s', subscription_role_required, subscription.content)
+                    assertions.assert_good(False)
+
+                subscription_id = subscription.json()['data']['id']
+
+                subscription_detail = UserSubscriptionDetail(
+                    slack_user=user,
+                    subscription_type=subscription_type.value,
+                    subscription_id=subscription_id
+                )
+
+                user_subscription_details.append(subscription_detail)
+
+        # Creating/Inserting subsctiptions in bulk
+        UserSubscriptionDetail.objects.bulk_create(user_subscription_details)
 
 
     def track_fyle_authorization(self, user: User, fyle_profile: Dict) -> None:

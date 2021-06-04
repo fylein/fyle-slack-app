@@ -9,7 +9,7 @@ from fyle.platform import exceptions
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, add_message_section_to_ui_block, get_slack_client
+from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 
 
@@ -26,7 +26,10 @@ class BlockActionHandler:
             'link_fyle_account': self.link_fyle_account,
             'review_report_in_fyle': self.review_report_in_fyle,
             'approve_report': self.approve_report,
-            'approver_report_approval_notification_preference': self.handle_notification_preference_selection
+            'report_submitted_notification_preference': self.handle_notification_preference_selection,
+            'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
+            'report_payment_processing_notification_preference': self.handle_notification_preference_selection,
+            'report_approver_sendback_notification_preference': self.handle_notification_preference_selection
         }
 
 
@@ -91,10 +94,14 @@ class BlockActionHandler:
                     report_notification_message.append(message_block)
 
             report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-            report_notification_message = add_message_section_to_ui_block(
-                report_notification_message,
-                report_message
-            )
+            report_deleted_section = {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': report_message
+                }
+            }
+            report_notification_message.insert(3, report_deleted_section)
 
             slack_client = get_slack_client(team_id)
 
@@ -132,7 +139,10 @@ class BlockActionHandler:
         value = slack_payload['actions'][0]['selected_option']['value']
 
         ACTION_NOTIFICATION_PREFERENCE_MAPPING = {
-            'approver_report_approval_notification_preference': NotificationType.APPROVER_REPORT_APPROVAL.value
+            'report_submitted_notification_preference': NotificationType.REPORT_SUBMITTED.value,
+            'report_partially_approved_notification_preference': NotificationType.REPORT_PARTIALLY_APPROVED.value,
+            'report_payment_processing_notification_preference': NotificationType.REPORT_PAYMENT_PROCESSING.value,
+            'report_approver_sendback_notification_preference': NotificationType.REPORT_APPROVER_SENDBACK.value
         }
 
         is_enabled = True if value == 'enable' else False
