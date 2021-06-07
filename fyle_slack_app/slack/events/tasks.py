@@ -1,10 +1,28 @@
 from slack_sdk import WebClient
 
+from django.conf import settings
+
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
-from fyle_slack_app.libs import utils, assertions
-from fyle_slack_app.models import Team, User
+from fyle_slack_app.libs import utils, assertions, logger
+from fyle_slack_app.models import Team, User, UserSubscriptionDetail
+from fyle_slack_app.models.user_subscription_details import SubscriptionType
+from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization import messages
+
+
+logger = logger.get_logger(__name__)
+
+SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
+    SubscriptionType.FYLER_SUBSCRIPTION: {
+        'role_required': 'FYLER',
+        'webhook_url': '{}/fyle/fyler/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+    },
+    SubscriptionType.APPROVER_SUBSCRIPTION: {
+        'role_required': 'APPROVER',
+        'webhook_url': '{}/fyle/approver/notifications'.format(settings.SLACK_SERVICE_BASE_URL)
+    }
+}
 
 
 def new_user_joined_pre_auth_message(user_id: str, team_id: str) -> None:
@@ -39,5 +57,43 @@ def uninstall_app(team_id: str) -> None:
     team = utils.get_or_none(Team, id=team_id)
 
     if team is not None:
+
+        users = User.objects.filter(slack_team_id=team_id)
+
+        # Disabling subscription for users in the team
+        for user in users:
+            access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
+            cluster_domain = fyle_utils.get_cluster_domain(access_token)
+
+            fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
+
+            for subscription_type in SubscriptionType:
+                subscription_webhook_details = SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING[subscription_type]
+
+                subscription_role_required = subscription_webhook_details['role_required']
+
+                if subscription_role_required in fyle_profile['roles']:
+                    fyle_user_id = user.fyle_user_id
+
+                    webhook_url = subscription_webhook_details['webhook_url']
+                    webhook_url = '{}/{}'.format(webhook_url, fyle_user_id)
+
+                    subscription_detail = UserSubscriptionDetail.objects.get(
+                        slack_user_id=user.slack_user_id,
+                        subscription_type=subscription_type.value
+                    )
+
+                    subscription_payload = {}
+                    subscription_payload['data'] = {
+                        'id': subscription_detail.subscription_id,
+                        'webhook_url': webhook_url,
+                        'is_enabled': False
+                    }
+
+                    subscription = fyle_utils.upsert_fyle_subscription(cluster_domain, access_token, subscription_payload, subscription_type)
+
+                    if subscription.status_code != 200:
+                        logger.error('Error while disabling %s subscription for user: %s ', subscription_role_required, fyle_user_id)
+
         # Deleting team :)
         team.delete()
