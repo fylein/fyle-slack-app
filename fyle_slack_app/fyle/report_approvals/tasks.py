@@ -80,7 +80,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 # With this CTAs are visible if approver wants to approve again
                 slack_client.chat_postMessage(
                     channel=user.slack_dm_channel_id,
-                    message=message,
+                    text=message,
                     thread_ts=message_timestamp
                 )
                 return None

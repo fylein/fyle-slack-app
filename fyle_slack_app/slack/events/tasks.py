@@ -75,13 +75,13 @@ def uninstall_app(team_id: str) -> None:
                 if subscription_role_required in fyle_profile['roles']:
                     fyle_user_id = user.fyle_user_id
 
-                    webhook_url = subscription_webhook_details['webhook_url']
-                    webhook_url = '{}/{}'.format(webhook_url, fyle_user_id)
-
                     subscription_detail = UserSubscriptionDetail.objects.get(
                         slack_user_id=user.slack_user_id,
                         subscription_type=subscription_type.value
                     )
+
+                    webhook_url = subscription_webhook_details['webhook_url']
+                    webhook_url = '{}/{}'.format(webhook_url, subscription_detail.webhook_id)
 
                     subscription_payload = {}
                     subscription_payload['data'] = {

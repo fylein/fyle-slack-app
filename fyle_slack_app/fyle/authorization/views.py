@@ -1,5 +1,7 @@
 from typing import Dict
 
+import uuid
+
 from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
@@ -158,8 +160,10 @@ class FyleAuthorization(View):
             if subscription_role_required in fyle_profile['roles']:
                 fyle_user_id = user.fyle_user_id
 
+                subscription_webhook_id = str(uuid.uuid4())
+
                 webhook_url = subscription_webhook_details['webhook_url']
-                webhook_url = '{}/{}'.format(webhook_url, fyle_user_id)
+                webhook_url = '{}/{}'.format(webhook_url, subscription_webhook_id)
 
                 subscription_payload = {}
                 subscription_payload['data'] = {
@@ -179,7 +183,8 @@ class FyleAuthorization(View):
                 subscription_detail = UserSubscriptionDetail(
                     slack_user=user,
                     subscription_type=subscription_type.value,
-                    subscription_id=subscription_id
+                    subscription_id=subscription_id,
+                    webhook_id=subscription_webhook_id
                 )
 
                 user_subscription_details.append(subscription_detail)

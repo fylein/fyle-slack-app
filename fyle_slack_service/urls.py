@@ -41,9 +41,9 @@ urlpatterns = [
     # Fyle routes
     path('fyle/authorization', fyle_auth_views.FyleAuthorization.as_view()),
 
-    path('fyle/fyler/notifications/<str:user_id>', fyle_notification_views.FyleFylerNotification.as_view()),
+    path('fyle/fyler/notifications/<str:webhook_id>', fyle_notification_views.FyleFylerNotification.as_view()),
 
-    path('fyle/approver/notifications/<str:user_id>', fyle_notification_views.FyleApproverNotification.as_view()),
+    path('fyle/approver/notifications/<str:webhook_id>', fyle_notification_views.FyleApproverNotification.as_view()),
 
     # Slack interactive routes
     path('slack/interactives', slack_interactive_views.SlackInteractiveView.as_view()),

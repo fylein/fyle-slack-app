@@ -9,7 +9,7 @@ from django.views import View
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.models import User, NotificationPreference
+from fyle_slack_app.models import User, NotificationPreference, UserSubscriptionDetail
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
@@ -19,7 +19,7 @@ class FyleNotificationView(View):
 
     event_handlers: Dict = {}
 
-    def post(self, request: HttpRequest, user_id: str) -> JsonResponse:
+    def post(self, request: HttpRequest, webhook_id: str) -> JsonResponse:
         webhook_data = json.loads(request.body)
 
         resource = webhook_data['resource']
@@ -39,12 +39,16 @@ class FyleNotificationView(View):
 
         if handler is not None:
 
-            user = utils.get_or_none(User, fyle_user_id=user_id)
-            assertions.assert_found(user, 'User not found for fyle user id: {}'.format(user_id))
+            user_subscription_detail = utils.get_or_none(UserSubscriptionDetail, webhook_id=webhook_id)
+            assertions.assert_found(user_subscription_detail, 'User subscription not found with webhook id: {}'.format(webhook_id))
 
-            user_notification_preference = NotificationPreference.objects.get(slack_user_id=user.slack_user_id, notification_type=event_type)
+            slack_user_id = user_subscription_detail.slack_user_id
+
+            user_notification_preference = NotificationPreference.objects.get(slack_user_id=slack_user_id, notification_type=event_type)
 
             if user_notification_preference.is_enabled is True:
+
+                user = User.objects.get(slack_user_id=slack_user_id)
 
                 return handler(webhook_data['data'], user)
 

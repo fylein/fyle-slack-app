@@ -18,6 +18,7 @@ class UserSubscriptionDetail(models.Model):
     slack_user = models.ForeignKey(User, on_delete=models.CASCADE, to_field='slack_user_id')
     subscription_type = models.CharField(max_length=120)
     subscription_id = models.CharField(max_length=120, unique=True)
+    webhook_id = models.CharField(max_length=120, unique=True)
 
 
     def __str__(self) -> str:

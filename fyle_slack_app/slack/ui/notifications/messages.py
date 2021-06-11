@@ -136,7 +136,7 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
 
     title_text = ':white_check_mark: Your expense report <{}|[{}]> has been approved'.format(
                     report_url,
-                    report['claim_number']
+                    report['seq_num']
                 )
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -151,7 +151,7 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
 
     title_text = ':moneybag: Payment is being processed for your expense report <{}|[{}]>'.format(
                     report_url,
-                    report['claim_number']
+                    report['seq_num']
                 )
 
     report_section_block = get_report_notification(report, report_url, title_text)
@@ -163,7 +163,7 @@ def get_report_approver_sendback_notification(report: Dict, report_url: str) -> 
 
     title_text = ':bangbang: Your expense report <{}|[{}]> is sent back for changes'.format(
                     report_url,
-                    report['claim_number']
+                    report['seq_num']
                 )
 
     report_section_block = get_report_notification(report, report_url, title_text)
@@ -175,7 +175,7 @@ def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dic
 
     title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted approval'.format(
                     report_url,
-                    report['claim_number']
+                    report['seq_num']
                 )
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -196,13 +196,13 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
 
     user_email = report['user']['email']
 
-    report_claim_number = report['claim_number']
+    report_seq_num = report['seq_num']
 
     title_text = ':envelope_with_arrow: *{}* ({}) submitted an expense report <{}|[{}]> for your approval'.format(
                     user_display_name,
                     user_email,
                     report_url,
-                    report_claim_number
+                    report_seq_num
                 )
 
     report_section_block = get_report_section_blocks(title_text, report)
