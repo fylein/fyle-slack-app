@@ -3,6 +3,7 @@ from typing import Dict, Tuple
 from fyle_slack_app import tracking
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
+from fyle_slack_app.fyle.notifications.views import FyleNotificationView
 
 
 class FyleReportApproval:
@@ -64,42 +65,9 @@ class FyleReportApproval:
 
 
     @staticmethod
-    def get_tracking_event_data(user: User, report: Dict) -> Dict:
-        event_data = {
-            'asset': 'SLACK_APP',
-            'slack_user_id': user.slack_user_id,
-            'fyle_user_id': user.fyle_user_id,
-            'email': user.email,
-            'slack_team_id': user.slack_team.id,
-            'slack_team_name': user.slack_team.name,
-            'report_id': report['id'],
-            'org_id': report['org_id']
-        }
-
-        return event_data
-
-    @staticmethod
-    def track_report_notification_received(user: User, report: Dict) -> None:
-        event_data = FyleReportApproval.get_tracking_event_data(user, report)
-
-        tracking.identify_user(user.email)
-
-        tracking.track_event(user.email, 'Report Approval Notification Received', event_data)
-
-
-    @staticmethod
     def track_report_approved(user: User, report: Dict) -> None:
-        event_data = FyleReportApproval.get_tracking_event_data(user, report)
+        event_data = FyleNotificationView.get_report_tracking_data(user, report)
 
         tracking.identify_user(user.email)
 
         tracking.track_event(user.email, 'Report Approved From Slack', event_data)
-
-
-    @staticmethod
-    def track_report_reviewed_in_fyle(user: User, report: Dict) -> None:
-        event_data = FyleReportApproval.get_tracking_event_data(user, report)
-
-        tracking.identify_user(user.email)
-
-        tracking.track_event(user.email, 'Report Reviewed In Fyle', event_data)
