@@ -79,11 +79,8 @@ class BlockActionHandler:
         assertions.assert_found(user)
 
         try:
+            # pylint: disable=unused-variable
             report = FyleReportApproval.get_report_by_id(user, report_id)
-
-            # Tracking report reviewed in Fyle
-            FyleReportApproval.track_report_reviewed_in_fyle(user, report['data'])
-
         except exceptions.NotFoundItemError as error:
             logger.error('Error while fetching report of id: %s \n %s', report_id, error)
 

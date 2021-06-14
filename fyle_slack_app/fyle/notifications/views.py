@@ -6,12 +6,12 @@ from django.http.request import HttpRequest
 from django.http.response import JsonResponse
 from django.views import View
 
+from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.models import User, NotificationPreference, UserSubscriptionDetail
 from fyle_slack_app.models.notification_preferences import NotificationType
-from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
 
 
@@ -55,6 +55,39 @@ class FyleNotificationView(View):
         return JsonResponse({}, status=200)
 
 
+    @staticmethod
+    def get_event_data(user: User) -> Dict:
+        event_data = {
+            'asset': 'SLACK_APP',
+            'slack_user_id': user.slack_user_id,
+            'fyle_user_id': user.fyle_user_id,
+            'email': user.email,
+            'slack_team_id': user.slack_team.id,
+            'slack_team_name': user.slack_team.name,
+        }
+        return event_data
+
+
+    @staticmethod
+    def get_report_tracking_data(user: User, report: Dict) -> Dict:
+        event_data = FyleNotificationView.get_event_data(user)
+
+        event_data['report_id'] = report['id']
+        event_data['org_id'] = report['org_id']
+
+        return event_data
+
+
+    @staticmethod
+    def track_notification(event_name: str, user: User, resource_type: str, resource: Dict) -> None:
+
+        if resource_type == 'REPORT':
+            event_data = FyleNotificationView.get_report_tracking_data(user, resource)
+
+        tracking.identify_user(user.email)
+
+        tracking.track_event(user.email, event_name, event_data)
+
 
 class FyleFylerNotification(FyleNotificationView):
 
@@ -83,6 +116,8 @@ class FyleFylerNotification(FyleNotificationView):
             blocks=report_notification_message
         )
 
+        self.track_notification('Report Partially Approved Notification Received', user, 'REPORT', report)
+
         return JsonResponse({}, status=200)
 
 
@@ -101,6 +136,8 @@ class FyleFylerNotification(FyleNotificationView):
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
+
+        self.track_notification('Report Payment Processing Notification Received', user, 'REPORT', report)
 
         return JsonResponse({}, status=200)
 
@@ -121,6 +158,8 @@ class FyleFylerNotification(FyleNotificationView):
             blocks=report_notification_message
         )
 
+        self.track_notification('Report Approver Sendback Notification Received', user, 'REPORT', report)
+
         return JsonResponse({}, status=200)
 
 
@@ -139,6 +178,8 @@ class FyleFylerNotification(FyleNotificationView):
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
+
+        self.track_notification('Report Submitted Notification Received', user, 'REPORT', report)
 
         return JsonResponse({}, status=200)
 
@@ -175,7 +216,6 @@ class FyleApproverNotification(FyleNotificationView):
                 blocks=report_notification_message
             )
 
-            # Track report approval notification received
-            FyleReportApproval.track_report_notification_received(user, report)
+            self.track_notification('Report Approval Notification Received', user, 'REPORT', report)
 
         return JsonResponse({}, status=200)
