@@ -84,7 +84,6 @@ def test_fyler_notifications(track_notification, fyle_utils, slack_utils, user, 
     track_notification.return_value = None
 
     # Calling the function to be test
-
     response = FyleFylerNotification().post(mock_request, mock_webhook_id)
 
     # Checking response type
@@ -166,7 +165,6 @@ def test_approver_notifications(track_notification, fyle_utils, slack_utils, use
     track_notification.return_value = None
 
     # Calling the function to be test
-
     response = FyleApproverNotification().post(mock_request, mock_webhook_id)
 
     # Checking response type
