@@ -67,11 +67,6 @@ def get_report_review_in_fyle_action(report_url: str, button_text: str, report_i
 
 
 def get_report_notification(report: Dict, report_url: str, title_text: str) -> List[Dict]:
-    report_url = '{}/{}'.format(report_url, report['id'])
-    report_query_params = {
-        'org_id': report['org_id']
-    }
-    report_url = utils.convert_to_branchio_url(report_url, report_query_params)
 
     report_section_block = get_report_section_blocks(title_text, report)
 
@@ -187,12 +182,6 @@ def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dic
 
 
 def get_report_approval_notification(report: Dict, user_display_name: str, report_url: str, message: str = None) -> List[Dict]:
-
-    report_url = '{}/{}'.format(report_url, report['id'])
-    report_query_params = {
-        'org_id': report['org_id']
-    }
-    report_url = utils.convert_to_branchio_url(report_url, report_query_params)
 
     user_email = report['user']['email']
 

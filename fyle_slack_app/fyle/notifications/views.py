@@ -104,7 +104,7 @@ class FyleFylerNotification(FyleNotificationView):
 
         slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
 
         report_notification_message = notification_messages.get_report_approved_notification(
             report,
@@ -125,7 +125,7 @@ class FyleFylerNotification(FyleNotificationView):
 
         slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
 
         report_notification_message = notification_messages.get_report_payment_processing_notification(
             report,
@@ -146,7 +146,7 @@ class FyleFylerNotification(FyleNotificationView):
 
         slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
 
         report_notification_message = notification_messages.get_report_approver_sendback_notification(
             report,
@@ -167,7 +167,7 @@ class FyleFylerNotification(FyleNotificationView):
 
         slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
 
         report_notification_message = notification_messages.get_report_submitted_notification(
             report,
@@ -198,7 +198,7 @@ class FyleApproverNotification(FyleNotificationView):
 
             slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token)
+            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
 
             user_display_name = slack_utils.get_user_display_name(
                 slack_client,

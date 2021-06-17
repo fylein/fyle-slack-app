@@ -4,13 +4,10 @@ from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
-from fyle.platform import exceptions
-
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
-from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 
 
 logger = logger.get_logger(__name__)
@@ -71,43 +68,7 @@ class BlockActionHandler:
 
 
     def review_report_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        report_id = slack_payload['actions'][0]['value']
-        message_timestamp = slack_payload['message']['ts']
-        message_blocks = slack_payload['message']['blocks']
-
-        user = utils.get_or_none(User, slack_user_id=user_id)
-        assertions.assert_found(user)
-
-        try:
-            # pylint: disable=unused-variable
-            report = FyleReportApproval.get_report_by_id(user, report_id)
-        except exceptions.NotFoundItemError as error:
-            logger.error('Error while fetching report of id: %s \n %s', report_id, error)
-
-            # Removing CTAs from notification message for deleted report
-            report_notification_message = []
-            for message_block in message_blocks:
-                if message_block['type'] != 'actions':
-                    report_notification_message.append(message_block)
-
-            report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-            report_deleted_section = {
-                'type': 'section',
-                'text': {
-                    'type': 'mrkdwn',
-                    'text': report_message
-                }
-            }
-            report_notification_message.insert(3, report_deleted_section)
-
-            slack_client = get_slack_client(team_id)
-
-            slack_client.chat_update(
-                channel=user.slack_dm_channel_id,
-                blocks=report_notification_message,
-                ts=message_timestamp
-            )
-
+        # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
 
 
