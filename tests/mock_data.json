@@ -24,10 +24,10 @@
                         "num_expenses": 3,
                         "is_manually_flagged": false,
                         "is_policy_flagged": false,
-                        "reimbursed_at": null,
-                        "approved_at": null,
-                        "submitted_at": "2020-06-11T13:14:55.201598+00:00",
-                        "claim_number": "C/2021/02/R/907",
+                        "last_reimbursed_at": null,
+                        "last_approved_at": null,
+                        "last_submitted_at": "2020-06-11T13:14:55.201598+00:00",
+                        "seq_num": "C/2021/02/R/907",
                         "source": "WEBAPP",
                         "approvals": [
                             {
@@ -63,10 +63,10 @@
                     "num_expenses": 3,
                     "is_manually_flagged": false,
                     "is_policy_flagged": false,
-                    "reimbursed_at": null,
-                    "approved_at": null,
-                    "submitted_at": "2020-06-11T13:14:55.201598+00:00",
-                    "claim_number": "C/2021/02/R/907",
+                    "last_reimbursed_at": null,
+                    "last_approved_at": null,
+                    "last_submitted_at": "2020-06-11T13:14:55.201598+00:00",
+                    "seq_num": "C/2021/02/R/907",
                     "source": "WEBAPP",
                     "approvals": [
                         {
@@ -101,10 +101,10 @@
                     "num_expenses": 3,
                     "is_manually_flagged": false,
                     "is_policy_flagged": false,
-                    "reimbursed_at": null,
-                    "approved_at": "2020-06-11T13:15:55.201598+00:00",
-                    "submitted_at": "2020-06-11T13:14:55.201598+00:00",
-                    "claim_number": "C/2021/02/R/907",
+                    "last_reimbursed_at": null,
+                    "last_approved_at": "2020-06-11T13:15:55.201598+00:00",
+                    "last_submitted_at": "2020-06-11T13:14:55.201598+00:00",
+                    "seq_num": "C/2021/02/R/907",
                     "source": "WEBAPP",
                     "approvals": [
                         {
