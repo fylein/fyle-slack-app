@@ -76,7 +76,7 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     slack_utils.get_user_display_name.assert_called_with(slack_client(), mock_approver_report['data']['user'])
 
     fyle_utils.get_fyle_report_url.assert_called()
-    fyle_utils.get_fyle_report_url.assert_called_with(mock_fyle_refresh_token)
+    fyle_utils.get_fyle_report_url.assert_called_with(mock_fyle_refresh_token, mock_approver_report['data'])
 
     fyle_report_approval.approve_report.assert_called()
     fyle_report_approval.approve_report.assert_called_with(mock_user, mock_report_id)
