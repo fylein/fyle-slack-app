@@ -50,7 +50,7 @@ class FyleAuthorization(View):
 
             # Error when user declines Fyle authorization
             if error == 'access_denied':
-                error_message = 'Sad to see you decline us :white_frowning_face: \n Well if you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Fyle account with Slack :zap:'
+                error_message = 'Well.. if you do change your mind, visit the home tab and link your Fyle account to Slack to stay up to date on all your expense reports.'
 
             slack_client.chat_postMessage(
                     channel=slack_user_dm_channel_id,

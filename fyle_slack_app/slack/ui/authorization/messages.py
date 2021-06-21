@@ -14,14 +14,28 @@ def get_pre_authorization_message(user_name: str, FYLE_OAUTH_URL: str) -> List[D
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': 'Your organisation uses *Fyle* so you spend virtually no time on expense reports. That\'s some boring work.'
+                'text': 'The Fyle app for Slack brings all the important expense reporting action to right where work happens. No more switching between multiple tabs! '
             }
         },
         {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': 'Once you link your Fyle account, you\'ll see alerts for reports that need your approval and you\'ll able to check and approve them from within Slack. Your teammates will love you for approving their reports in a jiffy!'
+                'text': 'Once you link your Fyle account, you can use this app to receive real-time notifications on the status of your expense reports after you\'ve submitted them.'
+            }
+        },
+		{
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': 'And if you\'re an approver, you\'ll be notified on Slack whenever a teammate submits an expense report to you. Not just that, you can even approve it right from this app. Your teammates are going to love you for your speed! :zap:'
+            }
+        },
+		{
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': 'What are you waiting for? \n Link your Fyle account now'
             }
         },
         {
@@ -50,21 +64,35 @@ def get_post_authorization_message() -> List[Dict]:
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
-				'text': 'Yaay :tada: you\'ve linked *Fyle* to Slack :confetti_ball:  \n\n'
+				'text': 'Yaay :tada: you\'ve successfully linked *Fyle* to Slack :confetti_ball:  \n\n'
 			}
 		},
 		{
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
-				'text': '*What to do next?*'
+				'text': '*What\'s next?*'
 			}
 		},
 		{
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
-				'text': 'When one of your teammates submits an expense report for your approval, you\'ll receive a direct message like this:'
+				'text': 'If you\'ve submitted an expense report for approval, you\'ll receive real-time notifications on the Fyle Slack app whenever:'
+			}
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': '• Your report gets approved \n • You receive your reimbursement \n • A comment is made on the report \n • The report is sent back to you for further inquiry.'
+			}
+		},
+		{
+			'type': 'section',
+			'text': {
+				'type': 'mrkdwn',
+				'text': 'If you\'re an approver, you\'ll see a direct message like below whenever your teammate submits a report to you for approval.'
 			}
 		},
 		{
@@ -76,7 +104,7 @@ def get_post_authorization_message() -> List[Dict]:
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
-				'text': 'You can approve reports within Slack or view details in Fyle within 2 seconds. Your teammates are going to love you a little bit more!'
+				'text': 'You can even approve the report from within the Slack app as soon as you\'re notified. Your teammates are going to love you for your speed! :zap:'
 			}
 		},
 		{
