@@ -7,12 +7,15 @@ from django.http.response import JsonResponse
 from django.views import View
 
 from fyle_slack_app import tracking
-from fyle_slack_app.libs import utils, assertions
+from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.models import User, NotificationPreference, UserSubscriptionDetail
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
+
+
+logger = logger.get_logger(__name__)
 
 
 class FyleNotificationView(View):
@@ -32,6 +35,8 @@ class FyleNotificationView(View):
         # Constructing event in `<resource>_<action>` format
         # This is equivalent to the notification types defined
         event_type = '{}_{}'.format(resource, action)
+
+        logger.info('Notification type received -> %s',  event_type)
 
         self._initialize_event_handlers()
 

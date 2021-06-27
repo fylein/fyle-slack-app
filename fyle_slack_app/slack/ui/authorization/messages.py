@@ -85,7 +85,7 @@ def get_post_authorization_message() -> List[Dict]:
 			'type': 'section',
 			'text': {
 				'type': 'mrkdwn',
-				'text': '• Your report gets approved \n • You receive your reimbursement \n • A comment is made on the report \n • The report is sent back to you for further inquiry.'
+				'text': '• Your report gets approved :white_check_mark: \n • You receive your reimbursement :moneybag: \n • A comment is made on the report :speech_balloon: \n • The report is sent back to you for further inquiry :bangbang: '
 			}
 		},
 		{
