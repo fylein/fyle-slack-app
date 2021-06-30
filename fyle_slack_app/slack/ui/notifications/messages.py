@@ -57,6 +57,18 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     if sub_category is not None:
         category = '{} / {}'.format(category, sub_category)
 
+    currency = expense['currency']
+    amount =  expense['amount']
+
+    amount_details = '*Amount:*\n {} {}'.format(currency, amount)
+
+    # If foreign currency exists, then show foreign amount and currency
+    if expense['foreign_currency'] is not None:
+        foreign_currency = expense['foreign_currency']
+        foreign_amount =  expense['foreign_amount']
+
+        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency, foreign_amount)
+
     expense_section_block = [
         {
             'type': 'section',
@@ -70,7 +82,7 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
             'fields': [
                 {
                     'type': 'mrkdwn',
-                    'text': '*Amount:*\n {} {}'.format(expense['currency'], expense['amount'])
+                    'text': amount_details
                 },
                 {
                     'type': 'mrkdwn',
