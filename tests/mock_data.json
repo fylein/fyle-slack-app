@@ -39,7 +39,12 @@
                                 },
                                 "state": "APPROVAL_PENDING"
                             }
-                        ]
+                        ],
+                        "updated_by_user": {
+                            "id": "mock-user-id-2",
+                            "full_name": "John Doe",
+                            "email": "john.doe@example.com"
+                        }
                     }
                 ]
             },
@@ -78,7 +83,12 @@
                             },
                             "state": "APPROVAL_PENDING"
                         }
-                    ]
+                    ],
+                    "updated_by_user": {
+                        "id": "mock-user-id-2",
+                        "full_name": "John Doe",
+                        "email": "john.doe@example.com"
+                    }
                 }
             },
             "approve": {
@@ -116,7 +126,12 @@
                             },
                             "state": "APPROVAL_DONE"
                         }
-                    ]
+                    ],
+                    "updated_by_user": {
+                        "id": "mock-user-id-2",
+                        "full_name": "John Doe",
+                        "email": "john.doe@example.com"
+                    }
                 }
             }
         }
