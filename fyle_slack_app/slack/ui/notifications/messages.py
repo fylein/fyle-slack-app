@@ -49,6 +49,78 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
     return report_section_block
 
 
+def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
+
+    category = expense['category']['name']
+    sub_category = expense['category']['sub_category']
+
+    if sub_category is not None:
+        category = '{} / {}'.format(category, sub_category)
+
+    expense_section_block = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': title_text
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Amount:*\n {} {}'.format(expense['currency'], expense['amount'])
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Category:*\n {}'.format(category)
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Merchant:*\n {}'.format(
+                        expense['merchant']
+                    )
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Purpose:*\n {}'.format(expense['purpose'])
+                }
+            ]
+        }
+    ]
+
+    project = expense['project']
+
+    if project is not None:
+        project = expense['project']['name']
+        sub_project = expense['project']['sub_project']
+
+        if sub_project is not None:
+            project = '{} / {}'.format(project, sub_project)
+
+        project_section = {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Project:*\n {}'.format(
+                        project
+                    )
+                }
+            ]
+        }
+
+        expense_section_block.append(project_section)
+
+    return expense_section_block
+
+
 def get_report_review_in_fyle_action(report_url: str, button_text: str, report_id: str) -> Dict:
 
     report_review_in_fyle_action = {
@@ -94,6 +166,36 @@ def get_report_notification(report: Dict, report_url: str, title_text: str) -> L
     )
 
     return report_section_block
+
+
+def get_expense_notification(expense: Dict, report_url: str, title_text: str) -> List[Dict]:
+
+    expense_section_block = get_expense_section_blocks(title_text, expense)
+
+    actions_block = {
+        'type': 'actions',
+        'elements': []
+    }
+
+    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, 'View in Fyle', expense['id'])
+
+    actions_block['elements'].append(report_view_in_fyle_section)
+    expense_section_block.append(actions_block)
+
+    # Adding Notification Preference message as footer
+    expense_section_block.append(
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": "Check *Fyle Notification Preferences* in quick actions :zap: to customise notifications you receive from Fyle"
+                }
+            ]
+        }
+    )
+
+    return expense_section_block
 
 
 def get_report_approval_state_section(report: Dict) -> Dict:
@@ -154,14 +256,30 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
     return report_section_block
 
 
-def get_report_approver_sendback_notification(report: Dict, report_url: str) -> List[Dict]:
+def get_report_approver_sendback_notification(report: Dict, report_url: str, report_sendback_reason: str) -> List[Dict]:
 
-    title_text = ':bangbang: Your expense report <{}|[{}]> is sent back for changes'.format(
+    title_text = ':bangbang: *{}* ({}) sent back your expense report <{}|[{}]> '.format(
+                    report['updated_by_user']['full_name'],
+                    report['updated_by_user']['email'],
                     report_url,
                     report['seq_num']
                 )
 
     report_section_block = get_report_notification(report, report_url, title_text)
+
+    report_sendback_reason = report_sendback_reason.replace('reason for sending back report: ', '')
+
+    report_sendback_reason_section = {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": ">>>*Reason for sending back report:* \n {}".format(
+                report_sendback_reason,
+            )
+        }
+    }
+
+    report_section_block.insert(1, report_sendback_reason_section)
 
     return report_section_block
 
@@ -245,3 +363,57 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     )
 
     return report_section_block
+
+
+def get_report_commented_notification(report: Dict, user_display_name: str, report_url: str, report_comment: str) -> List[Dict]:
+
+    title_text = ':speech_balloon:  *{}* ({}) commented on your expense report <{}|[{}]> '.format(
+        user_display_name,
+        report['updated_by_user']['email'],
+        report_url,
+        report['seq_num']
+    )
+
+    report_section_block = get_report_notification(report, report_url, title_text)
+
+    report_comment_block = {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": ">>>\"{}\"  - *{}*".format(
+                report_comment,
+                report['updated_by_user']['full_name']
+            )
+        }
+    }
+
+    report_section_block.insert(1, report_comment_block)
+
+    return report_section_block
+
+
+def get_expense_commented_notification(expense: Dict, user_display_name: str, expense_url: str, expense_comment: str) -> List[Dict]:
+
+    title_text = ':speech_balloon:  *{}* ({}) commented on your expense <{}|[{}]> '.format(
+        user_display_name,
+        expense['updated_by_user']['email'],
+        expense_url,
+        expense['seq_num']
+    )
+
+    expense_section_block = get_expense_notification(expense, expense_url, title_text)
+
+    expense_comment_block = {
+        "type": "section",
+        "text": {
+            "type": "mrkdwn",
+            "text": ">>>\"{}\"  - *{}*".format(
+                expense_comment,
+                expense['updated_by_user']['full_name']
+            )
+        }
+    }
+
+    expense_section_block.insert(1, expense_comment_block)
+
+    return expense_section_block

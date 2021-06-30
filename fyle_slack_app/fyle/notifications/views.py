@@ -6,6 +6,8 @@ from django.http.request import HttpRequest
 from django.http.response import JsonResponse
 from django.views import View
 
+from slack_sdk.web.client import WebClient
+
 from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack import utils as slack_utils
@@ -55,7 +57,9 @@ class FyleNotificationView(View):
 
                 user = User.objects.get(slack_user_id=slack_user_id)
 
-                return handler(webhook_data['data'], user)
+                slack_client = slack_utils.get_slack_client(user.slack_team_id)
+
+                return handler(webhook_data, user, slack_client)
 
         return JsonResponse({}, status=200)
 
@@ -84,10 +88,22 @@ class FyleNotificationView(View):
 
 
     @staticmethod
+    def get_expense_tracking_data(user: User, expense: Dict) -> Dict:
+        event_data = FyleNotificationView.get_event_data(user)
+
+        event_data['expense_id'] = expense['id']
+        event_data['org_id'] = expense['org_id']
+
+        return event_data
+
+
+    @staticmethod
     def track_notification(event_name: str, user: User, resource_type: str, resource: Dict) -> None:
 
         if resource_type == 'REPORT':
             event_data = FyleNotificationView.get_report_tracking_data(user, resource)
+        elif resource_type == 'EXPENSE':
+            event_data = FyleNotificationView.get_expense_tracking_data(user, resource)
 
         tracking.identify_user(user.email)
 
@@ -100,16 +116,17 @@ class FyleFylerNotification(FyleNotificationView):
         self.event_handlers = {
             NotificationType.REPORT_PARTIALLY_APPROVED.value: self.handle_report_partially_approved,
             NotificationType.REPORT_PAYMENT_PROCESSING.value: self.handle_report_payment_processing,
-            NotificationType.REPORT_APPROVER_SENDBACK.value: self.handle_report_approver_sendback,
-            NotificationType.REPORT_SUBMITTED.value: self.handle_report_submitted
+            NotificationType.REPORT_SUBMITTED.value: self.handle_report_submitted,
+            NotificationType.REPORT_COMMENTED.value: self.handle_report_commented,
+            NotificationType.EXPENSE_COMMENTED.value: self.handle_expense_commented
         }
 
 
-    def handle_report_partially_approved(self, report: Dict, user: User) -> JsonResponse:
+    def handle_report_partially_approved(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
 
-        slack_client = slack_utils.get_slack_client(user.slack_team_id)
+        report = webhook_data['data']
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
+        report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
         report_notification_message = notification_messages.get_report_approved_notification(
             report,
@@ -126,11 +143,11 @@ class FyleFylerNotification(FyleNotificationView):
         return JsonResponse({}, status=200)
 
 
-    def handle_report_payment_processing(self, report: Dict, user: User) -> JsonResponse:
+    def handle_report_payment_processing(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
 
-        slack_client = slack_utils.get_slack_client(user.slack_team_id)
+        report = webhook_data['data']
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
+        report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
         report_notification_message = notification_messages.get_report_payment_processing_notification(
             report,
@@ -147,15 +164,18 @@ class FyleFylerNotification(FyleNotificationView):
         return JsonResponse({}, status=200)
 
 
-    def handle_report_approver_sendback(self, report: Dict, user: User) -> JsonResponse:
+    def handle_report_approver_sendback(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
 
-        slack_client = slack_utils.get_slack_client(user.slack_team_id)
+        report = webhook_data['data']
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
+        report_sendback_reason = webhook_data['reason']
+
+        report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
         report_notification_message = notification_messages.get_report_approver_sendback_notification(
             report,
-            report_url
+            report_url,
+            report_sendback_reason
         )
 
         slack_client.chat_postMessage(
@@ -168,11 +188,11 @@ class FyleFylerNotification(FyleNotificationView):
         return JsonResponse({}, status=200)
 
 
-    def handle_report_submitted(self, report: Dict, user: User) -> JsonResponse:
+    def handle_report_submitted(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
 
-        slack_client = slack_utils.get_slack_client(user.slack_team_id)
+        report = webhook_data['data']
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
+        report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
         report_notification_message = notification_messages.get_report_submitted_notification(
             report,
@@ -189,6 +209,67 @@ class FyleFylerNotification(FyleNotificationView):
         return JsonResponse({}, status=200)
 
 
+    def handle_report_commented(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
+
+        report = webhook_data['data']
+
+        # Send comment notification only if the commenter is not SYSTEM and not the user itself
+        if  report['updated_by_user']['id'] not in ['SYSTEM', report['user']['id']]:
+
+            report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
+
+            report_comment = webhook_data['reason']
+
+            # Hacky way to check report sendback and show it's notification with reason
+            if 'reason for sending back report' in report_comment:
+                self.handle_report_approver_sendback(webhook_data, user, slack_client)
+            else:
+
+                user_display_name = slack_utils.get_user_display_name(
+                    slack_client,
+                    report['updated_by_user']
+                )
+
+                report_notification_message = notification_messages.get_report_commented_notification(report, user_display_name, report_url, report_comment)
+
+                slack_client.chat_postMessage(
+                    channel=user.slack_dm_channel_id,
+                    blocks=report_notification_message
+                )
+
+                self.track_notification('Report Commented Notification Received', user, 'REPORT', report)
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_expense_commented(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
+
+        expense = webhook_data['data']
+
+        # Send comment notification only if the commenter is not SYSTEM and not the user itself
+        if  expense['updated_by_user']['id'] not in ['SYSTEM', expense['user']['id']]:
+
+            expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
+
+            expense_comment = webhook_data['reason']
+
+            user_display_name = slack_utils.get_user_display_name(
+                slack_client,
+                expense['updated_by_user']
+            )
+
+            expense_notification_message = notification_messages.get_expense_commented_notification(expense, user_display_name, expense_url, expense_comment)
+
+            slack_client.chat_postMessage(
+                channel=user.slack_dm_channel_id,
+                blocks=expense_notification_message
+            )
+
+            self.track_notification('Expense Commented Notification Received', user, 'EXPENSE', expense)
+
+        return JsonResponse({}, status=200)
+
+
 class FyleApproverNotification(FyleNotificationView):
 
     def _initialize_event_handlers(self) -> None:
@@ -197,13 +278,13 @@ class FyleApproverNotification(FyleNotificationView):
         }
 
 
-    def handle_report_submitted(self, report: Dict, user: User) -> JsonResponse:
+    def handle_report_submitted(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
+
+        report = webhook_data['data']
 
         if report['state'] == 'APPROVER_PENDING':
 
-            slack_client = slack_utils.get_slack_client(user.slack_team_id)
-
-            report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
+            report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
             user_display_name = slack_utils.get_user_display_name(
                 slack_client,
