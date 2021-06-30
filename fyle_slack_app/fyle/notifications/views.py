@@ -214,7 +214,7 @@ class FyleFylerNotification(FyleNotificationView):
         report = webhook_data['data']
 
         # Send comment notification only if the commenter is not SYSTEM and not the user itself
-        if  report['updated_by_user']['id'] not in ['SYSTEM', report['user']['id']]:
+        if report['updated_by_user']['id'] not in ['SYSTEM', report['user']['id']]:
 
             report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
@@ -247,7 +247,7 @@ class FyleFylerNotification(FyleNotificationView):
         expense = webhook_data['data']
 
         # Send comment notification only if the commenter is not SYSTEM and not the user itself
-        if  expense['updated_by_user']['id'] not in ['SYSTEM', expense['user']['id']]:
+        if expense['updated_by_user']['id'] not in ['SYSTEM', expense['user']['id']]:
 
             expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
