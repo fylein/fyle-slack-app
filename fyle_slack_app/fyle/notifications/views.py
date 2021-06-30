@@ -224,7 +224,7 @@ class FyleFylerNotification(FyleNotificationView):
             if 'reason for sending back report' in report_comment:
                 self.handle_report_approver_sendback(webhook_data, user, slack_client)
             else:
-
+                # This else case is for normal comments made on a report
                 user_display_name = slack_utils.get_user_display_name(
                     slack_client,
                     report['updated_by_user']
