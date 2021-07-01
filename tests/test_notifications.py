@@ -13,7 +13,7 @@ from fyle_slack_app.fyle.notifications.views import FyleFylerNotification, FyleA
 
 # This is needed to parameterize the tests
 FYLER_NOTIFICATION_TYPES = [
-    NotificationType.REPORT_APPROVER_SENDBACK,
+    NotificationType.REPORT_COMMENTED,
     NotificationType.REPORT_PARTIALLY_APPROVED,
     NotificationType.REPORT_SUBMITTED,
     NotificationType.REPORT_PAYMENT_PROCESSING
@@ -49,7 +49,8 @@ def test_fyler_notifications(track_notification, fyle_utils, slack_utils, user, 
     mock_webhook_data = {
         'resource': resource,
         'action': action,
-        'data': mock_report['data']
+        'data': mock_report['data'],
+        'reason': 'mock-reason'
     }
 
     mock_request = mock.Mock()

@@ -7,6 +7,7 @@ from fyle_slack_app.models.users import User
 # Defining notification types in <resource>_<resource_action> format
 # Similar to payload received in webhook to keep it consistent
 class NotificationType(enum.Enum):
+
     # Report notification types
     REPORT_SUBMITTED = 'REPORT_SUBMITTED'
     REPORT_COMMENTED = 'REPORT_COMMENTED'
@@ -14,6 +15,9 @@ class NotificationType(enum.Enum):
     REPORT_PARTIALLY_APPROVED = 'REPORT_PARTIALLY_APPROVED'
     REPORT_APPROVER_SENDBACK = 'REPORT_APPROVER_SENDBACK'
     REPORT_PAYMENT_PROCESSING = 'REPORT_PAYMENT_PROCESSING'
+
+    # Expense notification types
+    EXPENSE_COMMENTED = 'EXPENSE_COMMENTED'
 
 
 class NotificationPreference(models.Model):

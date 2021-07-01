@@ -81,19 +81,25 @@ def get_fyle_profile(refresh_token: str) -> Dict:
     return fyle_profile_response['data']
 
 
-def get_fyle_report_url(fyle_refresh_token: str, report: Dict) -> str:
+def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type: str) -> str:
     access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain = get_cluster_domain(access_token)
 
-    report_base_url = '{}/app/main/#/enterprise/reports/{}'.format(cluster_domain, report['id'])
-
-    report_query_params = {
-        'org_id': report['org_id']
+    RESOURCE_URL_MAPPING = {
+        'REPORT': '{}/app/main/#/enterprise/reports'.format(cluster_domain),
+        'EXPENSE': '{}/app/main/#/enterprise/view_expense'.format(cluster_domain)
     }
 
-    report_url = utils.convert_to_branchio_url(report_base_url, report_query_params)
+    resource_base_url = RESOURCE_URL_MAPPING[resource_type]
+    resource_base_url = '{}/{}'.format(resource_base_url, resource['id'])
 
-    return report_url
+    resource_query_params = {
+        'org_id': resource['org_id']
+    }
+
+    resource_url = utils.convert_to_branchio_url(resource_base_url, resource_query_params)
+
+    return resource_url
 
 
 def get_fyle_oauth_url(user_id: str, team_id: str) -> str:
