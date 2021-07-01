@@ -54,7 +54,7 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     category = expense['category']['name']
     sub_category = expense['category']['sub_category']
 
-    if sub_category is not None:
+    if sub_category is not None and category != sub_category:
         category = '{} / {}'.format(category, sub_category)
 
     currency = expense['currency']
