@@ -117,6 +117,7 @@ class FyleFylerNotification(FyleNotificationView):
             NotificationType.REPORT_PARTIALLY_APPROVED.value: self.handle_report_partially_approved,
             NotificationType.REPORT_PAYMENT_PROCESSING.value: self.handle_report_payment_processing,
             NotificationType.REPORT_SUBMITTED.value: self.handle_report_submitted,
+            NotificationType.REPORT_APPROVER_SENDBACK.value: self.handle_report_approver_sendback,
             NotificationType.REPORT_COMMENTED.value: self.handle_report_commented,
             NotificationType.EXPENSE_COMMENTED.value: self.handle_expense_commented
         }
@@ -220,24 +221,19 @@ class FyleFylerNotification(FyleNotificationView):
 
             report_comment = webhook_data['reason']
 
-            # Hacky way to check report sendback and show it's notification with reason
-            if 'reason for sending back report' in report_comment:
-                self.handle_report_approver_sendback(webhook_data, user, slack_client)
-            else:
-                # This else case is for normal comments made on a report
-                user_display_name = slack_utils.get_user_display_name(
-                    slack_client,
-                    report['updated_by_user']
-                )
+            user_display_name = slack_utils.get_user_display_name(
+                slack_client,
+                report['updated_by_user']
+            )
 
-                report_notification_message = notification_messages.get_report_commented_notification(report, user_display_name, report_url, report_comment)
+            report_notification_message = notification_messages.get_report_commented_notification(report, user_display_name, report_url, report_comment)
 
-                slack_client.chat_postMessage(
-                    channel=user.slack_dm_channel_id,
-                    blocks=report_notification_message
-                )
+            slack_client.chat_postMessage(
+                channel=user.slack_dm_channel_id,
+                blocks=report_notification_message
+            )
 
-                self.track_notification('Report Commented Notification Received', user, 'REPORT', report)
+            self.track_notification('Report Commented Notification Received', user, 'REPORT', report)
 
         return JsonResponse({}, status=200)
 
