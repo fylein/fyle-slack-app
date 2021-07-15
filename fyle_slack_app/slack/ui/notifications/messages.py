@@ -150,6 +150,23 @@ def get_report_review_in_fyle_action(report_url: str, button_text: str, report_i
     return report_review_in_fyle_action
 
 
+def get_expense_view_in_fyle_action(expense_url: str, button_text: str, expense_id: str) -> Dict:
+
+    expense_view_in_fyle_action = {
+        'type': 'button',
+        'text': {
+            'type': 'plain_text',
+            'text': button_text,
+            'emoji': True
+        },
+        'action_id': 'expense_view_in_fyle',
+        'url': expense_url,
+        'value': expense_id,
+    }
+
+    return expense_view_in_fyle_action
+
+
 def get_report_notification(report: Dict, report_url: str, title_text: str) -> List[Dict]:
 
     report_section_block = get_report_section_blocks(title_text, report)
@@ -180,7 +197,7 @@ def get_report_notification(report: Dict, report_url: str, title_text: str) -> L
     return report_section_block
 
 
-def get_expense_notification(expense: Dict, report_url: str, title_text: str) -> List[Dict]:
+def get_expense_notification(expense: Dict, expense_url: str, title_text: str) -> List[Dict]:
 
     expense_section_block = get_expense_section_blocks(title_text, expense)
 
@@ -189,9 +206,9 @@ def get_expense_notification(expense: Dict, report_url: str, title_text: str) ->
         'elements': []
     }
 
-    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, 'View in Fyle', expense['id'])
+    expense_view_in_fyle_section = get_expense_view_in_fyle_action(expense_url, 'View in Fyle', expense['id'])
 
-    actions_block['elements'].append(report_view_in_fyle_section)
+    actions_block['elements'].append(expense_view_in_fyle_section)
     expense_section_block.append(actions_block)
 
     # Adding Notification Preference message as footer
