@@ -81,7 +81,7 @@ def test_fyler_notifications(track_notification, fyle_utils, slack_utils, user, 
     mock_slack_client.chat_postMessage.return_value = None
 
     mock_fyle_report_url = 'mock-fyle-report-url'
-    fyle_utils.get_fyle_report_url.return_value = mock_fyle_report_url
+    fyle_utils.get_fyle_resource_url.return_value = mock_fyle_report_url
 
     track_notification.return_value = None
 
@@ -162,7 +162,7 @@ def test_approver_notifications(track_notification, fyle_utils, slack_utils, use
     mock_slack_client.chat_postMessage.return_value = None
 
     mock_fyle_report_url = 'mock-fyle-report-url'
-    fyle_utils.get_fyle_report_url.return_value = mock_fyle_report_url
+    fyle_utils.get_fyle_resource_url.return_value = mock_fyle_report_url
 
     track_notification.return_value = None
 

@@ -59,7 +59,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
         user_display_name = slack_utils.get_user_display_name(slack_client, report['user'])
 
-        report_url = fyle_utils.get_fyle_report_url(user.fyle_refresh_token, report)
+        report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
         if can_approve_report is True:
             try:

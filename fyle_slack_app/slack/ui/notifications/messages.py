@@ -213,6 +213,7 @@ def get_expense_notification(expense: Dict, report_url: str, title_text: str) ->
 def get_report_approval_state_section(report: Dict) -> Dict:
     report_approved_by = ''
     report_approval_pending_from = ''
+    is_report_fully_approved = True
 
     for approval in report['approvals']:
         approver_full_name = approval['approver_user']['full_name']
@@ -223,6 +224,7 @@ def get_report_approval_state_section(report: Dict) -> Dict:
 
         if approval['state'] == 'APPROVAL_PENDING':
             report_approval_pending_from += '{} ({})\n'.format(approver_full_name, approver_email)
+            is_report_fully_approved = False
 
     report_approval_section = {
         'type': 'section',
@@ -230,13 +232,17 @@ def get_report_approval_state_section(report: Dict) -> Dict:
             {
                 'type': 'mrkdwn',
                 'text': '*Approved by:*\n {}'.format(report_approved_by)
-            },
+            }
+        ]
+    }
+
+    if is_report_fully_approved is False:
+        report_approval_section['fields'].append(
             {
                 'type': 'mrkdwn',
                 'text': '*Approval pending from:*\n {}'.format(report_approval_pending_from)
             }
-        ]
-    }
+        )
 
     return report_approval_section
 

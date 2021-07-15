@@ -29,7 +29,7 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     slack_utils.get_user_display_name.return_value = mock_user_display_name
 
     mock_report_url = 'mock-report-url'
-    fyle_utils.get_fyle_report_url.return_value = mock_report_url
+    fyle_utils.get_fyle_resource_url.return_value = mock_report_url
 
     mock_report_message = 'mock-report-message'
     fyle_report_approval.can_approve_report.return_value = (True, mock_report_message)
@@ -75,8 +75,8 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     slack_utils.get_user_display_name.assert_called()
     slack_utils.get_user_display_name.assert_called_with(slack_client(), mock_approver_report['data']['user'])
 
-    fyle_utils.get_fyle_report_url.assert_called()
-    fyle_utils.get_fyle_report_url.assert_called_with(mock_fyle_refresh_token, mock_approver_report['data'])
+    fyle_utils.get_fyle_resource_url.assert_called()
+    fyle_utils.get_fyle_resource_url.assert_called_with(mock_fyle_refresh_token, mock_approver_report['data'])
 
     fyle_report_approval.approve_report.assert_called()
     fyle_report_approval.approve_report.assert_called_with(mock_user, mock_report_id)
