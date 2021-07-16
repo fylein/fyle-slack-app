@@ -8,6 +8,7 @@ from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app import tracking
 
 
 logger = logger.get_logger(__name__)
@@ -22,6 +23,7 @@ class BlockActionHandler:
         self._block_action_handlers = {
             'link_fyle_account': self.link_fyle_account,
             'review_report_in_fyle': self.review_report_in_fyle,
+            'expense_view_in_fyle': self.expense_view_in_fyle,
             'approve_report': self.approve_report,
             'pre_auth_message_approve': self.handle_pre_auth_mock_button,
             'pre_auth_message_view_in_fyle': self.handle_pre_auth_mock_button,
@@ -74,7 +76,20 @@ class BlockActionHandler:
 
 
     def review_report_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        # Empty function because slack still sends an interactive event on button click and expects a 200 response
+
+        report_id = slack_payload['actions'][0]['value']
+
+        self.track_view_in_fyle_action(user_id, 'Report Viewed in Fyle', {'report_id': report_id})
+
+        return JsonResponse({}, status=200)
+
+
+    def expense_view_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        expense_id = slack_payload['actions'][0]['value']
+
+        self.track_view_in_fyle_action(user_id, 'Expense Viewed in Fyle', {'expense_id': expense_id})
+
         return JsonResponse({}, status=200)
 
 
@@ -118,3 +133,15 @@ class BlockActionHandler:
         notification_preference.save()
 
         return JsonResponse({}, status=200)
+
+
+    def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user, 'user not found')
+
+        event_data['email'] = user.email
+        event_data['asset'] = 'SLACK_APP'
+
+        tracking.identify_user(user.email)
+        tracking.track_event(user.email, event_name, event_data)
