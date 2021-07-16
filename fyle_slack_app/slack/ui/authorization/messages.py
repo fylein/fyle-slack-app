@@ -96,9 +96,41 @@ def get_post_authorization_message() -> List[Dict]:
 			}
 		},
 		{
-			'type': 'image',
-			'image_url': 'https://i.ibb.co/1zY81f7/Screenshot-2021-03-01-at-12-00-25-PM.png',
-			'alt_text': 'inspiration'
+			"type": "divider"
+		},
+		{
+			"type": "section",
+			"text": {
+				"type": "mrkdwn",
+				"text": ":envelope_with_arrow: *John Doe* (john.doe@gmail.com) submitted an expense report <https://www.fylehq.com/|[C/2021/07/R/36]> for your approval \n \n *Report name:* \t\t\t\t\t\t\t\t *Number of expenses:* \n #1 July 2021\t\t\t\t\t\t\t\t\t2  \n \n *Amount:* \t\t\t\t\t\t\t\t\t\t *Submitted On:* \n INR 1234.56\t\t\t\t\t\t\t\t\tJuly 07, 2021 \n \n"
+			}
+		},
+		{
+			"type": "actions",
+			"elements": [
+				{
+					"type": "button",
+					"style": "primary",
+					"text": {
+						"type": "plain_text",
+						"text": "Approve",
+					},
+					"value": "pre_auth_message_approve",
+					"action_id": "pre_auth_message_approve"
+				},
+				{
+					"type": "button",
+					"text": {
+						"type": "plain_text",
+						"text": "Review in Fyle",
+					},
+					"value": "pre_auth_message_view_in_fyle",
+					"action_id": "pre_auth_message_view_in_fyle"
+				}
+			]
+		},
+		{
+			"type": "divider"
 		},
 		{
 			'type': 'section',
