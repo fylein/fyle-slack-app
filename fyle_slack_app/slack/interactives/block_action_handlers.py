@@ -23,6 +23,8 @@ class BlockActionHandler:
             'link_fyle_account': self.link_fyle_account,
             'review_report_in_fyle': self.review_report_in_fyle,
             'approve_report': self.approve_report,
+            'pre_auth_message_approve': self.handle_pre_auth_mock_button,
+            'pre_auth_message_view_in_fyle': self.handle_pre_auth_mock_button,
             'report_submitted_notification_preference': self.handle_notification_preference_selection,
             'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
             'report_payment_processing_notification_preference': self.handle_notification_preference_selection,
@@ -61,6 +63,10 @@ class BlockActionHandler:
 
 
     # Define all the action handlers below this
+
+    def handle_pre_auth_mock_button(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        # Empty function because slack still sends an interactive event on button click and expects a 200 response
+        return JsonResponse({}, status=200)
 
     def link_fyle_account(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
