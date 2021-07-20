@@ -30,9 +30,32 @@ class BlockActionHandler:
             'report_submitted_notification_preference': self.handle_notification_preference_selection,
             'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
             'report_payment_processing_notification_preference': self.handle_notification_preference_selection,
-            'report_approver_sendback_notification_preference': self.handle_notification_preference_selection
+            'report_approver_sendback_notification_preference': self.handle_notification_preference_selection,
+
+            # Dynamic options
+            'external_select_option': self.enternal_select
         }
 
+
+    def enternal_select(self, slack_payload: Dict, user_id: str, team_id: str):
+        trigger_id = slack_payload['trigger_id']
+
+        from fyle_slack_app.slack.ui.dashboard.messages import mock_message_2, mock_message
+
+        slack_client = get_slack_client(team_id)
+
+
+        value = slack_payload['actions'][0]['selected_option']['value']
+        
+        view_id = slack_payload['container']['view_id']
+
+
+        if value == 'category':
+            slack_client.views_update(view=mock_message_2(), view_id=view_id)
+        else:
+            slack_client.views_update(view_id=view_id, view=mock_message())
+
+        return JsonResponse({}, status=200)
 
     # Gets called when function with an action is not found
     def _handle_invalid_block_actions(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
@@ -58,6 +81,8 @@ class BlockActionHandler:
         self._initialize_block_action_handlers()
 
         action_id = slack_payload['actions'][0]['action_id']
+
+        print('ACTIONM ID -> ', action_id)
 
         handler = self._block_action_handlers.get(action_id, self._handle_invalid_block_actions)
 

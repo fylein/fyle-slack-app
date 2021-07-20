@@ -5,6 +5,7 @@ from django.http.response import JsonResponse
 from django_q.tasks import async_task
 
 from fyle.platform import exceptions
+from slack_sdk.web.client import WebClient
 
 from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions, logger
@@ -25,7 +26,8 @@ class SlackCommandHandler:
     def _initialize_command_handlers(self):
         self._command_handlers = {
             'fyle_unlink_account': self.handle_fyle_unlink_account,
-            'fyle_notification_preferences': self.handle_fyle_notification_preferences
+            'fyle_notification_preferences': self.handle_fyle_notification_preferences,
+            'modal': self.modal_test
         }
 
     def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
@@ -38,17 +40,17 @@ class SlackCommandHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_slack_command(self, command: str, user_id: str, team_id: str, user_dm_channel_id: str) -> Callable:
+    def handle_slack_command(self, command: str, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id) -> Callable:
 
         # Initialize slack command handlers
         self._initialize_command_handlers()
 
         handler = self._command_handlers.get(command, self.handle_invalid_command)
 
-        return handler(user_id, team_id, user_dm_channel_id)
+        return handler(user_id, team_id, user_dm_channel_id, trigger_id)
 
 
-    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id) -> JsonResponse:
         async_task(
             'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
             user_id,
@@ -74,7 +76,7 @@ class SlackCommandHandler:
         slack_client.views_publish(user_id=user_id, view=pre_auth_message_view)
 
 
-    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id) -> JsonResponse:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Slack user not found')
 
@@ -111,3 +113,13 @@ class SlackCommandHandler:
         tracking.identify_user(user.email)
 
         tracking.track_event(user.email, 'Fyle Account Unlinked From Slack', event_data)
+
+
+    def modal_test(self, user_id, team_id, user_dm_channel_id, trigger_id):
+        slack_client: WebClient = slack_utils.get_slack_client(team_id)
+
+        modal = dashboard_messages.mock_message()
+
+        slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
+
+        return JsonResponse({}, status=200)
