@@ -291,6 +291,18 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
     return report_section_block
 
 
+def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
+
+    title_text = ':dollar: Reimbursement for your expense report <{}|[{}]> is here!'.format(
+                    report_url,
+                    report['seq_num']
+                )
+
+    report_section_block = get_report_notification(report, report_url, title_text)
+
+    return report_section_block
+
+
 def get_report_approver_sendback_notification(report: Dict, report_url: str, report_sendback_reason: str) -> List[Dict]:
 
     title_text = ':bangbang: *{}* ({}) sent back your expense report <{}|[{}]> '.format(
