@@ -112,7 +112,7 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     # Returns next value each time get_or_none is called
     # in function which is to be tested
     mock_team = mock.Mock(spec=Team)
-    utils.get_or_none.side_effect = [mock_team, None]
+    utils.get_or_none.side_effect = [mock_team, None, None]
 
     utils.decode_state = decode_state
 
@@ -155,13 +155,14 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)
 
     # Check is get_or_none function has been called twice
-    assert utils.get_or_none.call_count == 2
+    assert utils.get_or_none.call_count == 3
 
     # We call get_or_none twice in view to be tested
     # This check if the parameters passed in each call are correct or not
     expected_calls = [
         mock.call(Team, id=state_params['team_id']),
-        mock.call(User, slack_user_id=state_params['user_id'])
+        mock.call(User, slack_user_id=state_params['user_id']),
+        mock.call(User, fyle_user_id=mock_fyle_profile['user_id'])
     ]
 
     utils.get_or_none.assert_has_calls(expected_calls)
