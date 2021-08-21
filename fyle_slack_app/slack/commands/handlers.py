@@ -118,7 +118,7 @@ class SlackCommandHandler:
     def modal_test(self, user_id, team_id, user_dm_channel_id, trigger_id):
         slack_client: WebClient = slack_utils.get_slack_client(team_id)
 
-        modal = dashboard_messages.mock_message()
+        modal = dashboard_messages.expense_dialog_form()
 
         slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
 
