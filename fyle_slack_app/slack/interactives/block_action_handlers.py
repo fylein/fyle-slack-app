@@ -1,3 +1,4 @@
+import json
 from typing import Callable, Dict
 
 from django.http import JsonResponse
@@ -33,27 +34,39 @@ class BlockActionHandler:
             'report_approver_sendback_notification_preference': self.handle_notification_preference_selection,
 
             # Dynamic options
-            'external_select_option': self.enternal_select
+            'category_select': self.category_select
         }
 
 
-    def enternal_select(self, slack_payload: Dict, user_id: str, team_id: str):
+    def category_select(self, slack_payload: Dict, user_id: str, team_id: str):
         trigger_id = slack_payload['trigger_id']
 
-        from fyle_slack_app.slack.ui.dashboard.messages import mock_message_2, mock_message
+        from fyle_slack_app.slack.ui.dashboard.messages import mock_message_2, mock_message, generate_category_field_mapping, expense_dialog_form
+        from fyle_slack_app.admin import expense_fields
 
         slack_client = get_slack_client(team_id)
 
 
-        value = slack_payload['actions'][0]['selected_option']['value']
+        category_id = slack_payload['actions'][0]['selected_option']['value']
         
         view_id = slack_payload['container']['view_id']
 
+        mappings = generate_category_field_mapping(expense_fields)
 
-        if value == 'category':
-            slack_client.views_update(view=mock_message_2(), view_id=view_id)
-        else:
-            slack_client.views_update(view_id=view_id, view=mock_message())
+        # print('MAPINGS -> ', json.dumps(mappings, indent=2))
+
+        extra_fields = []
+
+        for key, value in mappings.items():
+            for val in value:
+                if int(category_id) in val['category_ids']:
+                    extra_fields.append(val)
+        
+        # print('EF -> ', json.dumps(extra_fields, indent=2))
+
+        if len(extra_fields) > 0:
+            new_expense_dialog_form = expense_dialog_form(extra_fields)
+            slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
         return JsonResponse({}, status=200)
 
