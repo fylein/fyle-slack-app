@@ -1887,7 +1887,7 @@ expense_fields = [
     "default_value": None,
     "options": [],
     "org_category_ids": [
-      123456
+      136250
     ],
     "code": None,
     "roles_editable": [

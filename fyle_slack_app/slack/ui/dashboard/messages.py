@@ -335,7 +335,7 @@ def expense_dialog_form(extra_fields=None):
                                 "text": "Custom Field Category",
                                 "emoji": True,
                             },
-                            "value": "123456",
+                            "value": "136250",
                         },
                         {
                             "text": {
