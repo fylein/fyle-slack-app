@@ -55,7 +55,7 @@ class BlockActionHandler:
 
         # print('MAPINGS -> ', json.dumps(mappings, indent=2))
 
-        extra_fields = []   
+        extra_fields = []
         default_fields = ['purpose', 'txn_dt', 'vendor_id', 'cost_center_id']
 
         for key, value in mappings.items():
@@ -63,12 +63,22 @@ class BlockActionHandler:
                 for val in value:
                     if int(category_id) in val['category_ids']:
                         extra_fields.append(val)
-        
+
         print('EF -> ', json.dumps(extra_fields, indent=2))
 
+        form_state = slack_payload['view']['state']['values']
+        current_form_state = {}
+
+        # for block_key, block_value in form_state.items():
+        #     pass
+
         if len(extra_fields) > 0:
-            new_expense_dialog_form = expense_dialog_form(extra_fields)
-            slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
+            new_expense_dialog_form = expense_dialog_form(extra_fields, form_state)
+        else:
+            new_expense_dialog_form = expense_dialog_form()
+        
+        slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
+        
 
         return JsonResponse({}, status=200)
 
