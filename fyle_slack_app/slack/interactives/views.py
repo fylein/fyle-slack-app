@@ -5,6 +5,7 @@ from django.http import HttpRequest, JsonResponse
 from fyle_slack_app.slack import SlackView
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 from fyle_slack_app.slack.interactives.shortcut_handlers import ShortcutHandler
+from fyle_slack_app.slack.interactives.view_submission_handlers import handle_view_submission
 
 
 class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler):
@@ -27,6 +28,9 @@ class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler):
         elif event_type == 'shortcut':
             # Call handler function from ShortcutHandler
             return self.handle_shortcuts(slack_payload, user_id, team_id)
+        
+        elif event_type == 'view_submission':
+            return handle_view_submission(slack_payload, user_id, team_id)
 
         elif event_type == 'block_suggestion':
             # Call handler function from BlockActionHandler

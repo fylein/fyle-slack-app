@@ -67,10 +67,6 @@ class BlockActionHandler:
         print('EF -> ', json.dumps(extra_fields, indent=2))
 
         form_state = slack_payload['view']['state']['values']
-        current_form_state = {}
-
-        # for block_key, block_value in form_state.items():
-        #     pass
 
         if len(extra_fields) > 0:
             new_expense_dialog_form = expense_dialog_form(extra_fields, form_state)

@@ -2,7 +2,7 @@ import json
 from random import random
 from typing import Dict
 
-import random, copy, zlib, base64
+import datetime
 
 from fyle_slack_app.slack.ui.authorization import messages
 
@@ -189,6 +189,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 	#         }
 
 	#     blocks.append(block)
+	current_date = datetime.datetime.today().strftime('%Y-%m-%d')
 	view = {
 		"type": "modal",
 		"callback_id": "create_expense",
@@ -301,7 +302,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 				"block_id": "date_of_spend_block",
 				"element": {
 					"type": "datepicker",
-					"initial_date": "2021-08-23",
+					"initial_date": current_date,
 					"placeholder": {
 						"type": "plain_text",
 						"text": "Select a date",
@@ -351,6 +352,14 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 								"text": "Internet",
 								"emoji": True,
 							},
+							"value": "136518",
+						},
+						{
+							"text": {
+								"type": "plain_text",
+								"text": "Office Supplies",
+								"emoji": True,
+							},
 							"value": "1234",
 						},
 					],
@@ -389,7 +398,38 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 						},
 					},
 				}
-				view["blocks"].append(fld)
+			elif field['type'] == 'SELECT':
+				fld = {
+					"type": "input",
+					"label": {
+						"type": "plain_text",
+						"text": "{}".format(field["field_name"]),
+						"emoji": True
+					},
+					"block_id": "{}_block".format(field['column_name']),
+					"element": {
+						"type": "static_select",
+						"placeholder": {
+							"type": "plain_text",
+							"text": "{}".format(field["placeholder"]),
+							"emoji": True
+						},
+						"action_id": "{}".format(field["column_name"].lower()),
+					}
+				}
+				fld['element']['options'] = []
+				for option in field['options']:
+					fld['element']['options'].append(
+						{
+							"text": {
+								"type": "plain_text",
+								"text": option,
+								"emoji": True
+							},
+							"value": option
+						}
+					)
+			view["blocks"].append(fld)
 
 	
 	# if form_state is not None:
