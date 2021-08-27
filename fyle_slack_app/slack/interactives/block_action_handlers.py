@@ -34,7 +34,7 @@ class BlockActionHandler:
             'report_approver_sendback_notification_preference': self.handle_notification_preference_selection,
 
             # Dynamic options
-            'category_select': self.category_select
+            'category': self.category_select,
         }
 
 

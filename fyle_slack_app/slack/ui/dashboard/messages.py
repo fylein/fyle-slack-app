@@ -190,6 +190,9 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 
 	#     blocks.append(block)
 	current_date = datetime.datetime.today().strftime('%Y-%m-%d')
+	cf_category = {'id': 136250, 'name': 'Custom Field Category'}
+	internet_category = {'id': 136518, 'name': 'Internet'}
+	os_category = {'id': 1234, 'name': 'Office Supplies'}
 	view = {
 		"type": "modal",
 		"callback_id": "create_expense",
@@ -225,7 +228,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 							"value": "USD",
 						},
 					],
-					"action_id": "currency_select",
+					"action_id": "currency",
 				},
 				"label": {"type": "plain_text", "text": "Currency", "emoji": True},
 			},
@@ -308,7 +311,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 						"text": "Select a date",
 						"emoji": True,
 					},
-					"action_id": "date_of_spend",
+					"action_id": "spent_at",
 				},
 				"label": {"type": "plain_text", "text": "Date of Spend", "emoji": True},
 			},
@@ -363,7 +366,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 							"value": "1234",
 						},
 					],
-					"action_id": "category_select",
+					"action_id": "category",
 				},
 				"label": {"type": "plain_text", "text": "Category", "emoji": True},
 			},
