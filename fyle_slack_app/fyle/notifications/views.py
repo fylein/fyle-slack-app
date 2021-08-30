@@ -119,7 +119,8 @@ class FyleFylerNotification(FyleNotificationView):
             NotificationType.REPORT_SUBMITTED.value: self.handle_report_submitted,
             NotificationType.REPORT_APPROVER_SENDBACK.value: self.handle_report_approver_sendback,
             NotificationType.REPORT_COMMENTED.value: self.handle_report_commented,
-            NotificationType.EXPENSE_COMMENTED.value: self.handle_expense_commented
+            NotificationType.EXPENSE_COMMENTED.value: self.handle_expense_commented,
+            NotificationType.REPORT_PAID.value: self.handle_report_paid
         }
 
 
@@ -262,6 +263,27 @@ class FyleFylerNotification(FyleNotificationView):
             )
 
             self.track_notification('Expense Commented Notification Received', user, 'EXPENSE', expense)
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_report_paid(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
+
+        report = webhook_data['data']
+
+        report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
+
+        report_notification_message = notification_messages.get_report_paid_notification(
+            report,
+            report_url
+        )
+
+        slack_client.chat_postMessage(
+            channel=user.slack_dm_channel_id,
+            blocks=report_notification_message
+        )
+
+        self.track_notification('Report Paid Notification Received', user, 'REPORT', report)
 
         return JsonResponse({}, status=200)
 
