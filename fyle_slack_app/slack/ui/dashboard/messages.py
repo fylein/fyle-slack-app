@@ -117,7 +117,7 @@ def generate_category_field_mapping(expense_fields):
 			"default_value": ef["default_value"],
 			"category_ids": ef["org_category_ids"],
 		}
-		if ef["type"] == "SELECT":
+		if ef["type"] in ["SELECT", "MULTI_SELECT"]:
 			ci_details["options"] = ef["options"]
 		mapping[ef["column_name"]].append(ci_details)
 
@@ -401,7 +401,11 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 						},
 					},
 				}
-			elif field['type'] == 'SELECT':
+			elif field['type'] in ['SELECT', 'MULTI_SELECT']:
+				if field['type'] == 'SELECT':
+					field_type = 'static_select'
+				elif field['type'] == 'MULTI_SELECT':
+					field_type = 'multi_static_select'
 				fld = {
 					"type": "input",
 					"label": {
@@ -411,7 +415,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 					},
 					"block_id": "{}_block".format(field['column_name']),
 					"element": {
-						"type": "static_select",
+						"type": field_type,
 						"placeholder": {
 							"type": "plain_text",
 							"text": "{}".format(field["placeholder"]),

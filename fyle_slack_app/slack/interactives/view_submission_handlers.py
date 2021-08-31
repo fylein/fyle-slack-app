@@ -8,7 +8,7 @@ def handle_view_submission(slack_payload, user_id, team_id):
 
     if callback_id == "create_expense":
         form_values = slack_payload["view"]["state"]["values"]
-        print("REACHED CREATE EXPENSE")
+        print("REACHED CREATE EXPENSE -> ", form_values)
 
         expense_mapping = {}
 
@@ -16,6 +16,11 @@ def handle_view_submission(slack_payload, user_id, team_id):
             for inner_key, inner_value in value.items():
                 if inner_value["type"] == "static_select":
                     expense_mapping[inner_key] = inner_value["selected_option"]["value"]
+                if inner_value["type"] == "multi_static_select":
+                    values_list = []
+                    for val in inner_value["selected_options"]:
+                        values_list.append(val['value'])
+                    expense_mapping[inner_key] = values_list
                 elif inner_value["type"] == "datepicker":
                     expense_mapping[inner_key] = inner_value["selected_date"]
                 elif inner_value["type"] == "plain_text_input":
