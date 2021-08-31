@@ -11,20 +11,40 @@ def handle_view_submission(slack_payload, user_id, team_id):
         print("REACHED CREATE EXPENSE -> ", form_values)
 
         expense_mapping = {}
+        custom_fields = []
 
         for key, value in form_values.items():
-            for inner_key, inner_value in value.items():
-                if inner_value["type"] == "static_select":
-                    expense_mapping[inner_key] = inner_value["selected_option"]["value"]
-                if inner_value["type"] == "multi_static_select":
-                    values_list = []
-                    for val in inner_value["selected_options"]:
-                        values_list.append(val['value'])
-                    expense_mapping[inner_key] = values_list
-                elif inner_value["type"] == "datepicker":
-                    expense_mapping[inner_key] = inner_value["selected_date"]
-                elif inner_value["type"] == "plain_text_input":
-                    expense_mapping[inner_key] = inner_value["value"]
+            custom_field_mappings = {}
+            if 'custom_field' in key:
+                for inner_key, inner_value in value.items():
+                    if inner_value["type"] == "static_select":
+                        custom_field_mappings[inner_key] = inner_value["selected_option"]["value"]
+                    if inner_value["type"] == "multi_static_select":
+                        values_list = []
+                        for val in inner_value["selected_options"]:
+                            values_list.append(val['value'])
+                        custom_field_mappings[inner_key] = values_list
+                    elif inner_value["type"] == "datepicker":
+                        custom_field_mappings[inner_key] = inner_value["selected_date"]
+                    elif inner_value["type"] == "plain_text_input":
+                        custom_field_mappings[inner_key] = inner_value["value"]
+                    
+                    custom_fields.append(custom_field_mappings)
+            else:
+                for inner_key, inner_value in value.items():
+                    if inner_value["type"] == "static_select":
+                        expense_mapping[inner_key] = inner_value["selected_option"]["value"]
+                    if inner_value["type"] == "multi_static_select":
+                        values_list = []
+                        for val in inner_value["selected_options"]:
+                            values_list.append(val['value'])
+                        expense_mapping[inner_key] = values_list
+                    elif inner_value["type"] == "datepicker":
+                        expense_mapping[inner_key] = inner_value["selected_date"]
+                    elif inner_value["type"] == "plain_text_input":
+                        expense_mapping[inner_key] = inner_value["value"]
+                
+        expense_mapping['custom_fields'] = custom_fields
 
         print("EXPENSE -> ", json.dumps(expense_mapping, indent=2))
 

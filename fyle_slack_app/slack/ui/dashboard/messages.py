@@ -387,14 +387,14 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 			if field["type"] in ["NUMBER", "TEXT"]:
 				fld = {
 					"type": "input",
-					"block_id": "{}_block".format(field['column_name']),
+					"block_id": "custom_field_{}_block".format(field['column_name']),
 					"label": {
 						"type": "plain_text",
 						"text": "{}".format(field["field_name"]),
 					},
 					"element": {
 						"type": "plain_text_input",
-						"action_id": "{}".format(field["column_name"].lower()),
+						"action_id": "{}".format(field["field_name"]),
 						"placeholder": {
 							"type": "plain_text",
 							"text": "{}".format(field["placeholder"]),
@@ -413,7 +413,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 						"text": "{}".format(field["field_name"]),
 						"emoji": True
 					},
-					"block_id": "{}_block".format(field['column_name']),
+					"block_id": "custom_field_{}_block".format(field['column_name']),
 					"element": {
 						"type": field_type,
 						"placeholder": {
@@ -421,7 +421,7 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 							"text": "{}".format(field["placeholder"]),
 							"emoji": True
 						},
-						"action_id": "{}".format(field["column_name"].lower()),
+						"action_id": "{}".format(field["field_name"]),
 					}
 				}
 				fld['element']['options'] = []
