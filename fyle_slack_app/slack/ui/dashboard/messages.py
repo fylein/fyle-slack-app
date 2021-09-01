@@ -19,68 +19,6 @@ def get_post_authorization_message() -> Dict:
 	return {"type": "home", "blocks": post_authorization_message_blocks}
 
 
-def mock_message():
-	return {
-		"type": "modal",
-		"title": {"type": "plain_text", "text": "My App", "emoji": True},
-		"submit": {"type": "plain_text", "text": "Submit", "emoji": True},
-		"close": {"type": "plain_text", "text": "Cancel", "emoji": True},
-		"blocks": [
-			{
-				"dispatch_action": True,
-				"type": "input",
-				"element": {
-					"type": "external_select",
-					"placeholder": {
-						"type": "plain_text",
-						"text": "Select an item",
-						"emoji": True,
-					},
-					"action_id": "external_select_option",
-				},
-				"label": {"type": "plain_text", "text": "Label", "emoji": True},
-			}
-		],
-	}
-
-
-def mock_message_2():
-	return {
-		"type": "modal",
-		"title": {"type": "plain_text", "text": "My App", "emoji": True},
-		"submit": {"type": "plain_text", "text": "Submit", "emoji": True},
-		"close": {"type": "plain_text", "text": "Cancel", "emoji": True},
-		"blocks": [
-			{
-				"dispatch_action": True,
-				"type": "input",
-				"element": {
-					"type": "external_select",
-					"placeholder": {
-						"type": "plain_text",
-						"text": "Select an item",
-						"emoji": True,
-					},
-					"action_id": "external_select_option",
-				},
-				"label": {"type": "plain_text", "text": "Label", "emoji": True},
-			},
-			{
-				"type": "section",
-				"text": {
-					"type": "plain_text",
-					"text": "Dynamic updated view",
-					"emoji": True,
-				},
-			},
-		],
-	}
-
-
-from fyle_slack_app.admin import expense_fields
-from fyle_slack_app.libs.utils import encode_state
-
-
 def generate_category_field_mapping(expense_fields):
 	mapping = {}
 	for ef in expense_fields:
@@ -436,6 +374,30 @@ def expense_dialog_form(extra_fields=None, form_state=None):
 							"value": option
 						}
 					)
+			elif field['type'] == 'BOOLEAN':
+				fld = {
+					"type": "input",
+					"block_id": "custom_field_{}_block".format(field['column_name']),
+					"optional": True,
+					"element": {
+						"type": "checkboxes",
+						"options": [
+							{
+								"text": {
+									"type": "plain_text",
+									"text": "{}".format(field["field_name"]),
+									"emoji": True
+								}
+							}
+						],
+						"action_id": "{}".format(field["field_name"]),
+					},
+					"label": {
+						"type": "plain_text",
+						"text": "{}".format(field["field_name"]),
+						"emoji": True
+					}
+				}
 			view["blocks"].append(fld)
 
 	

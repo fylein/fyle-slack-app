@@ -1,6 +1,7 @@
-from fyle_slack_app.slack.utils import get_slack_client
 import json
+
 from django.http.response import JsonResponse
+from fyle_slack_app.slack.utils import get_slack_client
 
 
 def handle_view_submission(slack_payload, user_id, team_id):
@@ -28,7 +29,11 @@ def handle_view_submission(slack_payload, user_id, team_id):
                         custom_field_mappings[inner_key] = inner_value["selected_date"]
                     elif inner_value["type"] == "plain_text_input":
                         custom_field_mappings[inner_key] = inner_value["value"]
-                    
+                    elif inner_value["type"] == "checkboxes":
+                        custom_field_mappings[inner_key] = False
+                        if len(inner_value["selected_options"]) > 0:
+                            custom_field_mappings[inner_key] = True
+
                     custom_fields.append(custom_field_mappings)
             else:
                 for inner_key, inner_value in value.items():
@@ -43,7 +48,11 @@ def handle_view_submission(slack_payload, user_id, team_id):
                         expense_mapping[inner_key] = inner_value["selected_date"]
                     elif inner_value["type"] == "plain_text_input":
                         expense_mapping[inner_key] = inner_value["value"]
-                
+                    elif inner_value["type"] == "checkboxes":
+                        expense_mapping[inner_key] = False
+                        if len(inner_value["selected_options"]) > 0:
+                            expense_mapping[inner_key] = True
+
         expense_mapping['custom_fields'] = custom_fields
 
         print("EXPENSE -> ", json.dumps(expense_mapping, indent=2))
