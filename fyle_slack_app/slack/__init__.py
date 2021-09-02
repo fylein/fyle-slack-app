@@ -75,5 +75,3 @@ class SlackView(View):
     @method_decorator(verify_slack_request)
     def dispatch(self, request: HttpRequest, *args: Any, **kwargs: Any) -> HttpResponse:
         return super().dispatch(request, *args, **kwargs)
-
-

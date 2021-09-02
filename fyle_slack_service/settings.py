@@ -18,7 +18,6 @@ import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 from fyle_slack_service.sentry import Sentry
 
-from fyle_slack_service import traces_sampler
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -224,12 +223,12 @@ SLACK_SERVICE_BASE_URL = os.environ['SLACK_SERVICE_BASE_URL']
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
 
-Sentry.init()
-
 sentry_sdk.init(
     dsn=SENTRY_DSN,
+    send_default_pii=True,
     integrations=[DjangoIntegration()],
     server_name='slack-app',
     environment=ENVIRONMENT,
-    traces_sampler=traces_sampler
+    traces_sampler=Sentry.traces_sampler,
+    before_send=Sentry.sentry_before_send
 )
