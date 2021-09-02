@@ -9,6 +9,8 @@ from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app.slack.ui.dashboard.messages import generate_category_field_mapping, expense_dialog_form
+from fyle_slack_app.admin import expense_fields
 from fyle_slack_app import tracking
 
 
@@ -41,19 +43,14 @@ class BlockActionHandler:
     def category_select(self, slack_payload: Dict, user_id: str, team_id: str):
         trigger_id = slack_payload['trigger_id']
 
-        from fyle_slack_app.slack.ui.dashboard.messages import generate_category_field_mapping, expense_dialog_form
-        from fyle_slack_app.admin import expense_fields
-
         slack_client = get_slack_client(team_id)
 
 
         category_id = slack_payload['actions'][0]['selected_option']['value']
-        
+
         view_id = slack_payload['container']['view_id']
 
         mappings = generate_category_field_mapping(expense_fields)
-
-        # print('MAPINGS -> ', json.dumps(mappings, indent=2))
 
         extra_fields = []
         default_fields = ['purpose', 'txn_dt', 'vendor_id', 'cost_center_id']
@@ -69,12 +66,12 @@ class BlockActionHandler:
         form_state = slack_payload['view']['state']['values']
 
         if len(extra_fields) > 0:
-            new_expense_dialog_form = expense_dialog_form(extra_fields, form_state)
+            new_expense_dialog_form = expense_dialog_form(extra_fields)
         else:
             new_expense_dialog_form = expense_dialog_form()
-        
+
         slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
-        
+
 
         return JsonResponse({}, status=200)
 
