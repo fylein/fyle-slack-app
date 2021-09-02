@@ -41,10 +41,8 @@ class BlockActionHandler:
 
 
     def category_select(self, slack_payload: Dict, user_id: str, team_id: str):
-        trigger_id = slack_payload['trigger_id']
 
         slack_client = get_slack_client(team_id)
-
 
         category_id = slack_payload['actions'][0]['selected_option']['value']
 
@@ -63,15 +61,12 @@ class BlockActionHandler:
 
         print('EF -> ', json.dumps(extra_fields, indent=2))
 
-        form_state = slack_payload['view']['state']['values']
-
         if len(extra_fields) > 0:
             new_expense_dialog_form = expense_dialog_form(extra_fields)
         else:
             new_expense_dialog_form = expense_dialog_form()
 
         slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
-
 
         return JsonResponse({}, status=200)
 
@@ -99,8 +94,6 @@ class BlockActionHandler:
         self._initialize_block_action_handlers()
 
         action_id = slack_payload['actions'][0]['action_id']
-
-        print('ACTIONM ID -> ', action_id)
 
         handler = self._block_action_handlers.get(action_id, self._handle_invalid_block_actions)
 

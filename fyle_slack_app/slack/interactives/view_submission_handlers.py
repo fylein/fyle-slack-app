@@ -123,7 +123,28 @@ class ViewSubmissionHandler:
                         {'type': 'mrkdwn', 'text': '*Date of Spend*: \n {}'.format(expense_mapping['spent_at'])},
                         {'type': 'mrkdwn', 'text': '*Purpose*: \n {}'.format(expense_mapping['purpose'])},
                     ],
-                },
+                }
+            ]
+
+            cf_section = {
+                'type': 'section',
+                'fields': []
+            }
+
+            for custom_field in custom_fields:
+                for cf in custom_field.keys():
+                    if isinstance(custom_field[cf], list):
+                        value = ', '.join(custom_field[cf])
+                    elif isinstance(custom_field[cf], bool):
+                        value = 'Yes' if custom_field[cf] is True else 'No'
+                    else:
+                        value = custom_field[cf]
+                    cf_section['fields'].append(
+                        {'type': 'mrkdwn', 'text': '*{}*: \n {}'.format(cf.title(), value)}
+                    )
+
+            blocks.append(cf_section)
+            blocks.append(
                 {
                     'type': 'actions',
                     'elements': [
@@ -138,7 +159,9 @@ class ViewSubmissionHandler:
                             'action_id': 'edit_expense',
                         }
                     ],
-                },
+                }
+            )
+            blocks.append(
                 {
                     'type': 'context',
                     'block_id': 'tx123456',
@@ -149,8 +172,7 @@ class ViewSubmissionHandler:
                             'emoji': True,
                         }
                     ],
-                },
-            ]
-
+                }
+            )
             slack_client.chat_postMessage(channel='D01K1L9UHBP', blocks=blocks)
         return JsonResponse({})
