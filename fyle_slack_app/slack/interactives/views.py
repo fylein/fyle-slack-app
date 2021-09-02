@@ -5,10 +5,10 @@ from django.http import HttpRequest, JsonResponse
 from fyle_slack_app.slack import SlackView
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 from fyle_slack_app.slack.interactives.shortcut_handlers import ShortcutHandler
-from fyle_slack_app.slack.interactives.view_submission_handlers import handle_view_submission
+from fyle_slack_app.slack.interactives.view_submission_handlers import ViewSubmissionHandler
 
 
-class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler):
+class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler, ViewSubmissionHandler):
 
     def post(self, request: HttpRequest) -> JsonResponse:
         payload = request.POST.get('payload')
@@ -28,44 +28,12 @@ class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler):
         elif event_type == 'shortcut':
             # Call handler function from ShortcutHandler
             return self.handle_shortcuts(slack_payload, user_id, team_id)
-        
-        elif event_type == 'view_submission':
-            return handle_view_submission(slack_payload, user_id, team_id)
 
-        elif event_type == 'block_suggestion':
-            # Call handler function from BlockActionHandler
-            a = {
-                'options': [
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": "Category"
-                },
-                "value": "category"
-            },
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": "Discrepancy"
-                },
-                "value": "discrepancy"
-            },
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": "Projects"
-                },
-                "value": "projects"
-            },
-            {
-                "text": {
-                    "type": "plain_text",
-                    "text": "Currency"
-                },
-                "value": "currency"
-            }
-        ]
-            }
-            return JsonResponse(a)
+        elif event_type == 'view_submission':
+            # Call handler function from ViewSubmissionHandler
+            return self.handle_view_submission(slack_payload, user_id, team_id)
+
+        # elif event_type == 'block_suggestion':
+        #     # Call handler function from BlockActionHandler
 
         return JsonResponse({}, status=200)
