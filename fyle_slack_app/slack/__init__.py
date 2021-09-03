@@ -13,7 +13,6 @@ from django.views import View
 from django.utils.decorators import method_decorator
 
 from fyle_slack_app.libs import assertions
-from fyle_slack_service.sentry import Sentry
 
 
 def verify_slack_signature(request: HttpRequest) -> bool:
