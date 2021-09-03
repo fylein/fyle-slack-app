@@ -16,8 +16,6 @@ from fyle_slack_app.models import User, NotificationPreference, UserSubscription
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
 
-from fyle_slack_service.sentry import Sentry
-
 
 logger = logger.get_logger(__name__)
 
@@ -61,16 +59,9 @@ class FyleNotificationView(View):
 
                 slack_client = slack_utils.get_slack_client(user.slack_team_id)
 
-                self.set_sentry_context(request, user)
-
                 return handler(webhook_data, user, slack_client)
 
         return JsonResponse({}, status=200)
-
-
-    def set_sentry_context(self, request: HttpRequest, user: User) -> None:
-        remote_address = request.META['REMOTE_ADDR']
-        Sentry.set_sentry_user(remote_address, user.__dict__)
 
 
     @staticmethod
