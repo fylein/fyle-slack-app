@@ -270,38 +270,13 @@ def expense_dialog_form(extra_fields=None):
                 "block_id": "category_block",
                 "dispatch_action": True,
                 "element": {
-                    "type": "static_select",
+                    "type": "external_select",
+					"min_query_length": 1,
                     "placeholder": {
                         "type": "plain_text",
                         "text": "Eg. Travel",
                         "emoji": True,
                     },
-                    "options": [
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Custom Field Category",
-                                "emoji": True,
-                            },
-                            "value": "136250",
-                        },
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Internet",
-                                "emoji": True,
-                            },
-                            "value": "136518",
-                        },
-                        {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Office Supplies",
-                                "emoji": True,
-                            },
-                            "value": "1234",
-                        },
-                    ],
                     "action_id": "category",
                 },
                 "label": {"type": "plain_text", "text": "Category", "emoji": True},

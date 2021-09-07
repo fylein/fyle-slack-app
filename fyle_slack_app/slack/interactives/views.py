@@ -1,4 +1,5 @@
 import json
+from os import lchown
 
 from django.http import HttpRequest, JsonResponse
 
@@ -33,7 +34,49 @@ class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler, ViewS
             # Call handler function from ViewSubmissionHandler
             return self.handle_view_submission(slack_payload, user_id, team_id)
 
-        # elif event_type == 'block_suggestion':
-        #     # Call handler function from BlockActionHandler
+        elif event_type == 'block_suggestion':
+            # Call handler function from BlockActionHandler
+            value = slack_payload['value']
+            categories = [
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Custom Field Category',
+                        'emoji': True,
+                    },
+                    'value': '136250',
+                },
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Internet',
+                        'emoji': True,
+                    },
+                    'value': '136518',
+                },
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Office Supplies',
+                        'emoji': True,
+                    },
+                    'value': '1234',
+                },
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Stuff for office',
+                        'emoji': True,
+                    },
+                    'value': '1234',
+                },
+            ]
+
+            options = []
+            for category in categories:
+                if value.lower() in category['text']['text'].lower():
+                    options.append(category)
+
+            return JsonResponse({'options': options})
 
         return JsonResponse({}, status=200)
