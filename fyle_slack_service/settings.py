@@ -13,9 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import sys
 import os
 from pathlib import Path
-import sentry_sdk
 
-from sentry_sdk.integrations.django import DjangoIntegration
 from fyle_slack_service.sentry import Sentry
 
 
@@ -223,12 +221,5 @@ SLACK_SERVICE_BASE_URL = os.environ['SLACK_SERVICE_BASE_URL']
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 ENVIRONMENT = os.environ.get('ENVIRONMENT')
 
-sentry_sdk.init(
-    dsn=SENTRY_DSN,
-    send_default_pii=True,
-    integrations=[DjangoIntegration()],
-    server_name='slack-app',
-    environment=ENVIRONMENT,
-    traces_sampler=Sentry.traces_sampler,
-    attach_stacktrace=True
-)
+# Initialising sentry integration
+Sentry.init()
