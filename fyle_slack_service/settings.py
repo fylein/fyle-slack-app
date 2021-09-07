@@ -14,6 +14,9 @@ import sys
 import os
 from pathlib import Path
 
+from fyle_slack_service.sentry import Sentry
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -213,3 +216,10 @@ SLACK_APP_ID = os.environ['SLACK_APP_ID']
 SLACK_APP_TOKEN = os.environ['SLACK_APP_TOKEN']
 SLACK_SIGNING_SECRET = os.environ['SLACK_SIGNING_SECRET']
 SLACK_SERVICE_BASE_URL = os.environ['SLACK_SERVICE_BASE_URL']
+
+# Sentry Integration
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+ENVIRONMENT = os.environ.get('ENVIRONMENT')
+
+# Initialising sentry integration
+Sentry.init()
