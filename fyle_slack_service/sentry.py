@@ -1,10 +1,6 @@
-class Sentry:
+from sentry_sdk import set_user
 
-    @staticmethod
-    def sentry_before_send(event, hint):
-        if 'exc_info' in hint:
-            return event
-        return None
+class Sentry:
 
     @staticmethod
     def traces_sampler(sampling_context):
@@ -14,3 +10,10 @@ class Sentry:
                 return 0
 
         return 0.2
+
+    @staticmethod
+    def set_user(user_id=None, team_id=None):
+        set_user({
+            'user_id': user_id,
+            'team_id': team_id
+        })

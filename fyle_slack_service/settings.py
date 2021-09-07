@@ -229,6 +229,5 @@ sentry_sdk.init(
     integrations=[DjangoIntegration()],
     server_name='slack-app',
     environment=ENVIRONMENT,
-    traces_sampler=Sentry.traces_sampler,
-    before_send=Sentry.sentry_before_send
+    traces_sampler=Sentry.traces_sampler
 )
