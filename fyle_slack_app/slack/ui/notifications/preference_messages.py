@@ -59,6 +59,48 @@ NOTIFICATION_TYPE_UI_DETAILS = {
                 'action_id': 'report_payment_processing_notification_preference'
             }
         }
+    },
+    NotificationType.REPORT_PAID.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Reimbursement done :dollar: * \n_Get notified when reimbursement is done for your expense report_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'report_paid_notification_preference'
+            }
+        }
+    },
+    NotificationType.REPORT_COMMENTED.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Comment made reports :speech_balloon: * \n_Get notified when a comment is made on your expense report_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'report_commented_notification_preference'
+            }
+        }
+    },
+    NotificationType.EXPENSE_COMMENTED.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Comment made expenses :speech_balloon: * \n_Get notified when a comment is made on your expense_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'expense_commented_notification_preference'
+            }
+        }
     }
 }
 

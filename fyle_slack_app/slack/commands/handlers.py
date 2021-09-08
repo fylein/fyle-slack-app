@@ -89,7 +89,7 @@ class SlackCommandHandler:
 
             slack_client.chat_postMessage(
                 blocks=notification_preference_blocks,
-                channel=user_dm_channel_id
+                channel=user.slack_dm_channel_id
             )
         except exceptions.NotFoundItemError as error:
             logger.info('Fyle profile not found for user %s - %s', user.slack_user_id, user.fyle_user_id)
