@@ -42,7 +42,16 @@ class SlackEventView(SlackView, SlackEventHandler):
 
                 thread_ts = file_info['file']['shares']['private'][user.slack_dm_channel_id][0]['thread_ts']
 
+                print('THREAD TD -> ', thread_ts)
+
+                a = slack_client.chat_getPermalink(channel=user.slack_dm_channel_id, message_ts=thread_ts)
+                pl = a['permalink']
+
+                print('PL -> ', a['permalink'])
+
                 parent_message = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)
+
+                slack_client.chat_postMessage(text=f'<{pl}|LINK>', channel=user.slack_dm_channel_id)
 
                 for block in parent_message['messages'][0]['blocks']:
                     if block['type'] == 'context':

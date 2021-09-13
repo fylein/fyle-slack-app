@@ -14,7 +14,7 @@ class SlackInteractiveView(SlackView, BlockActionHandler, ShortcutHandler, ViewS
     def post(self, request: HttpRequest) -> JsonResponse:
         payload = request.POST.get('payload')
         slack_payload = json.loads(payload)
-        print('SLACK PAYLOAD -> ', slack_payload)
+
         # Extract details from payload
         user_id = slack_payload['user']['id']
         team_id = slack_payload['team']['id']

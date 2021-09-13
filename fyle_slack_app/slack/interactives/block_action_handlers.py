@@ -2,6 +2,7 @@ import json
 from typing import Callable, Dict
 
 from django.http import JsonResponse
+from django.http.response import HttpResponseRedirect
 
 from django_q.tasks import async_task
 
