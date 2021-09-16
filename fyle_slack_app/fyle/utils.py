@@ -1,10 +1,15 @@
-from typing import Dict
+from typing import Any, Callable, Dict
 
+from functools import wraps
+
+import hashlib
 import requests
+
 
 from fyle.platform import Platform
 
 from django.conf import settings
+from django.core.cache import cache
 
 from fyle_slack_app.libs import http, assertions, utils
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
@@ -13,9 +18,27 @@ from fyle_slack_app.models.user_subscription_details import SubscriptionType
 FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
 
+def cache_this(key, timeout: int  = 60) -> Callable:
+    def decorator(function: Callable) -> Callable:
+        @wraps(function)
+        def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
+
+            hashed_args = hashlib.sha256(str(*args).encode('utf=8'))
+            cache_key = '{}.{}'.format(key, hashed_args.hexdigest())
+            response = cache.get(cache_key)
+
+            if response is None:
+                response = function(*args, **kwargs)
+                cache.set(cache_key, response, timeout)
+
+            return response
+        return function_wrapper
+    return decorator
+
+
 def get_fyle_sdk_connection(refresh_token: str) -> Platform:
-    access_token = get_fyle_access_token(refresh_token)
-    cluster_domain = get_cluster_domain(access_token)
+    # access_token = get_fyle_access_token(refresh_token)
+    cluster_domain = get_cluster_domain(refresh_token)
 
     FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
 
@@ -27,8 +50,10 @@ def get_fyle_sdk_connection(refresh_token: str) -> Platform:
         refresh_token=refresh_token
     )
 
-
-def get_cluster_domain(access_token: str) -> str:
+@cache_this(key='cluster_domain', timeout=60)
+def get_cluster_domain(fyle_refresh_token: str) -> str:
+    print('INSIDE CLUSTER DOMAIN')
+    access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain_url = '{}/oauth/cluster'.format(settings.FYLE_ACCOUNTS_URL)
     headers = {
         'content-type': 'application/json',
@@ -75,15 +100,17 @@ def get_fyle_refresh_token(code: str) -> str:
     return oauth_response.json()['refresh_token']
 
 
+@cache_this(key='my_profile')
 def get_fyle_profile(refresh_token: str) -> Dict:
+    print('MY PROFILE')
     connection = get_fyle_sdk_connection(refresh_token)
     fyle_profile_response = connection.v1.fyler.my_profile.get()
     return fyle_profile_response['data']
 
 
 def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type: str) -> str:
-    access_token = get_fyle_access_token(fyle_refresh_token)
-    cluster_domain = get_cluster_domain(access_token)
+    # access_token = get_fyle_access_token(fyle_refresh_token)
+    cluster_domain = get_cluster_domain(fyle_refresh_token)
 
     RESOURCE_URL_MAPPING = {
         'REPORT': '{}/app/main/#/enterprise/reports'.format(cluster_domain),
