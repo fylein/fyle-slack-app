@@ -23,7 +23,7 @@ def cache_this(key, timeout: int  = 60) -> Callable:
         @wraps(function)
         def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
 
-            hashed_args = hashlib.sha256(str(*args).encode('utf=8'))
+            hashed_args = hashlib.sha256(str(*args).encode('utf-8'))
             cache_key = '{}.{}'.format(key, hashed_args.hexdigest())
             response = cache.get(cache_key)
 
