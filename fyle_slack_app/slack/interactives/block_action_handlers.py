@@ -35,6 +35,9 @@ class BlockActionHandler:
             'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
             'report_payment_processing_notification_preference': self.handle_notification_preference_selection,
             'report_approver_sendback_notification_preference': self.handle_notification_preference_selection,
+            'report_paid_notification_preference': self.handle_notification_preference_selection,
+            'report_commented_notification_preference': self.handle_notification_preference_selection,
+            'expense_commented_notification_preference': self.handle_notification_preference_selection,
 
             # Dynamic options
             'category': self.category_select,
@@ -158,7 +161,10 @@ class BlockActionHandler:
             'report_submitted_notification_preference': NotificationType.REPORT_SUBMITTED.value,
             'report_partially_approved_notification_preference': NotificationType.REPORT_PARTIALLY_APPROVED.value,
             'report_payment_processing_notification_preference': NotificationType.REPORT_PAYMENT_PROCESSING.value,
-            'report_approver_sendback_notification_preference': NotificationType.REPORT_APPROVER_SENDBACK.value
+            'report_approver_sendback_notification_preference': NotificationType.REPORT_APPROVER_SENDBACK.value,
+            'report_paid_notification_preference': NotificationType.REPORT_PAID.value,
+            'report_commented_notification_preference': NotificationType.REPORT_COMMENTED.value,
+            'expense_commented_notification_preference': NotificationType.EXPENSE_COMMENTED.value
         }
 
         is_enabled = True if value == 'enable' else False
