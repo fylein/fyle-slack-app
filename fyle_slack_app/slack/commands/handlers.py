@@ -5,15 +5,16 @@ from django.http.response import JsonResponse
 from django_q.tasks import async_task
 
 from fyle.platform import exceptions
-from slack_sdk.web.client import WebClient
 
-from fyle_slack_app import tracking
+from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 from fyle_slack_app.slack.ui.notifications import preference_messages as notification_preference_messages
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app import tracking
 
 
 logger = logger.get_logger(__name__)
@@ -27,10 +28,10 @@ class SlackCommandHandler:
         self._command_handlers = {
             'fyle_unlink_account': self.handle_fyle_unlink_account,
             'fyle_notification_preferences': self.handle_fyle_notification_preferences,
-            'modal': self.modal_test
+            'expense_form': self.handle_expense_form
         }
 
-    def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
         slack_client = slack_utils.get_slack_client(team_id)
 
         slack_client.chat_postMessage(
@@ -40,7 +41,7 @@ class SlackCommandHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_slack_command(self, command: str, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id) -> Callable:
+    def handle_slack_command(self, command: str, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> Callable:
 
         # Initialize slack command handlers
         self._initialize_command_handlers()
@@ -50,7 +51,7 @@ class SlackCommandHandler:
         return handler(user_id, team_id, user_dm_channel_id, trigger_id)
 
 
-    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id) -> JsonResponse:
+    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
         async_task(
             'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
             user_id,
@@ -76,7 +77,7 @@ class SlackCommandHandler:
         slack_client.views_publish(user_id=user_id, view=pre_auth_message_view)
 
 
-    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id) -> JsonResponse:
+    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Slack user not found')
 
@@ -100,6 +101,40 @@ class SlackCommandHandler:
         return JsonResponse({}, status=200)
 
 
+    def handle_expense_form(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str):
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user)
+
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        expense_fields_query_params = {
+            'offset': 0,
+            'limit': '20',
+            'order': 'created_at.desc',
+            'column_name': 'in.(purpose, txn_dt, vendor_id, cost_center_id, project_id)',
+            'is_enabled': 'eq.{}'.format(True),
+            'is_custom': 'eq.{}'.format(False),
+            'is_mandatory': 'eq.{}'.format(True),
+        }
+
+        expense_fields = FyleExpense.get_expense_fields(user, expense_fields_query_params)
+
+        projects_query_params = {
+            'offset': 0,
+            'limit': '20',
+            'order': 'created_at.desc',
+            'is_enabled': 'eq.{}'.format(True)
+        }
+
+        projects = FyleExpense.get_projects(user, projects_query_params)
+        print('projects -> ', projects)
+        modal = expense_messages.expense_dialog_form(projects=projects, expense_fields=expense_fields)
+
+        slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
+
+        return JsonResponse({}, status=200)
+
+
     def track_fyle_account_unlinked(self, user: User) -> None:
         event_data = {
             'asset': 'SLACK_APP',
@@ -113,13 +148,3 @@ class SlackCommandHandler:
         tracking.identify_user(user.email)
 
         tracking.track_event(user.email, 'Fyle Account Unlinked From Slack', event_data)
-
-
-    def modal_test(self, user_id, team_id, user_dm_channel_id, trigger_id):
-        slack_client: WebClient = slack_utils.get_slack_client(team_id)
-
-        modal = dashboard_messages.expense_dialog_form()
-
-        slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
-
-        return JsonResponse({}, status=200)

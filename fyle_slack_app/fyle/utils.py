@@ -5,7 +5,6 @@ import requests
 from fyle.platform import Platform
 
 from django.conf import settings
-from django.core.cache import cache
 
 from fyle_slack_app.libs import http, assertions, utils
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
@@ -77,16 +76,8 @@ def get_fyle_refresh_token(code: str) -> str:
 
 
 def get_fyle_profile(refresh_token: str) -> Dict:
-    fyle_profile = cache.get('abcd')
-    print('CACHE PROFILE -> ', fyle_profile)
-    if fyle_profile is None:
-        print('CACHE MISS')
-        connection = get_fyle_sdk_connection(refresh_token)
-        fyle_profile_response = connection.v1.fyler.my_profile.get()
-        cache.set('abcd', fyle_profile_response)
-    else:
-        print('CACHE HIT')
-        fyle_profile_response = fyle_profile
+    connection = get_fyle_sdk_connection(refresh_token)
+    fyle_profile_response = connection.v1.fyler.my_profile.get()
     return fyle_profile_response['data']
 
 
