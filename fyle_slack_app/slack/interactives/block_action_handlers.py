@@ -1,4 +1,6 @@
-from typing import Callable, Dict
+from fyle_slack_app.slack.ui.expenses.messages import expense_form_loading_modal
+import json
+from typing import Callable, Dict, List
 
 from django.http import JsonResponse
 
@@ -153,7 +155,32 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
+        current_view = expense_form_loading_modal()
+        current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
+
         blocks = slack_payload['view']['blocks']
+
+        # Adding loading info below project input element
+        project_block_index = next((index for (index, d) in enumerate(blocks) if d['block_id'] == 'project_block'), None)
+
+        project_loading_block = {
+			'type': 'context',
+            'block_id': 'project_loading_block',
+			'elements': [
+				{
+					'type': 'mrkdwn',
+					'text': 'Loading categories for this project'
+				}
+			]
+		}
+
+        blocks.insert(project_block_index + 1, project_loading_block)
+
+        current_view['blocks'] = blocks
+
+        slack_client = get_slack_client(team_id)
+
+        slack_client.views_update(view_id=view_id, view=current_view)
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_project_select',
@@ -161,7 +188,7 @@ class BlockActionHandler:
             team_id,
             project_id,
             view_id,
-            blocks
+            slack_payload
         )
 
         return JsonResponse({})
@@ -174,6 +201,33 @@ class BlockActionHandler:
         view_id = slack_payload['container']['view_id']
 
         user = utils.get_or_none(User, slack_user_id=user_id)
+
+        current_view = expense_form_loading_modal()
+        current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
+
+        blocks = slack_payload['view']['blocks']
+
+        # Adding loading info below category input element
+        category_block_index = next((index for (index, d) in enumerate(blocks) if d['block_id'] == 'category_block'), None)
+
+        category_loading_block = {
+			'type': 'context',
+            'block_id': 'category_loading_block',
+			'elements': [
+				{
+					'type': 'mrkdwn',
+					'text': 'Loading additional fields for this category if any'
+				}
+			]
+		}
+
+        blocks.insert(category_block_index + 1, category_loading_block)
+
+        current_view['blocks'] = blocks
+
+        slack_client = get_slack_client(team_id)
+
+        slack_client.views_update(view_id=view_id, view=current_view)
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_category_select',
