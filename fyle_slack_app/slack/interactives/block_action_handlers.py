@@ -1,4 +1,3 @@
-import json
 from typing import Callable, Dict
 
 from django.http import JsonResponse
@@ -8,9 +7,7 @@ from django_q.tasks import async_task
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
-from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 from fyle_slack_app import tracking
 
 
@@ -43,108 +40,6 @@ class BlockActionHandler:
             'project': self.handle_project_select
         }
 
-
-    def handle_project_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        print('SP -> ', json.dumps(slack_payload, indent=2))
-
-        slack_client = get_slack_client(team_id)
-
-        project_id = slack_payload['actions'][0]['selected_option']['value']
-
-        view_id = slack_payload['container']['view_id']
-
-        user = utils.get_or_none(User, slack_user_id=user_id)
-
-        project_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'id': 'eq.{}'.format(int(project_id)),
-            'is_enabled': 'eq.{}'.format(True)
-        }
-
-        project = FyleExpense.get_projects(user, project_query_params)
-
-        print('PROJECT -> ', project)
-
-        query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True),
-            'id': 'in.{}'.format(tuple(project['data'][0]['category_ids']))
-        }
-
-        categories = FyleExpense.get_categories(user, query_params)
-
-        expense_fields_query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'or': '(is_mandatory.eq.{}, and(is_custom.eq.{}, is_mandatory.eq.{}))'.format(True, True, True),
-            'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
-            'is_enabled': 'eq.{}'.format(True),
-        }
-
-        expense_fields = FyleExpense.get_expense_fields(user, expense_fields_query_params)
-
-        projects_query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
-
-        projects = FyleExpense.get_projects(user, projects_query_params)
-
-        new_expense_dialog_form = expense_dialog_form(expense_fields=expense_fields, projects=projects, categories=categories)
-
-        slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
-
-        return JsonResponse({})
-
-
-    def handle_category_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-
-        slack_client = get_slack_client(team_id)
-
-        category_id = slack_payload['actions'][0]['selected_option']['value']
-
-        view_id = slack_payload['container']['view_id']
-
-        user = utils.get_or_none(User, slack_user_id=user_id)
-
-        expense_fields_query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'or': '(is_mandatory.eq.{}, and(is_custom.eq.{}, is_mandatory.eq.{}))'.format(True, True, True),
-            'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
-            'is_enabled': 'eq.{}'.format(True),
-            'category_ids': 'cs.[{}]'.format(int(category_id))
-        }
-
-        expense_fields = FyleExpense.get_expense_fields(user, expense_fields_query_params)
-
-        print('expense fields -> ', json.dumps(expense_fields, indent=2))
-
-        projects_query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
-
-        projects = FyleExpense.get_projects(user, projects_query_params)
-
-        if expense_fields['count'] > 0:
-            new_expense_dialog_form = expense_dialog_form(expense_fields=expense_fields, custom_fields=expense_fields['data'], projects=projects)
-        else:
-            new_expense_dialog_form = expense_dialog_form(expense_fields=expense_fields, projects=projects)
-
-        slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
-
-        return JsonResponse({}, status=200)
 
     # Gets called when function with an action is not found
     def _handle_invalid_block_actions(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
@@ -246,6 +141,48 @@ class BlockActionHandler:
         notification_preference = NotificationPreference.objects.get(slack_user_id=user_id, notification_type=notification_type)
         notification_preference.is_enabled = is_enabled
         notification_preference.save()
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_project_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        project_id = slack_payload['actions'][0]['selected_option']['value']
+
+        view_id = slack_payload['container']['view_id']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        blocks = slack_payload['view']['blocks']
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_project_select',
+            user,
+            team_id,
+            project_id,
+            view_id,
+            blocks
+        )
+
+        return JsonResponse({})
+
+
+    def handle_category_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        category_id = slack_payload['actions'][0]['selected_option']['value']
+
+        view_id = slack_payload['container']['view_id']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_category_select',
+            user,
+            team_id,
+            category_id,
+            view_id,
+            slack_payload
+        )
 
         return JsonResponse({}, status=200)
 

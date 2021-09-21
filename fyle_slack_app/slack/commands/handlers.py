@@ -6,7 +6,6 @@ from django_q.tasks import async_task
 
 from fyle.platform import exceptions
 
-from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
@@ -103,34 +102,34 @@ class SlackCommandHandler:
 
     def handle_expense_form(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str):
         user = utils.get_or_none(User, slack_user_id=user_id)
-        assertions.assert_found(user)
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        expense_fields_query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'column_name': 'in.(purpose, txn_dt, vendor_id, cost_center_id, project_id)',
-            'is_enabled': 'eq.{}'.format(True),
-            'is_custom': 'eq.{}'.format(False),
-            'is_mandatory': 'eq.{}'.format(True),
-        }
+        # default_expense_fields = FyleExpense.get_default_expense_fields(user)
 
-        expense_fields = FyleExpense.get_expense_fields(user, expense_fields_query_params)
+        # projects_query_params = {
+        #     'offset': 0,
+        #     'limit': '100',
+        #     'order': 'created_at.desc',
+        #     'is_enabled': 'eq.{}'.format(True)
+        # }
 
-        projects_query_params = {
-            'offset': 0,
-            'limit': '20',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
+        # projects = FyleExpense.get_projects(user, projects_query_params)
 
-        projects = FyleExpense.get_projects(user, projects_query_params)
-        print('projects -> ', projects)
-        modal = expense_messages.expense_dialog_form(projects=projects, expense_fields=expense_fields)
+        # modal = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects)
 
-        slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
+        # slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
+
+        loading_modal = expense_messages.expense_form_loading_modal()
+
+        response = slack_client.views_open(user=user_id, view=loading_modal, trigger_id=trigger_id)
+
+        async_task(
+            'fyle_slack_app.slack.commands.tasks.open_expense_form',
+            user,
+            team_id,
+            response['view']['id']
+        )
 
         return JsonResponse({}, status=200)
 

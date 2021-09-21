@@ -3,7 +3,6 @@ from typing import Callable, Dict
 
 from django.http.response import JsonResponse
 
-from fyle_slack_app.libs.utils import encode_state
 from fyle_slack_app.slack import utils as slack_utils
 
 
@@ -101,11 +100,6 @@ class ViewSubmissionHandler:
         print('EXPENSE -> ', json.dumps(expense_mapping, indent=2))
 
         slack_client = slack_utils.get_slack_client(team_id)
-        em = {
-            'a': expense_mapping,
-            'b': expense_mapping,
-            'c': expense_mapping
-        }
         # policy_view = {
         #     "type": "modal",
         #     "private_metadata": encode_state(em),

@@ -1,5 +1,3 @@
-import json
-
 from typing import Dict, List
 
 from django.http import JsonResponse
@@ -57,14 +55,15 @@ class BlockSuggestionHandler:
 
 
     def handle_category_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
-        print('SLACK PAYLOAD -> ', json.dumps(slack_payload, indent=2))
+
         user = utils.get_or_none(User, slack_user_id=user_id)
         category_value_entered = slack_payload['value']
         query_params = {
             'offset': 0,
-            'limit': '20',
+            'limit': '100',
             'order': 'display_name.asc',
             'display_name': 'ilike.%{}%'.format(category_value_entered),
+            'system_category': 'not_in.(Unspecified, Per Diem, Mileage, Activity)',
             'is_enabled': 'eq.{}'.format(True)
         }
         suggested_categories = FyleExpense.get_categories(user, query_params)
