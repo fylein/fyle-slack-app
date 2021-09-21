@@ -1,15 +1,16 @@
-from fyle_slack_app.slack.ui.expenses.messages import expense_form_loading_modal
-import json
-from typing import Callable, Dict, List
+from typing import Callable, Dict
 
 from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
+from fyle_slack_app.fyle.utils import get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app import tracking
 
 
@@ -39,7 +40,8 @@ class BlockActionHandler:
 
             # Dynamic options
             'category': self.handle_category_select,
-            'project': self.handle_project_select
+            'project': self.handle_project_select,
+            # 'currency': self.handle_currency_select
         }
 
 
@@ -155,7 +157,7 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        current_view = expense_form_loading_modal()
+        current_view = expense_messages.expense_form_loading_modal()
         current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
 
         blocks = slack_payload['view']['blocks']
@@ -202,7 +204,7 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        current_view = expense_form_loading_modal()
+        current_view = expense_messages.expense_form_loading_modal()
         current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
 
         blocks = slack_payload['view']['blocks']
@@ -239,6 +241,45 @@ class BlockActionHandler:
         )
 
         return JsonResponse({}, status=200)
+
+
+    # def handle_currency_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    #     selected_currency = slack_payload['actions'][0]['selected_option']['value']
+
+    #     view_id = slack_payload['container']['view_id']
+
+    #     user = utils.get_or_none(User, slack_user_id=user_id)
+
+    #     fyle_profile = get_fyle_profile(user.fyle_refresh_token)
+
+    #     home_currency = fyle_profile['org']['currency']
+
+    #     is_home_currency_selected = True
+    #     if home_currency != selected_currency:
+    #         is_home_currency_selected = False
+
+    #     fyle_expense = FyleExpense(user)
+
+    #     default_expense_fields = fyle_expense.get_default_expense_fields()
+
+    #     slack_client = get_slack_client(team_id)
+
+    #     projects_query_params = {
+    #         'offset': 0,
+    #         'limit': '100',
+    #         'order': 'created_at.desc',
+    #         'is_enabled': 'eq.{}'.format(True)
+    #     }
+
+    #     projects = fyle_expense.get_projects(projects_query_params)
+
+    #     expense_form = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects)
+
+    #     if is_home_currency_selected is False:
+
+
+    #     slack_client.views_update(view_id=view_id, view=expense_form)
+
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:

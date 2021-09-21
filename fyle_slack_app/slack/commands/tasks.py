@@ -94,7 +94,10 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
 
 
 def open_expense_form(user: User, team_id: str, view_id: str) -> None:
-    default_expense_fields = FyleExpense.get_default_expense_fields(user)
+
+    fyle_expense = FyleExpense(user)
+
+    default_expense_fields = fyle_expense.get_default_expense_fields()
 
     slack_client = slack_utils.get_slack_client(team_id)
 
@@ -105,7 +108,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
         'is_enabled': 'eq.{}'.format(True)
     }
 
-    projects = FyleExpense.get_projects(user, projects_query_params)
+    projects = fyle_expense.get_projects(projects_query_params)
 
     modal = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects)
 

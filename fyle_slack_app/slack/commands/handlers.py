@@ -105,21 +105,6 @@ class SlackCommandHandler:
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        # default_expense_fields = FyleExpense.get_default_expense_fields(user)
-
-        # projects_query_params = {
-        #     'offset': 0,
-        #     'limit': '100',
-        #     'order': 'created_at.desc',
-        #     'is_enabled': 'eq.{}'.format(True)
-        # }
-
-        # projects = FyleExpense.get_projects(user, projects_query_params)
-
-        # modal = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects)
-
-        # slack_client.views_open(user_id=user_id, view=modal, trigger_id=trigger_id)
-
         loading_modal = expense_messages.expense_form_loading_modal()
 
         response = slack_client.views_open(user=user_id, view=loading_modal, trigger_id=trigger_id)

@@ -19,7 +19,9 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
         'is_enabled': 'eq.{}'.format(True)
     }
 
-    project = FyleExpense.get_projects(user, project_query_params)
+    fyle_expense = FyleExpense(user)
+
+    project = fyle_expense.get_projects(project_query_params)
 
     query_params = {
         'offset': 0,
@@ -30,7 +32,7 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
         'id': 'in.{}'.format(tuple(project['data'][0]['category_ids']))
     }
 
-    categories = FyleExpense.get_categories(user, query_params)
+    categories = fyle_expense.get_categories(query_params)
 
     blocks = slack_payload['view']['blocks']
 
@@ -78,8 +80,9 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
         'category_ids': 'cs.[{}]'.format(int(category_id))
     }
 
+    fyle_expense = FyleExpense(user)
 
-    custom_fields = FyleExpense.get_expense_fields(user, custom_fields_query_params)
+    custom_fields = fyle_expense.get_expense_fields(custom_fields_query_params)
 
     blocks = slack_payload['view']['blocks']
 
@@ -108,7 +111,7 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        project = FyleExpense.get_projects(user, project_query_params)
+        project = fyle_expense.get_projects(project_query_params)
 
         query_params = {
             'offset': 0,
@@ -119,7 +122,7 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
             'id': 'in.{}'.format(tuple(project['data'][0]['category_ids']))
         }
 
-        categories = FyleExpense.get_categories(user, query_params)
+        categories = fyle_expense.get_categories(query_params)
 
         blocks = slack_payload['view']['blocks']
 

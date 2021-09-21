@@ -141,30 +141,13 @@ def get_default_fields_blocks(mandatory_mapping: Dict) -> List:
             'type': 'input',
             'block_id': 'default_field_currency_block',
             'element': {
-                'type': 'static_select',
+                'type': 'external_select',
                 'placeholder': {
                     'type': 'plain_text',
                     'text': 'Select Currency',
                     'emoji': True,
                 },
-                'options': [
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': 'INR',
-                            'emoji': True,
-                        },
-                        'value': 'INR',
-                    },
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': 'USD',
-                            'emoji': True,
-                        },
-                        'value': 'USD',
-                    },
-                ],
+                'min_query_length': 0,
                 'action_id': 'currency',
             },
             'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},

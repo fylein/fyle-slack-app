@@ -18,7 +18,8 @@ class BlockSuggestionHandler:
     # Maps action_id with it's respective function
     def _initialize_block_suggestion_handlers(self):
         self._block_suggestion_handlers = {
-            'category': self.handle_category_suggestion
+            'category': self.handle_category_suggestion,
+            'currency': self.handle_currency_suggestion
         }
 
 
@@ -66,7 +67,9 @@ class BlockSuggestionHandler:
             'system_category': 'not_in.(Unspecified, Per Diem, Mileage, Activity)',
             'is_enabled': 'eq.{}'.format(True)
         }
-        suggested_categories = FyleExpense.get_categories(user, query_params)
+
+        fyle_expense = FyleExpense(user)
+        suggested_categories = fyle_expense.get_categories(query_params)
 
         category_options = []
         if suggested_categories['count'] > 0:
@@ -82,3 +85,25 @@ class BlockSuggestionHandler:
                 category_options.append(option)
 
         return category_options
+
+
+    def handle_currency_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+
+        currencies = ['ADP','AED','AFA','ALL','AMD','ANG','AOA','ARS','ATS','AUD','AWG','AZM','BAM','BBD','BDT','BEF','BGL','BGN','BHD','BIF','BMD','BND','BOB','BOV','BRL','BSD','BTN','BWP','BYB','BZD','CAD','CDF','CHF','CLF','CLP','CNY','COP','CRC','CUP','CVE','CYP','CZK','DEM','DJF','DKK','DOP','DZD','ECS','ECV','EEK','EGP','ERN','ESP','ETB','EUR','FIM','FJD','FKP','FRF','GBP','GEL','GHC','GIP','GMD','GNF','GRD','GTQ','GWP','GYD','HKD','HNL','HRK','HTG','HUF','IDE','IDR','IEP','ILS','INR','IQD','IRR','ISK','ITL','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT','LAK','LBP','LKR','LRD','LSL','LTL','LUF','LVL','LYD','MAD','MDL','MGF','MKD','MMK','MNT','MOP','MRO','MTL','MUR','MVR','MWK','MXN','MXV','MYR','MZM','NAD','NGN','NIO','NLG','NOK','NPR','NZD','OMR','PAB','PEN','PGK','PHP','PKR','PLN','PTE','PYG','QAR','ROL','RUB','RUR','RWF','RYR','SAR','SBD','SCR','SDP','SEK','SGD','SHP','SIT','SKK','SLL','SOS','SRG','STD','SVC','SYP','SZL','THB','TJR','TMM','TND','TOP','TPE','TRL','TTD','TWD','TZS','UAH','UGX','USD','USN','USS','UYU','UZS','VEB','VND','VUV','WST','XAF','XCD','XDR','XEU','XOF','XPF','YER','YUN','ZAR','ZMK','ZRN','ZWD']
+
+        currency_value_entered = slack_payload['value']
+
+        currency_options = []
+        for currency in currencies:
+            if currency_value_entered.upper() in currency:
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': currency,
+                        'emoji': True,
+                    },
+                    'value': currency,
+                }
+                currency_options.append(option)
+
+        return currency_options
