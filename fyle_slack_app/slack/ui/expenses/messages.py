@@ -3,7 +3,7 @@ from typing import Dict, List
 
 
 # is_additional_field is for fields which are not custom fields but are part of a specific categories
-def generate_fields_ui(field_details: Dict, is_additional_field: bool = False) -> Dict:
+def generate_field_ui(field_details: Dict, is_additional_field: bool = False) -> Dict:
     block_id = '{}_block'.format(field_details['column_name'])
     action_id = field_details['column_name']
 
@@ -119,7 +119,7 @@ def generate_fields_ui(field_details: Dict, is_additional_field: bool = False) -
     return custom_field
 
 
-def generate_expense_fields_mandatory_mapping(expense_fields: Dict) -> Dict:
+def generate_expense_fields_type_mandatory_mapping(expense_fields: List[Dict]) -> Dict:
     mandatory_mapping = {
         'purpose': False,
         'txn_dt': False,
@@ -135,7 +135,7 @@ def generate_expense_fields_mandatory_mapping(expense_fields: Dict) -> Dict:
     return mandatory_mapping
 
 
-def get_default_fields_blocks(mandatory_mapping: Dict) -> List:
+def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     default_fields_blocks = [
         {
             'type': 'input',
@@ -147,7 +147,7 @@ def get_default_fields_blocks(mandatory_mapping: Dict) -> List:
                     'text': 'Select Currency',
                     'emoji': True,
                 },
-                'min_query_length': 0,
+                'min_query_length': 1,
                 'action_id': 'currency',
             },
             'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
@@ -166,65 +166,9 @@ def get_default_fields_blocks(mandatory_mapping: Dict) -> List:
             },
             'label': {'type': 'plain_text', 'text': 'Amount', 'emoji': True},
         },
-        {
-            'type': 'input',
-            'block_id': 'default_field_payment_mode_block',
-            'element': {
-                'type': 'static_select',
-                'placeholder': {
-                    'type': 'plain_text',
-                    'text': 'Select Payment Mode',
-                    'emoji': True,
-                },
-                'initial_option': {
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Paid by me',
-                        'emoji': True,
-                    },
-                    'value': 'paid_by_me',
-                },
-                'options': [
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': 'Paid by me',
-                            'emoji': True,
-                        },
-                        'value': 'paid_by_me',
-                    },
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': 'Paid by company',
-                            'emoji': True,
-                        },
-                        'value': 'paid_by_company',
-                    },
-                ],
-                'action_id': 'payment_mode',
-            },
-            'label': {'type': 'plain_text', 'text': 'Payment Mode', 'emoji': True},
-        },
     ]
-    if mandatory_mapping['purpose'] is True:
-        purpose_block = {
-            'type': 'input',
-            'block_id': 'default_field_purpose_block',
-            'element': {
-                'type': 'plain_text_input',
-                'placeholder': {
-                    'type': 'plain_text',
-                    'text': 'Eg. Client Meeting',
-                    'emoji': True,
-                },
-                'action_id': 'purpose',
-            },
-            'label': {'type': 'plain_text', 'text': 'Purpose', 'emoji': True},
-        }
-        default_fields_blocks.append(purpose_block)
 
-    if mandatory_mapping['txn_dt'] is True:
+    if field_type_mandatory_mapping['txn_dt'] is True:
         date_of_spend_block = {
             'type': 'input',
             'block_id': 'default_field_date_of_spend_block',
@@ -242,7 +186,66 @@ def get_default_fields_blocks(mandatory_mapping: Dict) -> List:
         }
         default_fields_blocks.append(date_of_spend_block)
 
-    if mandatory_mapping['vendor_id'] is True:
+    if field_type_mandatory_mapping['purpose'] is True:
+        purpose_block = {
+            'type': 'input',
+            'block_id': 'default_field_purpose_block',
+            'element': {
+                'type': 'plain_text_input',
+                'placeholder': {
+                    'type': 'plain_text',
+                    'text': 'Eg. Client Meeting',
+                    'emoji': True,
+                },
+                'action_id': 'purpose',
+            },
+            'label': {'type': 'plain_text', 'text': 'Purpose', 'emoji': True},
+        }
+        default_fields_blocks.append(purpose_block)
+
+    payment_mode_block = {
+        'type': 'input',
+        'block_id': 'default_field_payment_mode_block',
+        'element': {
+            'type': 'static_select',
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Select Payment Mode',
+                'emoji': True,
+            },
+            'initial_option': {
+                'text': {
+                    'type': 'plain_text',
+                    'text': 'Paid by me',
+                    'emoji': True,
+                },
+                'value': 'paid_by_me',
+            },
+            'options': [
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Paid by me',
+                        'emoji': True,
+                    },
+                    'value': 'paid_by_me',
+                },
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Paid by company',
+                        'emoji': True,
+                    },
+                    'value': 'paid_by_company',
+                },
+            ],
+            'action_id': 'payment_mode',
+        },
+        'label': {'type': 'plain_text', 'text': 'Payment Mode', 'emoji': True},
+    }
+    default_fields_blocks.append(payment_mode_block)
+
+    if field_type_mandatory_mapping['vendor_id'] is True:
         merchant_block = {
             'type': 'input',
             'block_id': 'default_field_merchant_block',
@@ -262,7 +265,7 @@ def get_default_fields_blocks(mandatory_mapping: Dict) -> List:
     return default_fields_blocks
 
 
-def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, custom_fields: Dict = None, categories: Dict = None, current_ui_blocks: List = None) -> Dict:
+def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost_centers: Dict = None, custom_fields: Dict = None, categories: Dict = None, current_ui_blocks: List = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -275,13 +278,23 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cust
 
     # If current UI blocks are passed use them as it is for faster processing of UI elements.
     if current_ui_blocks is not None:
-        view['blocks'] = current_ui_blocks
+        ui_blocks = []
+        # Removing cost center of present to maintain order of cost center at end of form
+        cost_center_block = None
+        for block in current_ui_blocks:
+            if block['block_id'] == 'cost_center_block':
+                cost_center_block = block
+            else:
+                ui_blocks.append(block)
+
+        view['blocks'] = ui_blocks
+
     else:
-        mandatory_mapping = generate_expense_fields_mandatory_mapping(expense_fields)
+        field_type_mandatory_mapping = generate_expense_fields_type_mandatory_mapping(expense_fields)
 
-        view['blocks'] = get_default_fields_blocks(mandatory_mapping)
+        view['blocks'] = get_default_fields_blocks(field_type_mandatory_mapping)
 
-        if mandatory_mapping['project_id'] is True and projects is not None and projects['count'] > 0:
+        if field_type_mandatory_mapping['project_id'] is True and projects is not None and projects['count'] > 0:
             project_block = {
                 'type': 'input',
                 'block_id': 'project_block',
@@ -294,10 +307,15 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cust
             }
             project_options = []
             for project in projects['data']:
+
+                project_display_name = project['display_name']
+                if project['name'] == project['sub_project']:
+                    project_display_name = project['name']
+
                 project_options.append({
                     'text': {
                         'type': 'plain_text',
-                        'text': project['display_name'],
+                        'text': project_display_name,
                         'emoji': True,
                     },
                     'value': str(project['id']),
@@ -305,6 +323,27 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cust
             project_block['element']['options'] = project_options
 
             view['blocks'].append(project_block)
+
+            billable_block = {
+                'type': 'actions',
+                'block_id': 'billable_block',
+                'elements': [
+                    {
+                        'type': 'checkboxes',
+                        'options': [
+                            {
+                                'text': {
+                                    'type': 'plain_text',
+                                    'text': 'Billable',
+                                    'emoji': True
+                                }
+                            }
+                        ],
+                        'action_id': 'billable'
+                    }
+                ]
+            }
+            view['blocks'].append(billable_block)
 
     # Since category block is dependent of projects sometimes, render them everytime.
     category_block = {
@@ -328,10 +367,15 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cust
         category_options = []
 
         for category in categories['data']:
+
+            category_display_name = category['display_name']
+            if category['name'] == category['sub_category']:
+                category_display_name = category['name']
+
             category_options.append({
                 'text': {
                     'type': 'plain_text',
-                    'text': category['display_name'],
+                    'text': category_display_name,
                     'emoji': True,
                 },
                 'value': str(category['id']),
@@ -354,8 +398,37 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cust
             if field['is_custom'] is False:
                 is_additional_field = True
 
-            custom_field = generate_fields_ui(field, is_additional_field=is_additional_field)
+            custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
             view['blocks'].append(custom_field)
+
+    # Render cost center from current ui blocks if present
+    # This check is needed again here to maintain order
+    if current_ui_blocks is not None and cost_center_block is not None:
+        view['blocks'].append(cost_center_block)
+    else:
+        if field_type_mandatory_mapping['cost_center_id'] is True and cost_centers is not None and cost_centers['count'] > 0:
+            cost_center_block = {
+                'type': 'input',
+                'block_id': 'cost_center_block',
+                'element': {
+                    'type': 'static_select',
+                    'action_id': 'cost_center',
+                },
+                'label': {'type': 'plain_text', 'text': 'Cost Center', 'emoji': True},
+            }
+            cost_center_options = []
+            for cost_center in cost_centers['data']:
+                cost_center_options.append({
+                    'text': {
+                        'type': 'plain_text',
+                        'text': cost_center['name'],
+                        'emoji': True,
+                    },
+                    'value': str(cost_center['id']),
+                })
+            cost_center_block['element']['options'] = cost_center_options
+
+            view['blocks'].append(cost_center_block)
 
     return view
 

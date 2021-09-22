@@ -95,7 +95,7 @@ class BlockSuggestionHandler:
 
         currency_options = []
         for currency in currencies:
-            if currency_value_entered.upper() in currency:
+            if currency.startswith(currency_value_entered.upper()):
                 option = {
                     'text': {
                         'type': 'plain_text',

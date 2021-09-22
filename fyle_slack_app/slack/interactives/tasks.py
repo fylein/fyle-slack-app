@@ -46,22 +46,7 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
         if 'custom_field' not in block['block_id'] and 'category_block' not in block['block_id']:
             current_ui_blocks.append(block)
 
-    # Get projects from UI blocks itself, since projects won't be updated in the short span of expense form
-    project_options = []
-    for block in blocks:
-        if block['block_id'] == 'project_block':
-            for option in block['element']['options']:
-                project_options.append({
-                    'display_name': option['text']['text'],
-                    'id': int(option['value'])
-                })
-
-    projects = {
-        'data': project_options,
-        'count': len(project_options)
-    }
-
-    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, projects=projects, categories=categories)
+    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, categories=categories)
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
@@ -97,7 +82,6 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
             current_ui_blocks.append(block)
 
     categories = None
-    projects = None
 
     if 'project_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['project_block']['project']['selected_option'] is not None:
 
@@ -124,23 +108,6 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
         categories = fyle_expense.get_categories(query_params)
 
-        blocks = slack_payload['view']['blocks']
-
-        # Get projects from UI blocks itself, since projects won't be updated in the short span of expense form
-        project_options = []
-        for block in blocks:
-            if block['block_id'] == 'project_block':
-                for option in block['element']['options']:
-                    project_options.append({
-                        'display_name': option['text']['text'],
-                        'id': int(option['value'])
-                    })
-
-        projects = {
-            'data': project_options,
-            'count': len(project_options)
-        }
-
-    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, custom_fields=custom_fields, projects=projects, categories=categories)
+    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, custom_fields=custom_fields, categories=categories)
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)

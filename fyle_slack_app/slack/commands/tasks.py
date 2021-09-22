@@ -110,6 +110,15 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     projects = fyle_expense.get_projects(projects_query_params)
 
-    modal = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects)
+    cost_centers_query_params = {
+        'offset': 0,
+        'limit': '100',
+        'order': 'created_at.desc',
+        'is_enabled': 'eq.{}'.format(True)
+    }
+
+    cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
+
+    modal = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects, cost_centers=cost_centers)
 
     slack_client.views_update(view=modal, view_id=view_id)

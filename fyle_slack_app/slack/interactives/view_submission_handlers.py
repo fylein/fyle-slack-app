@@ -60,7 +60,7 @@ class ViewSubmissionHandler:
             custom_field_mappings = {}
             if 'custom_field' in key:
                 for inner_key, inner_value in value.items():
-                    if inner_value['type'] == 'static_select':
+                    if inner_value['type'] in ['static_select', 'external_select']:
                         custom_field_mappings[inner_key] = inner_value['selected_option']['value']
                     if inner_value['type'] == 'multi_static_select':
                         values_list = []
@@ -79,7 +79,7 @@ class ViewSubmissionHandler:
                     custom_fields.append(custom_field_mappings)
             else:
                 for inner_key, inner_value in value.items():
-                    if inner_value['type'] == 'static_select':
+                    if inner_value['type'] in ['static_select', 'external_select']:
                         expense_mapping[inner_key] = inner_value['selected_option']['value']
                     if inner_value['type'] == 'multi_static_select':
                         values_list = []

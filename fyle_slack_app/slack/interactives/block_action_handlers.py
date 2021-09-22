@@ -41,6 +41,7 @@ class BlockActionHandler:
             # Dynamic options
             'category': self.handle_category_select,
             'project': self.handle_project_select,
+            'billable': self.handle_billable
             # 'currency': self.handle_currency_select
         }
 
@@ -149,6 +150,10 @@ class BlockActionHandler:
         return JsonResponse({}, status=200)
 
 
+    def handle_billable(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        return JsonResponse({})
+
+
     def handle_project_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         project_id = slack_payload['actions'][0]['selected_option']['value']
@@ -250,6 +255,8 @@ class BlockActionHandler:
 
     #     user = utils.get_or_none(User, slack_user_id=user_id)
 
+    #     slack_client = get_slack_client(team_id)
+
     #     fyle_profile = get_fyle_profile(user.fyle_refresh_token)
 
     #     home_currency = fyle_profile['org']['currency']
@@ -258,28 +265,48 @@ class BlockActionHandler:
     #     if home_currency != selected_currency:
     #         is_home_currency_selected = False
 
+    #     blocks = slack_payload['view']['blocks']
+
+    #     # Get current UI block for faster rendering, ignore custom field and category blocks since they are dynamically rendered
+    #     current_ui_blocks = []
+    #     for block in blocks:
+    #         if 'custom_field' not in block['block_id'] and 'category_block' not in block['block_id']:
+    #             current_ui_blocks.append(block)
+
     #     fyle_expense = FyleExpense(user)
 
-    #     default_expense_fields = fyle_expense.get_default_expense_fields()
+    #     categories = None
 
-    #     slack_client = get_slack_client(team_id)
+    #     if 'project_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['project_block']['project']['selected_option'] is not None:
 
-    #     projects_query_params = {
-    #         'offset': 0,
-    #         'limit': '100',
-    #         'order': 'created_at.desc',
-    #         'is_enabled': 'eq.{}'.format(True)
-    #     }
+    #         project_id = int(slack_payload['view']['state']['values']['project_block']['project']['selected_option']['value'])
 
-    #     projects = fyle_expense.get_projects(projects_query_params)
+    #         project_query_params = {
+    #             'offset': 0,
+    #             'limit': '1',
+    #             'order': 'created_at.desc',
+    #             'id': 'eq.{}'.format(int(project_id)),
+    #             'is_enabled': 'eq.{}'.format(True)
+    #         }
 
-    #     expense_form = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, projects=projects)
+    #         project = fyle_expense.get_projects(project_query_params)
 
-    #     if is_home_currency_selected is False:
+    #         query_params = {
+    #             'offset': 0,
+    #             'limit': '20',
+    #             'order': 'created_at.desc',
+    #             'is_enabled': 'eq.{}'.format(True),
+    #             'system_category': 'not_in.(Unspecified, Per Diem, Mileage, Activity)',
+    #             'id': 'in.{}'.format(tuple(project['data'][0]['category_ids']))
+    #         }
 
+    #         categories = fyle_expense.get_categories(query_params)
+
+    #     expense_form = expense_messages.expense_dialog_form(current_ui_blocks=current_ui_blocks, categories=categories)
 
     #     slack_client.views_update(view_id=view_id, view=expense_form)
 
+    #     return JsonResponse({})
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:
