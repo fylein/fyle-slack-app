@@ -9,8 +9,9 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
 
     # We need to define addtional fields as custom fields so that we can clear them out in form when category is changed
     if field_details['is_custom'] is True or is_additional_field is True:
-        block_id = '{}_custom_field_{}_block'.format(field_details['type'], field_details['column_name'])
+        block_id = '{}_additional_field_{}_block'.format(field_details['type'], field_details['column_name'])
         if field_details['is_custom'] is True:
+            block_id = '{}_custom_field_{}_block'.format(field_details['type'], field_details['column_name'])
             action_id = '{}'.format(field_details['field_name'])
 
     if field_details['type'] in ['NUMBER', 'TEXT']:
@@ -279,12 +280,16 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost
     # If current UI blocks are passed use them as it is for faster processing of UI elements.
     if current_ui_blocks is not None:
         ui_blocks = []
-        # Removing cost center of present to maintain order of cost center at end of form
+
         cost_center_block = None
         for block in current_ui_blocks:
+
+            # Removing cost center if present to maintain order of cost center at end of form
             if block['block_id'] == 'cost_center_block':
                 cost_center_block = block
-            else:
+
+            # Removing these block as these should be rendered conditionally
+            if block['block_id'] not in ['custom_field', 'category_block', 'cost_center_block', 'additional_field']:
                 ui_blocks.append(block)
 
         view['blocks'] = ui_blocks

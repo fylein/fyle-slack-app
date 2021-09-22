@@ -270,7 +270,7 @@ class BlockActionHandler:
     #     # Get current UI block for faster rendering, ignore custom field and category blocks since they are dynamically rendered
     #     current_ui_blocks = []
     #     for block in blocks:
-    #         if 'custom_field' not in block['block_id'] and 'category_block' not in block['block_id']:
+    #         if 'custom_field' not in block['block_id'] and 'category_block' not in block['block_id'] and 'additional_field' not in block['block_id']:
     #             current_ui_blocks.append(block)
 
     #     fyle_expense = FyleExpense(user)

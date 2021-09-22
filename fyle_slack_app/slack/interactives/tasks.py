@@ -34,17 +34,12 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     categories = fyle_expense.get_categories(query_params)
 
-    blocks = slack_payload['view']['blocks']
+    current_ui_blocks = slack_payload['view']['blocks']
 
     # Removing loading info from below project input element
-    project_loading_block_index = next((index for (index, d) in enumerate(blocks) if d['block_id'] == 'project_loading_block'), None)
-    blocks.pop(project_loading_block_index)
+    project_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'project_loading_block'), None)
+    current_ui_blocks.pop(project_loading_block_index)
 
-    # Get current UI block for faster rendering, ignore custom field and category blocks since they are dynamically rendered
-    current_ui_blocks = []
-    for block in blocks:
-        if 'custom_field' not in block['block_id'] and 'category_block' not in block['block_id']:
-            current_ui_blocks.append(block)
 
     new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, categories=categories)
 
@@ -69,17 +64,11 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
     custom_fields = fyle_expense.get_expense_fields(custom_fields_query_params)
 
-    blocks = slack_payload['view']['blocks']
+    current_ui_blocks = slack_payload['view']['blocks']
 
     # Removing loading info from below category input element
-    category_loading_block_index = next((index for (index, d) in enumerate(blocks) if d['block_id'] == 'category_loading_block'), None)
-    blocks.pop(category_loading_block_index)
-
-    # Get current UI block for faster rendering, ignore custom field and category blocks since they are dynamically rendered
-    current_ui_blocks = []
-    for block in blocks:
-        if 'custom_field' not in block['block_id'] and 'category_block' not in block['block_id']:
-            current_ui_blocks.append(block)
+    category_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'category_loading_block'), None)
+    current_ui_blocks.pop(category_loading_block_index)
 
     categories = None
 
