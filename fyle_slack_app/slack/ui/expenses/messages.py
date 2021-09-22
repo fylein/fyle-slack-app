@@ -140,7 +140,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     default_fields_blocks = [
         {
             'type': 'input',
-            'block_id': 'default_field_currency_block',
+            'block_id': 'SELECT_default_field_currency_block',
             'element': {
                 'type': 'external_select',
                 'placeholder': {
@@ -155,7 +155,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
         },
         {
             'type': 'input',
-            'block_id': 'default_field_amount_block',
+            'block_id': 'NUMBER_default_field_amount_block',
             'element': {
                 'type': 'plain_text_input',
                 'placeholder': {
@@ -172,7 +172,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     if field_type_mandatory_mapping['txn_dt'] is True:
         date_of_spend_block = {
             'type': 'input',
-            'block_id': 'default_field_date_of_spend_block',
+            'block_id': 'DATE_default_field_date_of_spend_block',
             'element': {
                 'type': 'datepicker',
                 'initial_date': datetime.datetime.today().strftime('%Y-%m-%d'),
@@ -190,7 +190,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     if field_type_mandatory_mapping['purpose'] is True:
         purpose_block = {
             'type': 'input',
-            'block_id': 'default_field_purpose_block',
+            'block_id': 'TEXT_default_field_purpose_block',
             'element': {
                 'type': 'plain_text_input',
                 'placeholder': {
@@ -206,7 +206,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
 
     payment_mode_block = {
         'type': 'input',
-        'block_id': 'default_field_payment_mode_block',
+        'block_id': 'SELECT_default_field_payment_mode_block',
         'element': {
             'type': 'static_select',
             'placeholder': {
@@ -220,7 +220,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
                     'text': 'Paid by me',
                     'emoji': True,
                 },
-                'value': 'paid_by_me',
+                'value': 'true',
             },
             'options': [
                 {
@@ -229,7 +229,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
                         'text': 'Paid by me',
                         'emoji': True,
                     },
-                    'value': 'paid_by_me',
+                    'value': 'true',
                 },
                 {
                     'text': {
@@ -237,10 +237,10 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
                         'text': 'Paid by company',
                         'emoji': True,
                     },
-                    'value': 'paid_by_company',
+                    'value': 'false',
                 },
             ],
-            'action_id': 'payment_mode',
+            'action_id': 'is_reimbursable',
         },
         'label': {'type': 'plain_text', 'text': 'Payment Mode', 'emoji': True},
     }
@@ -249,7 +249,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     if field_type_mandatory_mapping['vendor_id'] is True:
         merchant_block = {
             'type': 'input',
-            'block_id': 'default_field_merchant_block',
+            'block_id': 'TEXT_default_field_merchant_block',
             'element': {
                 'type': 'plain_text_input',
                 'placeholder': {
@@ -387,7 +387,7 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost
             })
 
         category_block['element']['options'] = category_options
-        category_block['element']['initial_option'] = category_options[0]
+        # category_block['element']['initial_option'] = category_options[0]
     else:
         category_block['element']['min_query_length'] = 0
 
