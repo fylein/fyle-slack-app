@@ -39,9 +39,9 @@ class BlockActionHandler:
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
 
             # Dynamic options
-            'category': self.handle_category_select,
-            'project': self.handle_project_select,
-            'billable': self.handle_billable
+            'category_id': self.handle_category_select,
+            'project_id': self.handle_project_select,
+            'is_billable': self.handle_billable
             # 'currency': self.handle_currency_select
         }
 

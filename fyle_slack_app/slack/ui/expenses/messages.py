@@ -266,7 +266,101 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     return default_fields_blocks
 
 
-def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost_centers: Dict = None, custom_fields: Dict = None, categories: Dict = None, current_ui_blocks: List = None) -> Dict:
+def get_projects_and_billable_block(selected_project: Dict = None) -> Dict:
+    project_block = {
+        'type': 'input',
+        'block_id': 'project_block',
+        'dispatch_action': True,
+        'element': {
+            'min_query_length': 0,
+            'type': 'external_select',
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Eg. Travel',
+                'emoji': True,
+            },
+
+            'action_id': 'project_id',
+        },
+        'label': {'type': 'plain_text', 'text': 'Project', 'emoji': True},
+    }
+    if selected_project is not None:
+        project_display_name = selected_project['display_name']
+        if selected_project['name'] == selected_project['sub_project']:
+            project_display_name = selected_project['name']
+        project_block['element']['initial_option'] = {
+            'text': {
+                'type': 'plain_text',
+                'text': project_display_name,
+                'emoji': True,
+            },
+            'value': str(selected_project['id']),
+        }
+
+    billable_block = {
+        'type': 'actions',
+        'block_id': 'billable_block',
+        'elements': [
+            {
+                'type': 'checkboxes',
+                'options': [
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': 'Billable',
+                            'emoji': True
+                        }
+                    }
+                ],
+                'action_id': 'is_billable'
+            }
+        ]
+    }
+
+    return project_block, billable_block
+
+
+def get_categories_block() -> Dict:
+    category_block = {
+        'type': 'input',
+        'block_id': 'category_block',
+        'dispatch_action': True,
+        'element': {
+            'type': 'external_select',
+            'min_query_length': 0,
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Eg. Food',
+                'emoji': True,
+            },
+            'action_id': 'category_id',
+        },
+        'label': {'type': 'plain_text', 'text': 'Category', 'emoji': True},
+    }
+
+    return category_block
+
+
+def get_cost_centers_block() -> Dict:
+    cost_centers_block = {
+        'type': 'input',
+        'block_id': 'cost_center_block',
+        'element': {
+            'type': 'external_select',
+            'min_query_length': 0,
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Eg. Accounting',
+                'emoji': True,
+            },
+            'action_id': 'cost_center_id',
+        },
+        'label': {'type': 'plain_text', 'text': 'Cost Center', 'emoji': True},
+    }
+    return cost_centers_block
+
+
+def expense_dialog_form(expense_fields: Dict = None, fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -288,8 +382,9 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost
             if block['block_id'] == 'cost_center_block':
                 cost_center_block = block
 
-            # Removing these block as these should be rendered conditionally
-            if block['block_id'] not in ['custom_field', 'category_block', 'cost_center_block', 'additional_field']:
+            # Removing these block as these should be rendered from current/cached UI block
+            ignore_block_id_list = ['custom_field', 'project_block', 'billable_block', 'category_block', 'cost_center_block', 'additional_field']
+            if any(substring in block['block_id'] for substring in ignore_block_id_list) is False:
                 ui_blocks.append(block)
 
         view['blocks'] = ui_blocks
@@ -299,97 +394,16 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost
 
         view['blocks'] = get_default_fields_blocks(field_type_mandatory_mapping)
 
-        if field_type_mandatory_mapping['project_id'] is True and projects is not None and projects['count'] > 0:
-            project_block = {
-                'type': 'input',
-                'block_id': 'project_block',
-                'dispatch_action': True,
-                'element': {
-                    'type': 'static_select',
-                    'action_id': 'project',
-                },
-                'label': {'type': 'plain_text', 'text': 'Project', 'emoji': True},
-            }
-            project_options = []
-            for project in projects['data']:
+    if fields_render_property['is_projects_available'] is True:
 
-                project_display_name = project['display_name']
-                if project['name'] == project['sub_project']:
-                    project_display_name = project['name']
+        project_block, billable_block = get_projects_and_billable_block(selected_project)
 
-                project_options.append({
-                    'text': {
-                        'type': 'plain_text',
-                        'text': project_display_name,
-                        'emoji': True,
-                    },
-                    'value': str(project['id']),
-                })
-            project_block['element']['options'] = project_options
+        view['blocks'].append(project_block)
 
-            view['blocks'].append(project_block)
-
-            billable_block = {
-                'type': 'actions',
-                'block_id': 'billable_block',
-                'elements': [
-                    {
-                        'type': 'checkboxes',
-                        'options': [
-                            {
-                                'text': {
-                                    'type': 'plain_text',
-                                    'text': 'Billable',
-                                    'emoji': True
-                                }
-                            }
-                        ],
-                        'action_id': 'billable'
-                    }
-                ]
-            }
-            view['blocks'].append(billable_block)
+        view['blocks'].append(billable_block)
 
     # Since category block is dependent of projects sometimes, render them everytime.
-    category_block = {
-        'type': 'input',
-        'block_id': 'category_block',
-        'dispatch_action': True,
-        'element': {
-            'type': 'external_select',
-            'placeholder': {
-                'type': 'plain_text',
-                'text': 'Eg. Travel',
-                'emoji': True,
-            },
-            'action_id': 'category',
-        },
-        'label': {'type': 'plain_text', 'text': 'Category', 'emoji': True},
-    }
-
-    if categories is not None and categories['count'] > 0:
-        category_block['element']['type'] = 'static_select'
-        category_options = []
-
-        for category in categories['data']:
-
-            category_display_name = category['display_name']
-            if category['name'] == category['sub_category']:
-                category_display_name = category['name']
-
-            category_options.append({
-                'text': {
-                    'type': 'plain_text',
-                    'text': category_display_name,
-                    'emoji': True,
-                },
-                'value': str(category['id']),
-            })
-
-        category_block['element']['options'] = category_options
-        # category_block['element']['initial_option'] = category_options[0]
-    else:
-        category_block['element']['min_query_length'] = 0
+    category_block = get_categories_block()
 
     view['blocks'].append(category_block)
 
@@ -411,27 +425,9 @@ def expense_dialog_form(expense_fields: Dict = None, projects: Dict = None, cost
     if current_ui_blocks is not None and cost_center_block is not None:
         view['blocks'].append(cost_center_block)
     else:
-        if field_type_mandatory_mapping['cost_center_id'] is True and cost_centers is not None and cost_centers['count'] > 0:
-            cost_center_block = {
-                'type': 'input',
-                'block_id': 'cost_center_block',
-                'element': {
-                    'type': 'static_select',
-                    'action_id': 'cost_center',
-                },
-                'label': {'type': 'plain_text', 'text': 'Cost Center', 'emoji': True},
-            }
-            cost_center_options = []
-            for cost_center in cost_centers['data']:
-                cost_center_options.append({
-                    'text': {
-                        'type': 'plain_text',
-                        'text': cost_center['name'],
-                        'emoji': True,
-                    },
-                    'value': str(cost_center['id']),
-                })
-            cost_center_block['element']['options'] = cost_center_options
+        if field_type_mandatory_mapping['cost_center_id'] is True and fields_render_property['is_cost_centers_available'] is True:
+
+            cost_center_block = get_cost_centers_block()
 
             view['blocks'].append(cost_center_block)
 

@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List
 
 from django.http import JsonResponse
@@ -18,7 +19,9 @@ class BlockSuggestionHandler:
     # Maps action_id with it's respective function
     def _initialize_block_suggestion_handlers(self):
         self._block_suggestion_handlers = {
-            'category': self.handle_category_suggestion,
+            'category_id': self.handle_category_suggestion,
+            'project_id': self.handle_project_suggestion,
+            'cost_center_id': self.handle_cost_center_suggestion,
             'currency': self.handle_currency_suggestion
         }
 
@@ -57,27 +60,52 @@ class BlockSuggestionHandler:
 
     def handle_category_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
 
+        print('CATEGORY SUGGESTION -> ', json.dumps(slack_payload['view']['state']['values'], indent=2))
+
         user = utils.get_or_none(User, slack_user_id=user_id)
         category_value_entered = slack_payload['value']
-        query_params = {
+
+        fyle_expense = FyleExpense(user)
+
+        category_query_params = {
             'offset': 0,
-            'limit': '100',
+            'limit': '30',
             'order': 'display_name.asc',
             'display_name': 'ilike.%{}%'.format(category_value_entered),
             'system_category': 'not_in.(Unspecified, Per Diem, Mileage, Activity)',
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        fyle_expense = FyleExpense(user)
-        suggested_categories = fyle_expense.get_categories(query_params)
+        if 'project_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['project_block']['project_id']['selected_option'] is not None:
+
+            project_id = int(slack_payload['view']['state']['values']['project_block']['project_id']['selected_option']['value'])
+
+            project_query_params = {
+                'offset': 0,
+                'limit': '1',
+                'order': 'created_at.desc',
+                'id': 'eq.{}'.format(int(project_id)),
+                'is_enabled': 'eq.{}'.format(True)
+            }
+
+            project = fyle_expense.get_projects(project_query_params)
+
+            category_query_params['id'] = 'in.{}'.format(tuple(project['data'][0]['category_ids']))
+
+        suggested_categories = fyle_expense.get_categories(category_query_params)
 
         category_options = []
         if suggested_categories['count'] > 0:
             for category in suggested_categories['data']:
+
+                category_display_name = category['display_name']
+                if category['name'] == category['sub_category']:
+                    category_display_name = category['name']
+
                 option = {
                     'text': {
                         'type': 'plain_text',
-                        'text': category['display_name'],
+                        'text': category_display_name,
                         'emoji': True,
                     },
                     'value': str(category['id']),
@@ -89,7 +117,7 @@ class BlockSuggestionHandler:
 
     def handle_currency_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
 
-        currencies = ['ADP','AED','AFA','ALL','AMD','ANG','AOA','ARS','ATS','AUD','AWG','AZM','BAM','BBD','BDT','BEF','BGL','BGN','BHD','BIF','BMD','BND','BOB','BOV','BRL','BSD','BTN','BWP','BYB','BZD','CAD','CDF','CHF','CLF','CLP','CNY','COP','CRC','CUP','CVE','CYP','CZK','DEM','DJF','DKK','DOP','DZD','ECS','ECV','EEK','EGP','ERN','ESP','ETB','EUR','FIM','FJD','FKP','FRF','GBP','GEL','GHC','GIP','GMD','GNF','GRD','GTQ','GWP','GYD','HKD','HNL','HRK','HTG','HUF','IDE','IDR','IEP','ILS','INR','IQD','IRR','ISK','ITL','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT','LAK','LBP','LKR','LRD','LSL','LTL','LUF','LVL','LYD','MAD','MDL','MGF','MKD','MMK','MNT','MOP','MRO','MTL','MUR','MVR','MWK','MXN','MXV','MYR','MZM','NAD','NGN','NIO','NLG','NOK','NPR','NZD','OMR','PAB','PEN','PGK','PHP','PKR','PLN','PTE','PYG','QAR','ROL','RUB','RUR','RWF','RYR','SAR','SBD','SCR','SDP','SEK','SGD','SHP','SIT','SKK','SLL','SOS','SRG','STD','SVC','SYP','SZL','THB','TJR','TMM','TND','TOP','TPE','TRL','TTD','TWD','TZS','UAH','UGX','USD','USN','USS','UYU','UZS','VEB','VND','VUV','WST','XAF','XCD','XDR','XEU','XOF','XPF','YER','YUN','ZAR','ZMK','ZRN','ZWD']
+        currencies = FyleExpense.get_currencies()
 
         currency_value_entered = slack_payload['value']
 
@@ -107,3 +135,74 @@ class BlockSuggestionHandler:
                 currency_options.append(option)
 
         return currency_options
+
+
+    def handle_project_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+
+        # print('Project SUGGESTION -> ', json.dumps(slack_payload['view']['state'], indent=2))
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        project_value_entered = slack_payload['value']
+        query_params = {
+            'offset': 0,
+            'limit': '30',
+            'order': 'display_name.asc',
+            'display_name': 'ilike.%{}%'.format(project_value_entered),
+            'is_enabled': 'eq.{}'.format(True)
+        }
+
+        fyle_expense = FyleExpense(user)
+        suggested_projects = fyle_expense.get_projects(query_params)
+
+        project_options = []
+        if suggested_projects['count'] > 0:
+            for project in suggested_projects['data']:
+
+                project_display_name = project['display_name']
+                if project['name'] == project['sub_project']:
+                    project_display_name = project['name']
+
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': project_display_name,
+                        'emoji': True,
+                    },
+                    'value': str(project['id']),
+                }
+                project_options.append(option)
+
+        return project_options
+
+
+    def handle_cost_center_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+
+        # print('COST CENTER SUGGESTION -> ', json.dumps(slack_payload['view']['state'], indent=2))
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        cost_center_value_entered = slack_payload['value']
+        query_params = {
+            'offset': 0,
+            'limit': '30',
+            'order': 'name.asc',
+            'name': 'ilike.%{}%'.format(cost_center_value_entered),
+            'is_enabled': 'eq.{}'.format(True)
+        }
+
+        fyle_expense = FyleExpense(user)
+        suggested_cost_centers = fyle_expense.get_cost_centers(query_params)
+
+        cost_center_options = []
+        if suggested_cost_centers['count'] > 0:
+            for cost_center in suggested_cost_centers['data']:
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': cost_center['name'],
+                        'emoji': True,
+                    },
+                    'value': str(cost_center['id']),
+                }
+                cost_center_options.append(option)
+
+        return cost_center_options
