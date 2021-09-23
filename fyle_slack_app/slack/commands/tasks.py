@@ -101,33 +101,40 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     slack_client = slack_utils.get_slack_client(team_id)
 
-    projects_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'is_enabled': 'eq.{}'.format(True)
-    }
+    field_type_mandatory_mapping = fyle_expense.get_expense_fields_type_mandatory_mapping(default_expense_fields)
 
-    projects = fyle_expense.get_projects(projects_query_params)
+    is_project_available = False
+    is_cost_centers_available = False
 
-    is_project_available = True if projects['count'] > 0 else False
+    if field_type_mandatory_mapping['project_id'] is True:
+        projects_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'is_enabled': 'eq.{}'.format(True)
+        }
 
-    cost_centers_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'is_enabled': 'eq.{}'.format(True)
-    }
+        projects = fyle_expense.get_projects(projects_query_params)
 
-    cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
+        is_project_available = True if projects['count'] > 0 else False
 
-    is_cost_centers_available = True if cost_centers['count'] > 0 else False
+    if field_type_mandatory_mapping['cost_center_id'] is True:
+        cost_centers_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'is_enabled': 'eq.{}'.format(True)
+        }
+
+        cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
+
+        is_cost_centers_available = True if cost_centers['count'] > 0 else False
 
     fields_render_property = {
         'is_projects_available': is_project_available,
         'is_cost_centers_available': is_cost_centers_available
     }
 
-    modal = expense_messages.expense_dialog_form(expense_fields=default_expense_fields, fields_render_property=fields_render_property)
+    modal = expense_messages.expense_dialog_form(field_type_mandatory_mapping=field_type_mandatory_mapping, fields_render_property=fields_render_property)
 
     slack_client.views_update(view=modal, view_id=view_id)

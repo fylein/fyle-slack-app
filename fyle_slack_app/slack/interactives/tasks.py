@@ -30,10 +30,14 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
     current_ui_blocks.pop(project_loading_block_index)
 
     fields_render_property = {
-        'is_projects_available': True
+        'is_projects_available': True,
+        'is_cost_centers_available': False
     }
 
-    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, fields_render_property=fields_render_property, selected_project=project['data'][0])
+    if 'cost_center_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['cost_center_block']['cost_center_id']['selected_option'] is not None:
+        fields_render_property['is_cost_centers_available'] = True
+
+    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, fields_render_property=fields_render_property, selected_project=project)
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
@@ -63,9 +67,11 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
     current_ui_blocks.pop(category_loading_block_index)
 
     fields_render_property = {
-        'is_projects_available': False
+        'is_projects_available': False,
+        'is_cost_centers_available': False
     }
 
+    project = None
     if 'project_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['project_block']['project_id']['selected_option'] is not None:
 
         project_id = int(slack_payload['view']['state']['values']['project_block']['project_id']['selected_option']['value'])
@@ -82,6 +88,9 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
         fields_render_property['is_projects_available'] = True
 
-    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, custom_fields=custom_fields, selected_project=project['data'][0], fields_render_property=fields_render_property)
+    if 'cost_center_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['cost_center_block']['cost_center_id']['selected_option'] is not None:
+        fields_render_property['is_cost_centers_available'] = True
+
+    new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, custom_fields=custom_fields, selected_project=project, fields_render_property=fields_render_property)
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)

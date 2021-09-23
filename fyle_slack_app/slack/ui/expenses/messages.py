@@ -120,22 +120,6 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
     return custom_field
 
 
-def generate_expense_fields_type_mandatory_mapping(expense_fields: List[Dict]) -> Dict:
-    mandatory_mapping = {
-        'purpose': False,
-        'txn_dt': False,
-        'vendor_id': False,
-        'project_id': False,
-        'cost_center_id': False
-    }
-
-    for field in expense_fields['data']:
-        if field['column_name'] in mandatory_mapping:
-            mandatory_mapping[field['column_name']] = field['is_mandatory']
-
-    return mandatory_mapping
-
-
 def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     default_fields_blocks = [
         {
@@ -285,6 +269,8 @@ def get_projects_and_billable_block(selected_project: Dict = None) -> Dict:
         'label': {'type': 'plain_text', 'text': 'Project', 'emoji': True},
     }
     if selected_project is not None:
+        selected_project = selected_project['data'][0]
+
         project_display_name = selected_project['display_name']
         if selected_project['name'] == selected_project['sub_project']:
             project_display_name = selected_project['name']
@@ -360,7 +346,7 @@ def get_cost_centers_block() -> Dict:
     return cost_centers_block
 
 
-def expense_dialog_form(expense_fields: Dict = None, fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None) -> Dict:
+def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -382,7 +368,7 @@ def expense_dialog_form(expense_fields: Dict = None, fields_render_property: Dic
             if block['block_id'] == 'cost_center_block':
                 cost_center_block = block
 
-            # Removing these block as these should be rendered from current/cached UI block
+            # Removing these block as these should not be rendered from current/cached UI block
             ignore_block_id_list = ['custom_field', 'project_block', 'billable_block', 'category_block', 'cost_center_block', 'additional_field']
             if any(substring in block['block_id'] for substring in ignore_block_id_list) is False:
                 ui_blocks.append(block)
@@ -390,7 +376,6 @@ def expense_dialog_form(expense_fields: Dict = None, fields_render_property: Dic
         view['blocks'] = ui_blocks
 
     else:
-        field_type_mandatory_mapping = generate_expense_fields_type_mandatory_mapping(expense_fields)
 
         view['blocks'] = get_default_fields_blocks(field_type_mandatory_mapping)
 
@@ -425,7 +410,7 @@ def expense_dialog_form(expense_fields: Dict = None, fields_render_property: Dic
     if current_ui_blocks is not None and cost_center_block is not None:
         view['blocks'].append(cost_center_block)
     else:
-        if field_type_mandatory_mapping['cost_center_id'] is True and fields_render_property['is_cost_centers_available'] is True:
+        if fields_render_property['is_cost_centers_available'] is True:
 
             cost_center_block = get_cost_centers_block()
 
