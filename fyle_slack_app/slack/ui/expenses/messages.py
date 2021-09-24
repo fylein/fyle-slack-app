@@ -120,38 +120,91 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
     return custom_field
 
 
-def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
-    default_fields_blocks = [
-        {
-            'type': 'input',
-            'block_id': 'SELECT_default_field_currency_block',
-            'element': {
-                'type': 'external_select',
-                'placeholder': {
-                    'type': 'plain_text',
-                    'text': 'Select Currency',
-                    'emoji': True,
-                },
-                'min_query_length': 1,
-                'action_id': 'currency',
+def get_amount_and_currency_block(additional_currency_details: Dict = None) -> List:
+    currency_block = {
+        'type': 'input',
+        'block_id': 'SELECT_default_field_currency_block',
+        'dispatch_action': True,
+        'element': {
+            'type': 'external_select',
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Select Currency',
+                'emoji': True,
             },
-            'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
+            'min_query_length': 1,
+            'action_id': 'currency',
         },
-        {
+        'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
+    }
+
+    currency_context_block = None
+    total_amount_block = None
+    amount_block = {
+        'type': 'input',
+        'block_id': 'NUMBER_default_field_amount_block',
+        'element': {
+            'type': 'plain_text_input',
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Enter Amount',
+                'emoji': True,
+            },
+            'action_id': 'amount',
+        },
+        'label': {'type': 'plain_text', 'text': 'Amount', 'emoji': True},
+    }
+
+    if additional_currency_details is not None:
+        amount_block['dispatch_action'] = True
+        amount_block['element']['dispatch_action_config'] = {
+            'trigger_actions_on': [
+                'on_character_entered'
+            ]
+        }
+
+        amount_block['element']['placeholder']['text'] = 'Enter Amount {}'.format(additional_currency_details['foreign_currency'])
+
+        currency_context_block = {
+			'type': 'context',
+            'block_id': 'TEXT_default_field_currency_context_block',
+			'elements': [
+				{
+					'type': 'mrkdwn',
+					'text': ':information_source: Amount ({}) x Exchange Rate = Total ({})'.format(additional_currency_details['foreign_currency'], additional_currency_details['home_currency'])
+				}
+			]
+		}
+
+        total_amount_block = {
             'type': 'input',
-            'block_id': 'NUMBER_default_field_amount_block',
+            'block_id': 'NUMBER_default_field_total_amount_block',
             'element': {
                 'type': 'plain_text_input',
                 'placeholder': {
                     'type': 'plain_text',
-                    'text': 'Enter Amount',
+                    'text': 'Enter Total Amount {}'.format(additional_currency_details['home_currency']),
                     'emoji': True,
                 },
-                'action_id': 'amount',
+                'action_id': 'foreign_amount',
             },
-            'label': {'type': 'plain_text', 'text': 'Amount', 'emoji': True},
-        },
-    ]
+            'label': {'type': 'plain_text', 'text': 'Total Amount', 'emoji': True},
+        }
+
+        if int(additional_currency_details['total_amount']) != 0:
+            total_amount_block['element']['initial_value'] = str(additional_currency_details['total_amount'])
+
+    return currency_block, amount_block, currency_context_block, total_amount_block
+
+
+def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
+
+    default_fields_blocks = []
+
+    currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block()
+
+    default_fields_blocks.append(currency_block)
+    default_fields_blocks.append(amount_block)
 
     if field_type_mandatory_mapping['txn_dt'] is True:
         date_of_spend_block = {
@@ -346,7 +399,7 @@ def get_cost_centers_block() -> Dict:
     return cost_centers_block
 
 
-def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None) -> Dict:
+def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None, additional_currency_details: Dict = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -361,6 +414,33 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
     if current_ui_blocks is not None:
         ui_blocks = []
 
+        ignore_block_id_list = ['custom_field', 'project_block', 'billable_block', 'category_block', 'cost_center_block', 'additional_field']
+        additional_currency_amount_blocks = ['NUMBER_default_field_total_amount_block', 'TEXT_default_field_currency_context_block']
+
+        is_additional_currency_amount_blocks_present = False
+        for block in current_ui_blocks:
+            if any(substring == block['block_id'] for substring in additional_currency_amount_blocks) is True:
+                is_additional_currency_amount_blocks_present = True
+
+        if is_additional_currency_amount_blocks_present is True:
+            current_ui_blocks = current_ui_blocks[4:]
+        else:
+            current_ui_blocks = current_ui_blocks[2:]
+
+        if additional_currency_details is not None:
+
+            currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block(additional_currency_details)
+            current_ui_blocks.insert(0, currency_block)
+            current_ui_blocks.insert(1, currency_context_block)
+
+            current_ui_blocks.insert(2, amount_block)
+            current_ui_blocks.insert(3, total_amount_block)
+        else:
+
+            currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block()
+            current_ui_blocks.insert(0, currency_block)
+            current_ui_blocks.insert(1, amount_block)
+
         cost_center_block = None
         for block in current_ui_blocks:
 
@@ -369,7 +449,6 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
                 cost_center_block = block
 
             # Removing these block as these should not be rendered from current/cached UI block
-            ignore_block_id_list = ['custom_field', 'project_block', 'billable_block', 'category_block', 'cost_center_block', 'additional_field']
             if any(substring in block['block_id'] for substring in ignore_block_id_list) is False:
                 ui_blocks.append(block)
 

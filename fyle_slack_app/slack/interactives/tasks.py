@@ -72,21 +72,23 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
     }
 
     project = None
-    if 'project_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['project_block']['project_id']['selected_option'] is not None:
-
-        project_id = int(slack_payload['view']['state']['values']['project_block']['project_id']['selected_option']['value'])
-
-        project_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'id': 'eq.{}'.format(int(project_id)),
-            'is_enabled': 'eq.{}'.format(True)
-        }
-
-        project = fyle_expense.get_projects(project_query_params)
+    if 'project_block' in slack_payload['view']['state']['values']:
 
         fields_render_property['is_projects_available'] = True
+
+        if slack_payload['view']['state']['values']['project_block']['project_id']['selected_option'] is not None:
+
+            project_id = int(slack_payload['view']['state']['values']['project_block']['project_id']['selected_option']['value'])
+
+            project_query_params = {
+                'offset': 0,
+                'limit': '1',
+                'order': 'created_at.desc',
+                'id': 'eq.{}'.format(int(project_id)),
+                'is_enabled': 'eq.{}'.format(True)
+            }
+
+            project = fyle_expense.get_projects(project_query_params)
 
     if 'cost_center_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['cost_center_block']['cost_center_id']['selected_option'] is not None:
         fields_render_property['is_cost_centers_available'] = True
