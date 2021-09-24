@@ -423,10 +423,13 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
                 is_additional_currency_amount_blocks_present = True
 
         if is_additional_currency_amount_blocks_present is True:
+            # Removing all exchange rate context blocks
             current_ui_blocks = current_ui_blocks[4:]
         else:
+            # Removing currency and amount blocks only
             current_ui_blocks = current_ui_blocks[2:]
 
+        # When additional currency details are present, render exchange rate context and total amount block
         if additional_currency_details is not None:
 
             currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block(additional_currency_details)
@@ -435,6 +438,8 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
 
             current_ui_blocks.insert(2, amount_block)
             current_ui_blocks.insert(3, total_amount_block)
+
+        # When additional currency details are not present, render amount and currency blocks only
         else:
 
             currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block()

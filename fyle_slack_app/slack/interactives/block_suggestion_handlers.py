@@ -1,4 +1,3 @@
-import json
 from typing import Dict, List
 
 from django.http import JsonResponse
@@ -59,8 +58,6 @@ class BlockSuggestionHandler:
 
 
     def handle_category_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
-
-        print('CATEGORY SUGGESTION -> ', json.dumps(slack_payload['view']['state']['values'], indent=2))
 
         user = utils.get_or_none(User, slack_user_id=user_id)
         category_value_entered = slack_payload['value']
@@ -139,8 +136,6 @@ class BlockSuggestionHandler:
 
     def handle_project_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
 
-        # print('Project SUGGESTION -> ', json.dumps(slack_payload['view']['state'], indent=2))
-
         user = utils.get_or_none(User, slack_user_id=user_id)
         project_value_entered = slack_payload['value']
         query_params = {
@@ -176,8 +171,6 @@ class BlockSuggestionHandler:
 
 
     def handle_cost_center_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
-
-        # print('COST CENTER SUGGESTION -> ', json.dumps(slack_payload['view']['state'], indent=2))
 
         user = utils.get_or_none(User, slack_user_id=user_id)
         cost_center_value_entered = slack_payload['value']

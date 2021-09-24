@@ -4,8 +4,6 @@ from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
-from fyle_slack_app.fyle.expenses.views import FyleExpense
-from fyle_slack_app.fyle.utils import get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
@@ -250,142 +248,28 @@ class BlockActionHandler:
 
 
     def handle_currency_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        selected_currency = slack_payload['actions'][0]['selected_option']['value']
-
-        view_id = slack_payload['container']['view_id']
-
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        slack_client = get_slack_client(team_id)
-
-        fyle_profile = get_fyle_profile(user.fyle_refresh_token)
-
-        home_currency = fyle_profile['org']['currency']
-
-        form_current_state = slack_payload['view']['state']['values']
-
-        additional_currency_details = None
-
-        if home_currency != selected_currency:
-            exchange_rate = 70.12
-            amount = form_current_state['NUMBER_default_field_amount_block']['amount']['value']
-
-            if amount is None or len(amount) == 0:
-                amount = 0
-            else:
-                try:
-                    amount = round(float(amount), 2)
-                except ValueError:
-                    amount = 0
-
-            additional_currency_details = {
-                'foreign_currency': selected_currency,
-                'home_currency': home_currency,
-                'total_amount': exchange_rate * amount
-            }
-
-        current_ui_blocks = slack_payload['view']['blocks']
-
-        fields_render_property = {
-            'is_projects_available': False,
-            'is_cost_centers_available': False
-        }
-
-        project = None
-        if 'project_block' in form_current_state:
-
-            fields_render_property['is_projects_available'] = True
-
-            if form_current_state['project_block']['project_id']['selected_option'] is not None:
-
-                fyle_expense = FyleExpense(user)
-
-                project_id = int(form_current_state['project_block']['project_id']['selected_option']['value'])
-
-                project_query_params = {
-                    'offset': 0,
-                    'limit': '1',
-                    'order': 'created_at.desc',
-                    'id': 'eq.{}'.format(int(project_id)),
-                    'is_enabled': 'eq.{}'.format(True)
-                }
-
-                project = fyle_expense.get_projects(project_query_params)
-
-        if 'cost_center_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['cost_center_block']['cost_center_id']['selected_option'] is not None:
-            fields_render_property['is_cost_centers_available'] = True
-
-        expense_form = expense_messages.expense_dialog_form(current_ui_blocks=current_ui_blocks, selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details)
-
-        slack_client.views_update(view_id=view_id, view=expense_form)
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_currency_select',
+            user,
+            team_id,
+            slack_payload
+        )
 
         return JsonResponse({})
 
 
     def handle_amount_entered(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        amount_entered = slack_payload['actions'][0]['value']
-        form_current_state = slack_payload['view']['state']['values']
-
-        view_id = slack_payload['container']['view_id']
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        slack_client = get_slack_client(team_id)
-
-        fyle_profile = get_fyle_profile(user.fyle_refresh_token)
-
-        home_currency = fyle_profile['org']['currency']
-
-        selected_currency = form_current_state['SELECT_default_field_currency_block']['currency']['selected_option']['value']
-
-        if amount_entered is None or len(amount_entered) == 0:
-            amount = 0
-        else:
-            try:
-                amount = round(float(amount_entered), 2)
-            except ValueError:
-                amount = 0
-            exchange_rate = 70.12
-            additional_currency_details = {
-                'foreign_currency': selected_currency,
-                'home_currency': home_currency,
-                'total_amount': exchange_rate * amount
-            }
-
-        current_ui_blocks = slack_payload['view']['blocks']
-
-        fields_render_property = {
-            'is_projects_available': False,
-            'is_cost_centers_available': False
-        }
-
-        project = None
-        if 'project_block' in form_current_state:
-
-            fields_render_property['is_projects_available'] = True
-
-            if form_current_state['project_block']['project_id']['selected_option'] is not None:
-
-                fyle_expense = FyleExpense(user)
-
-                project_id = int(form_current_state['project_block']['project_id']['selected_option']['value'])
-
-                project_query_params = {
-                    'offset': 0,
-                    'limit': '1',
-                    'order': 'created_at.desc',
-                    'id': 'eq.{}'.format(int(project_id)),
-                    'is_enabled': 'eq.{}'.format(True)
-                }
-
-                project = fyle_expense.get_projects(project_query_params)
-
-        if 'cost_center_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['cost_center_block']['cost_center_id']['selected_option'] is not None:
-            fields_render_property['is_cost_centers_available'] = True
-
-        expense_form = expense_messages.expense_dialog_form(current_ui_blocks=current_ui_blocks, selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details)
-
-        slack_client.views_update(view_id=view_id, view=expense_form)
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_amount_entered',
+            user,
+            team_id,
+            slack_payload
+        )
 
         return JsonResponse({})
 
