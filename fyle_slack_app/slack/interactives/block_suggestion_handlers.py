@@ -140,7 +140,7 @@ class BlockSuggestionHandler:
         project_value_entered = slack_payload['value']
         query_params = {
             'offset': 0,
-            'limit': '30',
+            'limit': '10',
             'order': 'display_name.asc',
             'display_name': 'ilike.%{}%'.format(project_value_entered),
             'is_enabled': 'eq.{}'.format(True)
@@ -176,7 +176,7 @@ class BlockSuggestionHandler:
         cost_center_value_entered = slack_payload['value']
         query_params = {
             'offset': 0,
-            'limit': '30',
+            'limit': '10',
             'order': 'name.asc',
             'name': 'ilike.%{}%'.format(cost_center_value_entered),
             'is_enabled': 'eq.{}'.format(True)

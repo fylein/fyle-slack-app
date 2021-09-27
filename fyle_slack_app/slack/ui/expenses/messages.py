@@ -197,7 +197,7 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
     return currency_block, amount_block, currency_context_block, total_amount_block
 
 
-def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
+def get_default_fields_blocks(fields_render_property: Dict) -> List:
 
     default_fields_blocks = []
 
@@ -206,7 +206,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     default_fields_blocks.append(currency_block)
     default_fields_blocks.append(amount_block)
 
-    if field_type_mandatory_mapping['txn_dt'] is True:
+    if fields_render_property['transaction_date'] is True:
         date_of_spend_block = {
             'type': 'input',
             'block_id': 'DATE_default_field_date_of_spend_block',
@@ -224,7 +224,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
         }
         default_fields_blocks.append(date_of_spend_block)
 
-    if field_type_mandatory_mapping['purpose'] is True:
+    if fields_render_property['purpose'] is True:
         purpose_block = {
             'type': 'input',
             'block_id': 'TEXT_default_field_purpose_block',
@@ -283,7 +283,7 @@ def get_default_fields_blocks(field_type_mandatory_mapping: Dict) -> List:
     }
     default_fields_blocks.append(payment_mode_block)
 
-    if field_type_mandatory_mapping['vendor_id'] is True:
+    if fields_render_property['vendor'] is True:
         merchant_block = {
             'type': 'input',
             'block_id': 'TEXT_default_field_merchant_block',
@@ -399,7 +399,7 @@ def get_cost_centers_block() -> Dict:
     return cost_centers_block
 
 
-def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None, additional_currency_details: Dict = None) -> Dict:
+def expense_dialog_form(fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None, additional_currency_details: Dict = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -430,7 +430,7 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
             current_ui_blocks = current_ui_blocks[2:]
 
         # When additional currency details are present, render exchange rate context and total amount block
-        if additional_currency_details is not None:
+        if additional_currency_details is not None or is_additional_currency_amount_blocks_present is True:
 
             currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block(additional_currency_details)
             current_ui_blocks.insert(0, currency_block)
@@ -448,22 +448,21 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
 
         cost_center_block = None
         for block in current_ui_blocks:
-
             # Removing cost center if present to maintain order of cost center at end of form
-            if block['block_id'] == 'cost_center_block':
+            if block is not None and block['block_id'] == 'cost_center_block':
                 cost_center_block = block
 
             # Removing these block as these should not be rendered from current/cached UI block
-            if any(substring in block['block_id'] for substring in ignore_block_id_list) is False:
+            if block is not None and any(substring in block['block_id'] for substring in ignore_block_id_list) is False:
                 ui_blocks.append(block)
 
         view['blocks'] = ui_blocks
 
     else:
 
-        view['blocks'] = get_default_fields_blocks(field_type_mandatory_mapping)
+        view['blocks'] = get_default_fields_blocks(fields_render_property)
 
-    if fields_render_property['is_projects_available'] is True:
+    if fields_render_property['project'] is True:
 
         project_block, billable_block = get_projects_and_billable_block(selected_project)
 
@@ -494,7 +493,7 @@ def expense_dialog_form(field_type_mandatory_mapping: Dict = None, fields_render
     if current_ui_blocks is not None and cost_center_block is not None:
         view['blocks'].append(cost_center_block)
     else:
-        if fields_render_property['is_cost_centers_available'] is True:
+        if fields_render_property['cost_center'] is True:
 
             cost_center_block = get_cost_centers_block()
 

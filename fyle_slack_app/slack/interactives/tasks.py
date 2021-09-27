@@ -1,21 +1,20 @@
 from typing import Any, Dict, Union
 
-
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
-from fyle_slack_app.fyle.utils import get_fyle_profile
+from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 
 
 def check_project_in_form(form_current_state: Dict, fyle_expense: FyleExpense) -> Union[bool, Any]:
 
-    is_projects_available = False
+    is_project_available = False
     project = None
 
     if 'project_block' in form_current_state:
 
-        is_projects_available = True
+        is_project_available = True
 
         if form_current_state['project_block']['project_id']['selected_option'] is not None:
 
@@ -31,17 +30,17 @@ def check_project_in_form(form_current_state: Dict, fyle_expense: FyleExpense) -
 
             project = fyle_expense.get_projects(project_query_params)
 
-    return is_projects_available, project
+    return is_project_available, project
 
 
 def check_cost_centers_in_form(form_current_state) -> bool:
 
-    is_cost_centers_available = False
+    cost_centers = False
 
     if 'cost_center_block' in form_current_state and form_current_state['cost_center_block']['cost_center_id']['selected_option'] is not None:
-        is_cost_centers_available = True
+        cost_centers = True
 
-    return is_cost_centers_available
+    return cost_centers
 
 
 def get_additional_currency_details(amount: int, home_currency: str, selected_currency: str, exchange_rate: float) -> Dict:
@@ -88,12 +87,12 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
     form_current_state = slack_payload['view']['state']['values']
 
     fields_render_property = {
-        'is_projects_available': True
+        'project': True
     }
 
-    is_cost_centers_available = check_cost_centers_in_form(form_current_state)
+    is_cost_center_available = check_cost_centers_in_form(form_current_state)
 
-    fields_render_property['is_cost_centers_available'] = is_cost_centers_available
+    fields_render_property['cost_center'] = is_cost_center_available
 
     new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, fields_render_property=fields_render_property, selected_project=project)
 
@@ -126,13 +125,13 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
     form_current_state = slack_payload['view']['state']['values']
 
-    is_projects_available, project = check_project_in_form(form_current_state, fyle_expense)
+    is_project_available, project = check_project_in_form(form_current_state, fyle_expense)
 
-    is_cost_centers_available = check_cost_centers_in_form(form_current_state)
+    is_cost_center_available = check_cost_centers_in_form(form_current_state)
 
     fields_render_property = {
-        'is_projects_available': is_projects_available,
-        'is_cost_centers_available': is_cost_centers_available
+        'project': is_project_available,
+        'cost_center': is_cost_center_available
     }
 
     new_expense_dialog_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, custom_fields=custom_fields, selected_project=project, fields_render_property=fields_render_property)
@@ -148,9 +147,9 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
     slack_client = get_slack_client(team_id)
 
-    fyle_profile = get_fyle_profile(user.fyle_refresh_token)
+    private_metadata = decode_state(slack_payload['view']['private_metadata'])
 
-    home_currency = fyle_profile['org']['currency']
+    home_currency = private_metadata['home_currency']
 
     form_current_state = slack_payload['view']['state']['values']
 
@@ -162,20 +161,24 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
         additional_currency_details = get_additional_currency_details(amount, home_currency, selected_currency, exchange_rate)
 
+    private_metadata['additional_currency_details'] = additional_currency_details
+
     current_ui_blocks = slack_payload['view']['blocks']
 
     fyle_expense = FyleExpense(user)
 
-    is_projects_available, project = check_project_in_form(form_current_state, fyle_expense)
+    is_project_available, project = check_project_in_form(form_current_state, fyle_expense)
 
-    is_cost_centers_available = check_cost_centers_in_form(form_current_state)
+    is_cost_center_available = check_cost_centers_in_form(form_current_state)
 
     fields_render_property = {
-        'is_projects_available': is_projects_available,
-        'is_cost_centers_available': is_cost_centers_available
+        'project': is_project_available,
+        'cost_center': is_cost_center_available
     }
 
     expense_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details)
+
+    expense_form['private_metadata'] = encode_state(private_metadata)
 
     slack_client.views_update(view_id=view_id, view=expense_form)
 
@@ -190,9 +193,9 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     form_current_state = slack_payload['view']['state']['values']
 
-    fyle_profile = get_fyle_profile(user.fyle_refresh_token)
+    private_metadata = decode_state(slack_payload['view']['private_metadata'])
 
-    home_currency = fyle_profile['org']['currency']
+    home_currency = private_metadata['home_currency']
 
     selected_currency = form_current_state['SELECT_default_field_currency_block']['currency']['selected_option']['value']
 
@@ -204,13 +207,13 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     fyle_expense = FyleExpense(user)
 
-    is_projects_available, project = check_project_in_form(form_current_state, fyle_expense)
+    is_project_available, project = check_project_in_form(form_current_state, fyle_expense)
 
-    is_cost_centers_available = check_cost_centers_in_form(form_current_state)
+    is_cost_center_available = check_cost_centers_in_form(form_current_state)
 
     fields_render_property = {
-        'is_projects_available': is_projects_available,
-        'is_cost_centers_available': is_cost_centers_available
+        'project': is_project_available,
+        'cost_center': is_cost_center_available
     }
 
     expense_form = expense_dialog_form(current_ui_blocks=current_ui_blocks, selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details)
