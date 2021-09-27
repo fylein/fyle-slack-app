@@ -404,109 +404,6 @@ def get_cost_centers_block() -> Dict:
     return cost_centers_block
 
 
-def expense_dialog_form(fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, current_ui_blocks: List = None, additional_currency_details: Dict = None) -> Dict:
-    view = {
-        'type': 'modal',
-        'callback_id': 'create_expense',
-        'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
-        'submit': {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True},
-        'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True}
-    }
-
-    view['blocks'] = []
-
-    # If current UI blocks are passed use them as it is for faster processing of UI elements.
-    if current_ui_blocks is not None:
-        ui_blocks = []
-
-        ignore_block_id_list = ['custom_field', 'project_block', 'billable_block', 'category_block', 'cost_center_block', 'additional_field']
-        additional_currency_amount_blocks = ['NUMBER_default_field_total_amount_block', 'TEXT_default_field_currency_context_block']
-
-        is_additional_currency_amount_blocks_present = False
-        for block in current_ui_blocks:
-            if any(substring == block['block_id'] for substring in additional_currency_amount_blocks) is True:
-                is_additional_currency_amount_blocks_present = True
-
-        if is_additional_currency_amount_blocks_present is True:
-            # Removing all exchange rate context blocks
-            current_ui_blocks = current_ui_blocks[4:]
-        else:
-            # Removing currency and amount blocks only
-            current_ui_blocks = current_ui_blocks[2:]
-
-        # When additional currency details are present, render exchange rate context and total amount block
-        if additional_currency_details is not None or is_additional_currency_amount_blocks_present is True:
-
-            currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block(additional_currency_details)
-            current_ui_blocks.insert(0, currency_block)
-            current_ui_blocks.insert(1, currency_context_block)
-
-            current_ui_blocks.insert(2, amount_block)
-            current_ui_blocks.insert(3, total_amount_block)
-
-        # When additional currency details are not present, render amount and currency blocks only
-        else:
-
-            currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block()
-            current_ui_blocks.insert(0, currency_block)
-            current_ui_blocks.insert(1, amount_block)
-
-        cost_center_block = None
-        for block in current_ui_blocks:
-            # Removing cost center if present to maintain order of cost center at end of form
-            if block is not None and block['block_id'] == 'cost_center_block':
-                cost_center_block = block
-
-            # Removing these block as these should not be rendered from current/cached UI block
-            if block is not None and any(substring in block['block_id'] for substring in ignore_block_id_list) is False:
-                ui_blocks.append(block)
-
-        view['blocks'] = ui_blocks
-
-    else:
-
-        view['blocks'] = get_default_fields_blocks(fields_render_property)
-
-    if fields_render_property['project'] is True:
-
-        project_block, billable_block = get_projects_and_billable_block(selected_project)
-
-        view['blocks'].append(project_block)
-
-        view['blocks'].append(billable_block)
-
-    # Since category block is dependent of projects sometimes, render them everytime.
-    category_block = get_categories_block()
-
-    view['blocks'].append(category_block)
-
-
-    # If custom fields are present, render them in the form
-    if custom_fields is not None and custom_fields['count'] > 0:
-        for field in custom_fields['data']:
-
-            # Additional fields are field which are not custom fields but are dependent on categories
-            is_additional_field = False
-            if field['is_custom'] is False:
-                is_additional_field = True
-
-            custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
-            view['blocks'].append(custom_field)
-
-    # Render cost center from current ui blocks if present
-    # This check is needed again here to maintain order
-    if current_ui_blocks is not None and cost_center_block is not None:
-        view['blocks'].append(cost_center_block)
-    else:
-        if fields_render_property['cost_center'] is True:
-
-            cost_center_block = get_cost_centers_block()
-
-            view['blocks'].append(cost_center_block)
-
-    return view
-
-
 def expense_form_loading_modal() -> Dict:
     loading_modal = {
         'type': 'modal',
@@ -527,7 +424,7 @@ def expense_form_loading_modal() -> Dict:
     return loading_modal
 
 
-def expense_dialog_form_v2(fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None) -> Dict:
+def expense_dialog_form(fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -554,16 +451,19 @@ def expense_dialog_form_v2(fields_render_property: Dict = None, selected_project
 
 
     # If custom fields are present, render them in the form
-    if custom_fields is not None and custom_fields['count'] > 0:
-        for field in custom_fields['data']:
+    if custom_fields is not None:
+        if isinstance(custom_fields, list):
+            view['blocks'].extend(custom_fields)
+        elif custom_fields['count'] > 0:
+            for field in custom_fields['data']:
 
-            # Additional fields are field which are not custom fields but are dependent on categories
-            is_additional_field = False
-            if field['is_custom'] is False:
-                is_additional_field = True
+                # Additional fields are field which are not custom fields but are dependent on categories
+                is_additional_field = False
+                if field['is_custom'] is False:
+                    is_additional_field = True
 
-            custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
-            view['blocks'].append(custom_field)
+                custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
+                view['blocks'].append(custom_field)
 
     if fields_render_property['cost_center'] is True:
 
