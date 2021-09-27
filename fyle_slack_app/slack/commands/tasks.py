@@ -145,7 +145,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
         'home_currency': fyle_profile['org']['currency']
     }
 
-    expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property)
+    expense_form = expense_messages.expense_dialog_form_v2(fields_render_property=fields_render_property)
 
     expense_form['private_metadata'] = utils.encode_state(private_metadata)
 

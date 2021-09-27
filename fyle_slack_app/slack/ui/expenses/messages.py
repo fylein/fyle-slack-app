@@ -121,6 +121,8 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
 
 
 def get_amount_and_currency_block(additional_currency_details: Dict = None) -> List:
+    blocks = []
+
     currency_block = {
         'type': 'input',
         'block_id': 'SELECT_default_field_currency_block',
@@ -138,6 +140,8 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
         'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
     }
 
+    blocks.append(currency_block)
+
     currency_context_block = None
     total_amount_block = None
     amount_block = {
@@ -154,6 +158,8 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
         },
         'label': {'type': 'plain_text', 'text': 'Amount', 'emoji': True},
     }
+
+    blocks.append(amount_block)
 
     if additional_currency_details is not None:
         amount_block['dispatch_action'] = True
@@ -176,6 +182,8 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
 			]
 		}
 
+        blocks.insert(1, currency_context_block)
+
         total_amount_block = {
             'type': 'input',
             'block_id': 'NUMBER_default_field_total_amount_block',
@@ -194,17 +202,14 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
         if int(additional_currency_details['total_amount']) != 0:
             total_amount_block['element']['initial_value'] = str(additional_currency_details['total_amount'])
 
-    return currency_block, amount_block, currency_context_block, total_amount_block
+        blocks.insert(3, total_amount_block)
+
+    return blocks
 
 
-def get_default_fields_blocks(fields_render_property: Dict) -> List:
+def get_default_fields_blocks(fields_render_property: Dict, additional_currency_details: Dict = None) -> List:
 
-    default_fields_blocks = []
-
-    currency_block, amount_block, currency_context_block, total_amount_block = get_amount_and_currency_block()
-
-    default_fields_blocks.append(currency_block)
-    default_fields_blocks.append(amount_block)
+    default_fields_blocks = get_amount_and_currency_block(additional_currency_details)
 
     if fields_render_property['transaction_date'] is True:
         date_of_spend_block = {
@@ -520,3 +525,50 @@ def expense_form_loading_modal() -> Dict:
     }
 
     return loading_modal
+
+
+def expense_dialog_form_v2(fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None) -> Dict:
+    view = {
+        'type': 'modal',
+        'callback_id': 'create_expense',
+        'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
+        'submit': {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True},
+        'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True}
+    }
+
+    view['blocks'] = []
+
+    view['blocks'] = get_default_fields_blocks(fields_render_property, additional_currency_details)
+
+    if fields_render_property['project'] is True:
+
+        project_block, billable_block = get_projects_and_billable_block(selected_project)
+
+        view['blocks'].append(project_block)
+
+        view['blocks'].append(billable_block)
+
+    category_block = get_categories_block()
+
+    view['blocks'].append(category_block)
+
+
+    # If custom fields are present, render them in the form
+    if custom_fields is not None and custom_fields['count'] > 0:
+        for field in custom_fields['data']:
+
+            # Additional fields are field which are not custom fields but are dependent on categories
+            is_additional_field = False
+            if field['is_custom'] is False:
+                is_additional_field = True
+
+            custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
+            view['blocks'].append(custom_field)
+
+    if fields_render_property['cost_center'] is True:
+
+        cost_center_block = get_cost_centers_block()
+
+        view['blocks'].append(cost_center_block)
+
+    return view
