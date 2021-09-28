@@ -135,6 +135,14 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
                 'emoji': True,
             },
             'min_query_length': 1,
+            'initial_option': {
+                'text': {
+                    'type': 'plain_text',
+                    'text': additional_currency_details['home_currency'],
+                    'emoji': True,
+                },
+                'value': additional_currency_details['home_currency'],
+                },
             'action_id': 'currency',
         },
         'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
@@ -161,7 +169,7 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
 
     blocks.append(amount_block)
 
-    if additional_currency_details is not None:
+    if 'foreign_currency' in additional_currency_details:
         amount_block['dispatch_action'] = True
         amount_block['element']['dispatch_action_config'] = {
             'trigger_actions_on': [
@@ -424,10 +432,11 @@ def expense_form_loading_modal() -> Dict:
     return loading_modal
 
 
-def expense_dialog_form(fields_render_property: Dict = None, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None) -> Dict:
+def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None, private_metadata: str = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
+        'private_metadata': private_metadata,
         'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
         'submit': {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True},
         'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True}
@@ -452,9 +461,7 @@ def expense_dialog_form(fields_render_property: Dict = None, selected_project: D
 
     # If custom fields are present, render them in the form
     if custom_fields is not None:
-        if isinstance(custom_fields, list):
-            view['blocks'].extend(custom_fields)
-        elif custom_fields['count'] > 0:
+        if 'count' in custom_fields and custom_fields['count'] > 0:
             for field in custom_fields['data']:
 
                 # Additional fields are field which are not custom fields but are dependent on categories
@@ -464,6 +471,8 @@ def expense_dialog_form(fields_render_property: Dict = None, selected_project: D
 
                 custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
                 view['blocks'].append(custom_field)
+        else:
+            view['blocks'].extend(custom_fields)
 
     if fields_render_property['cost_center'] is True:
 

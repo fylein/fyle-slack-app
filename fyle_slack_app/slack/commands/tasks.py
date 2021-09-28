@@ -103,6 +103,8 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
 
+    home_currency = fyle_profile['org']['currency']
+
     field_type_mandatory_mapping = fyle_expense.get_expense_fields_type_mandatory_mapping(default_expense_fields)
 
     is_project_available = False
@@ -142,11 +144,15 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     private_metadata = {
         'fields_render_property': fields_render_property,
-        'home_currency': fyle_profile['org']['currency']
+        'home_currency': home_currency
     }
 
-    expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property)
+    encoded_metadata = utils.encode_state(private_metadata)
 
-    expense_form['private_metadata'] = utils.encode_state(private_metadata)
+    additional_currency_details = {
+        'home_currency': home_currency
+    }
+
+    expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details)
 
     slack_client.views_update(view=expense_form, view_id=view_id)

@@ -6,6 +6,7 @@ from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.libs import logger, utils
 from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app.slack.interactives.tasks import check_project_in_form
 
 
 logger = logger.get_logger(__name__)
@@ -73,20 +74,15 @@ class BlockSuggestionHandler:
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        if 'project_block' in slack_payload['view']['state']['values'] and slack_payload['view']['state']['values']['project_block']['project_id']['selected_option'] is not None:
+        private_metadata = slack_payload['view']['private_metadata']
 
-            project_id = int(slack_payload['view']['state']['values']['project_block']['project_id']['selected_option']['value'])
+        decoded_private_metadata = utils.decode_state(private_metadata)
 
-            project_query_params = {
-                'offset': 0,
-                'limit': '1',
-                'order': 'created_at.desc',
-                'id': 'eq.{}'.format(int(project_id)),
-                'is_enabled': 'eq.{}'.format(True)
-            }
+        form_current_state = slack_payload['view']['state']['values']
 
-            project = fyle_expense.get_projects(project_query_params)
+        is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
 
+        if is_project_available is True:
             category_query_params['id'] = 'in.{}'.format(tuple(project['data'][0]['category_ids']))
 
         suggested_categories = fyle_expense.get_categories(category_query_params)
