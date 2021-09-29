@@ -7,6 +7,8 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
     block_id = '{}_block'.format(field_details['column_name'])
     action_id = field_details['column_name']
 
+    custom_field = None
+
     # We need to define addtional fields as custom fields so that we can clear them out in form when category is changed
     if field_details['is_custom'] is True or is_additional_field is True:
         block_id = '{}_additional_field_{}_block'.format(field_details['type'], field_details['column_name'])
@@ -215,44 +217,42 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
     return blocks
 
 
-def get_default_fields_blocks(fields_render_property: Dict, additional_currency_details: Dict = None) -> List:
+def get_default_fields_blocks(additional_currency_details: Dict = None) -> List:
 
     default_fields_blocks = get_amount_and_currency_block(additional_currency_details)
 
-    if fields_render_property['transaction_date'] is True:
-        date_of_spend_block = {
-            'type': 'input',
-            'block_id': 'DATE_default_field_date_of_spend_block',
-            'element': {
-                'type': 'datepicker',
-                'initial_date': datetime.datetime.today().strftime('%Y-%m-%d'),
-                'placeholder': {
-                    'type': 'plain_text',
-                    'text': 'Select a date',
-                    'emoji': True,
-                },
-                'action_id': 'spent_at',
+    date_of_spend_block = {
+        'type': 'input',
+        'block_id': 'DATE_default_field_date_of_spend_block',
+        'element': {
+            'type': 'datepicker',
+            'initial_date': datetime.datetime.today().strftime('%Y-%m-%d'),
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Select a date',
+                'emoji': True,
             },
-            'label': {'type': 'plain_text', 'text': 'Date of Spend', 'emoji': True},
-        }
-        default_fields_blocks.append(date_of_spend_block)
+            'action_id': 'spent_at',
+        },
+        'label': {'type': 'plain_text', 'text': 'Date of Spend', 'emoji': True},
+    }
+    default_fields_blocks.append(date_of_spend_block)
 
-    if fields_render_property['purpose'] is True:
-        purpose_block = {
-            'type': 'input',
-            'block_id': 'TEXT_default_field_purpose_block',
-            'element': {
-                'type': 'plain_text_input',
-                'placeholder': {
-                    'type': 'plain_text',
-                    'text': 'Eg. Client Meeting',
-                    'emoji': True,
-                },
-                'action_id': 'purpose',
+    purpose_block = {
+        'type': 'input',
+        'block_id': 'TEXT_default_field_purpose_block',
+        'element': {
+            'type': 'plain_text_input',
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Eg. Client Meeting',
+                'emoji': True,
             },
-            'label': {'type': 'plain_text', 'text': 'Purpose', 'emoji': True},
-        }
-        default_fields_blocks.append(purpose_block)
+            'action_id': 'purpose',
+        },
+        'label': {'type': 'plain_text', 'text': 'Purpose', 'emoji': True},
+    }
+    default_fields_blocks.append(purpose_block)
 
     payment_mode_block = {
         'type': 'input',
@@ -296,22 +296,21 @@ def get_default_fields_blocks(fields_render_property: Dict, additional_currency_
     }
     default_fields_blocks.append(payment_mode_block)
 
-    if fields_render_property['vendor'] is True:
-        merchant_block = {
-            'type': 'input',
-            'block_id': 'TEXT_default_field_merchant_block',
-            'element': {
-                'type': 'plain_text_input',
-                'placeholder': {
-                    'type': 'plain_text',
-                    'text': 'Eg. Uber',
-                    'emoji': True,
-                },
-                'action_id': 'merchant',
+    merchant_block = {
+        'type': 'input',
+        'block_id': 'TEXT_default_field_merchant_block',
+        'element': {
+            'type': 'plain_text_input',
+            'placeholder': {
+                'type': 'plain_text',
+                'text': 'Eg. Uber',
+                'emoji': True,
             },
-            'label': {'type': 'plain_text', 'text': 'Merchant', 'emoji': True},
-        }
-        default_fields_blocks.append(merchant_block)
+            'action_id': 'merchant',
+        },
+        'label': {'type': 'plain_text', 'text': 'Merchant', 'emoji': True},
+    }
+    default_fields_blocks.append(merchant_block)
 
     return default_fields_blocks
 
@@ -432,7 +431,98 @@ def expense_form_loading_modal() -> Dict:
     return loading_modal
 
 
-def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None, private_metadata: str = None) -> Dict:
+def get_add_to_report_blocks(add_to_report: str) -> Dict:
+    blocks = []
+    add_to_existing_report_option = {
+        'text': {
+            'type': 'plain_text',
+            'text': 'Add to Existing Report',
+            'emoji': True
+        },
+        'value': 'existing_report'
+    }
+
+    add_to_new_report_option = {
+        'text': {
+            'type': 'plain_text',
+            'text': 'Add to New Report',
+            'emoji': True
+        },
+        'value': 'new_report'
+    }
+    add_to_report_block = {
+        'type': 'input',
+        'block_id': 'add_to_report_block',
+        'dispatch_action': True,
+        'element': {
+            'type': 'radio_buttons',
+            'options': [add_to_existing_report_option, add_to_new_report_option],
+            'action_id': 'add_to_report'
+        },
+        'label': {
+            'type': 'plain_text',
+            'text': 'Add to Report',
+            'emoji': True
+        }
+    }
+    blocks.append(add_to_report_block)
+
+    add_to_report_mapping = {
+        'new_report': {
+            'ui': {
+                'type': 'input',
+                'block_id': 'add_to_new_report_block',
+                'element': {
+                    'type': 'plain_text_input',
+                    'placeholder': {
+                        'type': 'plain_text',
+                        'text': 'Enter Report Name',
+                        'emoji': True
+                    },
+                    'action_id': 'report_name'
+                },
+                'label': {
+                    'type': 'plain_text',
+                    'text': 'Report Name',
+                    'emoji': True
+                }
+            },
+            'option': add_to_new_report_option
+        },
+        'existing_report': {
+            'ui': {
+                'type': 'input',
+                'block_id': 'add_to_existing_report_block',
+                'element': {
+                    'type': 'external_select',
+                    'placeholder': {
+                        'type': 'plain_text',
+                        'text': 'Select a Report',
+                        'emoji': True
+                    },
+                    'action_id': 'existing_report'
+                },
+                'label': {
+                    'type': 'plain_text',
+                    'text': 'Select Report',
+                    'emoji': True
+                }
+            },
+            'option': add_to_existing_report_option
+        }
+    }
+
+    if add_to_report is not None:
+        add_to_report_details = add_to_report_mapping[add_to_report]
+        add_to_report_additional_block = add_to_report_details['ui']
+        selected_report_option = add_to_report_details['option']
+        add_to_report_block['element']['initial_option'] = selected_report_option
+        blocks.append(add_to_report_additional_block)
+
+    return blocks
+
+
+def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None, add_to_report: str = None, private_metadata: str = None) -> Dict:
     view = {
         'type': 'modal',
         'callback_id': 'create_expense',
@@ -444,7 +534,7 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
 
     view['blocks'] = []
 
-    view['blocks'] = get_default_fields_blocks(fields_render_property, additional_currency_details)
+    view['blocks'] = get_default_fields_blocks(additional_currency_details)
 
     if fields_render_property['project'] is True:
 
@@ -461,7 +551,9 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
 
     # If custom fields are present, render them in the form
     if custom_fields is not None:
-        if 'count' in custom_fields and custom_fields['count'] > 0:
+        if isinstance(custom_fields, list):
+            view['blocks'].extend(custom_fields)
+        elif 'count' in custom_fields and custom_fields['count'] > 0:
             for field in custom_fields['data']:
 
                 # Additional fields are field which are not custom fields but are dependent on categories
@@ -470,9 +562,8 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
                     is_additional_field = True
 
                 custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
-                view['blocks'].append(custom_field)
-        else:
-            view['blocks'].extend(custom_fields)
+                if custom_field is not None:
+                    view['blocks'].append(custom_field)
 
     if fields_render_property['cost_center'] is True:
 
@@ -480,4 +571,18 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
 
         view['blocks'].append(cost_center_block)
 
+
+    # Divider for add to report section
+    view['blocks'].append({
+        'type': 'divider'
+    })
+
+    add_to_report_blocks = get_add_to_report_blocks(add_to_report)
+
+    view['blocks'].extend(add_to_report_blocks)
+
     return view
+
+
+def view_expense_message(expense: Dict) -> Dict:
+    pass

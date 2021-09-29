@@ -78,11 +78,11 @@ class BlockSuggestionHandler:
 
         decoded_private_metadata = utils.decode_state(private_metadata)
 
-        form_current_state = slack_payload['view']['state']['values']
+        fields_render_property = decoded_private_metadata['fields_render_property']
 
-        is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
+        is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
 
-        if is_project_available is True:
+        if is_project_available is True and project is not None:
             category_query_params['id'] = 'in.{}'.format(tuple(project['data'][0]['category_ids']))
 
         suggested_categories = fyle_expense.get_categories(category_query_params)

@@ -97,61 +97,52 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     fyle_expense = FyleExpense(user)
 
-    default_expense_fields = fyle_expense.get_default_expense_fields()
-
     slack_client = slack_utils.get_slack_client(team_id)
 
     fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
 
     home_currency = fyle_profile['org']['currency']
 
-    field_type_mandatory_mapping = fyle_expense.get_expense_fields_type_mandatory_mapping(default_expense_fields)
-
     is_project_available = False
     is_cost_centers_available = False
 
-    if field_type_mandatory_mapping['project_id'] is True:
-        projects_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
+    projects_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'is_enabled': 'eq.{}'.format(True)
+    }
 
-        projects = fyle_expense.get_projects(projects_query_params)
+    projects = fyle_expense.get_projects(projects_query_params)
 
-        is_project_available = True if projects['count'] > 0 else False
+    is_project_available = True if projects['count'] > 0 else False
 
-    if field_type_mandatory_mapping['cost_center_id'] is True:
-        cost_centers_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
+    cost_centers_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'is_enabled': 'eq.{}'.format(True)
+    }
 
-        cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
+    cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
 
-        is_cost_centers_available = True if cost_centers['count'] > 0 else False
+    is_cost_centers_available = True if cost_centers['count'] > 0 else False
 
     fields_render_property = {
         'project': is_project_available,
-        'cost_center': is_cost_centers_available,
-        'purpose': field_type_mandatory_mapping['purpose'],
-        'transaction_date': field_type_mandatory_mapping['txn_dt'],
-        'vendor': field_type_mandatory_mapping['vendor_id']
+        'cost_center': is_cost_centers_available
     }
-
-    private_metadata = {
-        'fields_render_property': fields_render_property,
-        'home_currency': home_currency
-    }
-
-    encoded_metadata = utils.encode_state(private_metadata)
 
     additional_currency_details = {
         'home_currency': home_currency
     }
+
+    private_metadata = {
+        'fields_render_property': fields_render_property,
+        'additional_currency_details': additional_currency_details
+    }
+
+    encoded_metadata = utils.encode_state(private_metadata)
 
     expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details)
 

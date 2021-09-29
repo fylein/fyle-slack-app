@@ -7,12 +7,12 @@ from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 
 
-def check_project_in_form(form_current_state: Dict, private_metadata: Dict) -> Union[bool, Any]:
+def check_project_in_form(fields_render_property: Dict, private_metadata: Dict) -> Union[bool, Any]:
 
     is_project_available = False
     project = None
 
-    if 'project_block' in form_current_state:
+    if fields_render_property['project'] is True:
 
         is_project_available = True
 
@@ -32,16 +32,6 @@ def get_custom_field_blocks(current_blocks: List[Dict]) -> List[Dict]:
         custom_field_blocks = None
 
     return custom_field_blocks
-
-
-def check_cost_centers_in_form(form_current_state) -> bool:
-
-    cost_centers = False
-
-    if 'cost_center_block' in form_current_state and form_current_state['cost_center_block']['cost_center_id']['selected_option'] is not None:
-        cost_centers = True
-
-    return cost_centers
 
 
 def get_additional_currency_details(amount: int, home_currency: str, selected_currency: str, exchange_rate: float) -> Dict:
@@ -89,22 +79,19 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     additional_currency_details = decoded_private_metadata.get('additional_currency_details')
 
+    add_to_report = decoded_private_metadata.get('add_to_report')
+
     current_ui_blocks = slack_payload['view']['blocks']
 
     # Removing loading info from below project input element
     project_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'project_loading_block'), None)
     current_ui_blocks.pop(project_loading_block_index)
 
-    form_current_state = slack_payload['view']['state']['values']
-
-    is_cost_center_available = check_cost_centers_in_form(form_current_state)
-
     fields_render_property['project'] = True
-    fields_render_property['cost_center'] = is_cost_center_available
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
-    new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, selected_project=project, additional_currency_details=additional_currency_details, private_metadata=encoded_private_metadata)
+    new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, selected_project=project, additional_currency_details=additional_currency_details, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
@@ -117,7 +104,6 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
         'offset': 0,
         'limit': '20',
         'order': 'created_at.desc',
-        'or': '(is_mandatory.eq.{}, and(is_custom.eq.{}, is_mandatory.eq.{}))'.format(True, True, True),
         'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
         'is_enabled': 'eq.{}'.format(True),
         'category_ids': 'cs.[{}]'.format(int(category_id))
@@ -135,22 +121,19 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
     additional_currency_details = decoded_private_metadata.get('additional_currency_details')
 
+    add_to_report = decoded_private_metadata.get('add_to_report')
+
     current_ui_blocks = slack_payload['view']['blocks']
 
     # Removing loading info from below category input element
     category_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'category_loading_block'), None)
     current_ui_blocks.pop(category_loading_block_index)
 
-    form_current_state = slack_payload['view']['state']['values']
-
-    is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
-
-    is_cost_center_available = check_cost_centers_in_form(form_current_state)
+    is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
 
     fields_render_property['project'] = is_project_available
-    fields_render_property['cost_center'] = is_cost_center_available
 
-    new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, custom_fields=custom_fields, selected_project=project, additional_currency_details=additional_currency_details, private_metadata=private_metadata)
+    new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, custom_fields=custom_fields, selected_project=project, additional_currency_details=additional_currency_details, add_to_report=add_to_report, private_metadata=private_metadata)
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
@@ -169,7 +152,9 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
     fields_render_property = decoded_private_metadata['fields_render_property']
 
-    home_currency = decoded_private_metadata['home_currency']
+    add_to_report = decoded_private_metadata.get('add_to_report')
+
+    home_currency = decoded_private_metadata['additional_currency_details']['home_currency']
 
     form_current_state = slack_payload['view']['state']['values']
 
@@ -189,16 +174,13 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
     is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
 
-    is_cost_center_available = check_cost_centers_in_form(form_current_state)
-
     custom_fields = get_custom_field_blocks(current_ui_blocks)
 
     fields_render_property['project'] = is_project_available
-    fields_render_property['cost_center'] = is_cost_center_available
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
-    expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, private_metadata=encoded_private_metadata)
+    expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
 
     slack_client.views_update(view_id=view_id, view=expense_form)
 
@@ -221,7 +203,9 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     fields_render_property = decoded_private_metadata['fields_render_property']
 
-    home_currency = decoded_private_metadata['home_currency']
+    add_to_report = decoded_private_metadata.get('add_to_report')
+
+    home_currency = decoded_private_metadata['additional_currency_details']['home_currency']
 
     selected_currency = form_current_state['SELECT_default_field_currency_block']['currency']['selected_option']['value']
 
@@ -235,13 +219,10 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
 
-    is_cost_center_available = check_cost_centers_in_form(form_current_state)
-
     fields_render_property['project'] = is_project_available
-    fields_render_property['cost_center'] = is_cost_center_available
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
-    expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, private_metadata=encoded_private_metadata)
+    expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, add_to_report=add_to_report, custom_fields=custom_fields, private_metadata=encoded_private_metadata)
 
     slack_client.views_update(view_id=view_id, view=expense_form)

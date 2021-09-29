@@ -9,6 +9,7 @@ from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
+from fyle_slack_app.slack.interactives import tasks
 from fyle_slack_app import tracking
 
 
@@ -41,7 +42,8 @@ class BlockActionHandler:
             'project_id': self.handle_project_select,
             'is_billable': self.handle_billable,
             'currency': self.handle_currency_select,
-            'amount': self.handle_amount_entered
+            'amount': self.handle_amount_entered,
+            'add_to_report': self.handle_add_to_report
         }
 
 
@@ -270,6 +272,40 @@ class BlockActionHandler:
             team_id,
             slack_payload
         )
+
+        return JsonResponse({})
+
+
+    def handle_add_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        add_to_report = slack_payload['actions'][0]['selected_option']['value']
+
+        view_id = slack_payload['container']['view_id']
+
+        slack_client = get_slack_client(team_id)
+
+        private_metadata = slack_payload['view']['private_metadata']
+
+        decoded_private_metadata = utils.decode_state(private_metadata)
+
+        fields_render_property = decoded_private_metadata['fields_render_property']
+
+        current_ui_blocks = slack_payload['view']['blocks']
+
+        additional_currency_details = decoded_private_metadata.get('additional_currency_details')
+
+        is_project_available, project = tasks.check_project_in_form(fields_render_property, decoded_private_metadata)
+
+        custom_fields = tasks.get_custom_field_blocks(current_ui_blocks)
+
+        fields_render_property['project'] = is_project_available
+
+        decoded_private_metadata['add_to_report'] = add_to_report
+
+        encoded_private_metadata = utils.encode_state(decoded_private_metadata)
+
+        expense_form = expense_messages.expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
+
+        slack_client.views_update(view_id=view_id, view=expense_form)
 
         return JsonResponse({})
 
