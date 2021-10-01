@@ -105,7 +105,7 @@ class SlackCommandHandler:
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        loading_modal = expense_messages.expense_form_loading_modal()
+        loading_modal = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
 
         response = slack_client.views_open(user=user_id, view=loading_modal, trigger_id=trigger_id)
 

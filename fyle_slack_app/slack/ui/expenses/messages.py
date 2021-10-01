@@ -1,5 +1,12 @@
+from typing import Any, Dict, List
+
 import datetime
-from typing import Dict, List
+
+from fyle_slack_app.libs import utils
+
+
+def get_custom_field_value(custom_fields: List, action_id) -> Any:
+    pass
 
 
 # is_additional_field is for fields which are not custom fields but are part of a specific categories
@@ -122,7 +129,7 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
     return custom_field
 
 
-def get_amount_and_currency_block(additional_currency_details: Dict = None) -> List:
+def get_amount_and_currency_block(additional_currency_details: Dict = None, expense: Dict = None) -> List:
     blocks = []
 
     currency_block = {
@@ -144,11 +151,15 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
                     'emoji': True,
                 },
                 'value': additional_currency_details['home_currency'],
-                },
+            },
             'action_id': 'currency',
         },
         'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
     }
+
+    if expense is not None:
+        currency_block['element']['initial_option']['text']['text'] = expense['currency']
+        currency_block['element']['initial_option']['value'] = expense['currency']
 
     blocks.append(currency_block)
 
@@ -169,7 +180,17 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
         'label': {'type': 'plain_text', 'text': 'Amount', 'emoji': True},
     }
 
+    if expense is not None:
+        amount_block['element']['initial_value'] = str(expense['amount'])
+
     blocks.append(amount_block)
+
+    if expense is not None and expense['foreign_currency'] is not None:
+        additional_currency_details = {
+            'home_currency': expense['currency'],
+            'foreign_currency': expense['foreign_currency'],
+            'total_amount': str(expense['foreign_amount'])
+        }
 
     if 'foreign_currency' in additional_currency_details:
         amount_block['dispatch_action'] = True
@@ -217,9 +238,9 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None) -> L
     return blocks
 
 
-def get_default_fields_blocks(additional_currency_details: Dict = None) -> List:
+def get_default_fields_blocks(additional_currency_details: Dict = None, expense: Dict = None) -> List:
 
-    default_fields_blocks = get_amount_and_currency_block(additional_currency_details)
+    default_fields_blocks = get_amount_and_currency_block(additional_currency_details, expense)
 
     date_of_spend_block = {
         'type': 'input',
@@ -236,6 +257,10 @@ def get_default_fields_blocks(additional_currency_details: Dict = None) -> List:
         },
         'label': {'type': 'plain_text', 'text': 'Date of Spend', 'emoji': True},
     }
+
+    if expense is not None:
+        date_of_spend_block['element']['initial_date'] = utils.get_formatted_datetime(expense['spent_at'], '%Y-%m-%d')
+
     default_fields_blocks.append(date_of_spend_block)
 
     purpose_block = {
@@ -252,7 +277,29 @@ def get_default_fields_blocks(additional_currency_details: Dict = None) -> List:
         },
         'label': {'type': 'plain_text', 'text': 'Purpose', 'emoji': True},
     }
+
+    if expense is not None:
+        purpose_block['element']['initial_value'] = expense['purpose']
+
     default_fields_blocks.append(purpose_block)
+
+    paid_by_me_option = {
+        'text': {
+            'type': 'plain_text',
+            'text': 'Paid by me',
+            'emoji': True,
+        },
+        'value': 'true',
+    }
+
+    paid_by_company_option = {
+        'text': {
+            'type': 'plain_text',
+            'text': 'Paid by company',
+            'emoji': True,
+        },
+        'value': 'false',
+    }
 
     payment_mode_block = {
         'type': 'input',
@@ -264,36 +311,17 @@ def get_default_fields_blocks(additional_currency_details: Dict = None) -> List:
                 'text': 'Select Payment Mode',
                 'emoji': True,
             },
-            'initial_option': {
-                'text': {
-                    'type': 'plain_text',
-                    'text': 'Paid by me',
-                    'emoji': True,
-                },
-                'value': 'true',
-            },
-            'options': [
-                {
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Paid by me',
-                        'emoji': True,
-                    },
-                    'value': 'true',
-                },
-                {
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Paid by company',
-                        'emoji': True,
-                    },
-                    'value': 'false',
-                },
-            ],
+            'initial_option': paid_by_me_option,
+            'options': [paid_by_me_option, paid_by_company_option],
             'action_id': 'is_reimbursable',
         },
         'label': {'type': 'plain_text', 'text': 'Payment Mode', 'emoji': True},
     }
+
+    if expense is not None:
+        if expense['is_reimbursable'] is False:
+            payment_mode_block['element']['initial_option'] = paid_by_company_option
+
     default_fields_blocks.append(payment_mode_block)
 
     merchant_block = {
@@ -310,12 +338,16 @@ def get_default_fields_blocks(additional_currency_details: Dict = None) -> List:
         },
         'label': {'type': 'plain_text', 'text': 'Merchant', 'emoji': True},
     }
+
+    if expense is not None:
+        merchant_block['element']['initial_value'] = expense['merchant']
+
     default_fields_blocks.append(merchant_block)
 
     return default_fields_blocks
 
 
-def get_projects_and_billable_block(selected_project: Dict = None) -> Dict:
+def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict = None) -> Dict:
     project_block = {
         'type': 'input',
         'block_id': 'project_block',
@@ -333,7 +365,17 @@ def get_projects_and_billable_block(selected_project: Dict = None) -> Dict:
         },
         'label': {'type': 'plain_text', 'text': 'Project', 'emoji': True},
     }
-    if selected_project is not None:
+
+    if expense is not None:
+        project_block['element']['initial_option'] = {
+            'text': {
+                'type': 'plain_text',
+                'text': expense['project']['name'],
+                'emoji': True,
+            },
+            'value': str(expense['project']['id']),
+        }
+    elif selected_project is not None:
         selected_project = selected_project['data'][0]
 
         project_display_name = selected_project['display_name']
@@ -349,29 +391,28 @@ def get_projects_and_billable_block(selected_project: Dict = None) -> Dict:
         }
 
     billable_block = {
-        'type': 'actions',
+        'type': 'input',
         'block_id': 'billable_block',
-        'elements': [
-            {
-                'type': 'checkboxes',
-                'options': [
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': 'Billable',
-                            'emoji': True
-                        }
+        'element': {
+            'type': 'checkboxes',
+            'options': [
+                {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Billable',
+                        'emoji': True
                     }
-                ],
-                'action_id': 'is_billable'
-            }
-        ]
+                }
+            ],
+            'action_id': 'is_billable'
+        },
+        'label': {'type': 'plain_text', 'text': 'Billable', 'emoji': True},
     }
 
     return project_block, billable_block
 
 
-def get_categories_block() -> Dict:
+def get_categories_block(expense: Dict = None) -> Dict:
     category_block = {
         'type': 'input',
         'block_id': 'category_block',
@@ -389,10 +430,20 @@ def get_categories_block() -> Dict:
         'label': {'type': 'plain_text', 'text': 'Category', 'emoji': True},
     }
 
+    if expense is not None:
+        category_block['element']['initial_option'] = {
+            'text': {
+                'type': 'plain_text',
+                'text': expense['category']['name'],
+                'emoji': True,
+            },
+            'value': str(expense['category']['id']),
+        }
+
     return category_block
 
 
-def get_cost_centers_block() -> Dict:
+def get_cost_centers_block(expense: Dict = None) -> Dict:
     cost_centers_block = {
         'type': 'input',
         'block_id': 'cost_center_block',
@@ -408,21 +459,31 @@ def get_cost_centers_block() -> Dict:
         },
         'label': {'type': 'plain_text', 'text': 'Cost Center', 'emoji': True},
     }
+
+    if expense is not None:
+        cost_centers_block['element']['initial_option'] = {
+            'text': {
+                'type': 'plain_text',
+                'text': expense['cost_center']['name'],
+                'emoji': True,
+            },
+            'value': str(expense['cost_center']['id']),
+        }
     return cost_centers_block
 
 
-def expense_form_loading_modal() -> Dict:
+def expense_form_loading_modal(title: str, loading_message: str) -> Dict:
     loading_modal = {
         'type': 'modal',
-        'callback_id': 'create_expense',
-        'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
+        'callback_id': 'upsert_expense',
+        'title': {'type': 'plain_text', 'text': '{}'.format(title), 'emoji': True},
         'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True},
         'blocks': [
             {
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': 'Loading the best expense form :zap:'
+                    'text': '{}'.format(loading_message)
                 }
             }
         ]
@@ -522,10 +583,19 @@ def get_add_to_report_blocks(add_to_report: str) -> Dict:
     return blocks
 
 
-def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = None, custom_fields: Dict = None, additional_currency_details: Dict = None, add_to_report: str = None, private_metadata: str = None) -> Dict:
+def expense_dialog_form(
+        fields_render_property: Dict,
+        selected_project: Dict = None,
+        custom_fields: Dict = None,
+        additional_currency_details: Dict = None,
+        add_to_report: str = None,
+        private_metadata: str = None,
+        expense : Dict = None
+    ) -> Dict:
+
     view = {
         'type': 'modal',
-        'callback_id': 'create_expense',
+        'callback_id': 'upsert_expense',
         'private_metadata': private_metadata,
         'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
         'submit': {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True},
@@ -534,17 +604,17 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
 
     view['blocks'] = []
 
-    view['blocks'] = get_default_fields_blocks(additional_currency_details)
+    view['blocks'] = get_default_fields_blocks(additional_currency_details, expense)
 
     if fields_render_property['project'] is True:
 
-        project_block, billable_block = get_projects_and_billable_block(selected_project)
+        project_block, billable_block = get_projects_and_billable_block(selected_project, expense)
 
         view['blocks'].append(project_block)
 
         view['blocks'].append(billable_block)
 
-    category_block = get_categories_block()
+    category_block = get_categories_block(expense)
 
     view['blocks'].append(category_block)
 
@@ -567,7 +637,7 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
 
     if fields_render_property['cost_center'] is True:
 
-        cost_center_block = get_cost_centers_block()
+        cost_center_block = get_cost_centers_block(expense)
 
         view['blocks'].append(cost_center_block)
 
@@ -577,12 +647,88 @@ def expense_dialog_form(fields_render_property: Dict, selected_project: Dict = N
         'type': 'divider'
     })
 
-    add_to_report_blocks = get_add_to_report_blocks(add_to_report)
+    if add_to_report is not None:
+        add_to_report_blocks = get_add_to_report_blocks(add_to_report)
 
-    view['blocks'].extend(add_to_report_blocks)
+        view['blocks'].extend(add_to_report_blocks)
 
     return view
 
 
 def view_expense_message(expense: Dict) -> Dict:
-    pass
+    from fyle_slack_app.slack.interactives import expense
+    expense = expense['data']
+
+    spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
+
+    receipt_message = ':x: Not Attached'
+    if len(expense['file_ids']) > 0:
+        receipt_message = ':white_check_mark: Attached'
+
+    report_message = ':x: Not Added'
+    if expense['report_id'] is not None:
+        report_message = ':white_check_mark: Added'
+
+    view_expense_blocks =  [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Date of spend: * \n {}'.format(spent_at)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Receipt: * \n {}'.format(receipt_message)
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Report: * \n {}'.format(report_message)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Expense Details: * \n Travel to Office (Uber)'
+                }
+            ]
+        },
+        {
+        'type': 'actions',
+            'elements': [
+                {
+                    'type': 'button',
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'Edit Expense',
+                        'emoji': True,
+                    },
+                    'value': expense['id'],
+                    'action_id': 'edit_expense',
+                }
+            ],
+        },
+        {
+            'type': 'context',
+            'block_id': expense['id'],
+            'elements': [
+                {
+                    'type': 'plain_text',
+                    'text': 'Powered by Fyle',
+                    'emoji': True,
+                }
+            ],
+        }
+    ]
+
+    return view_expense_blocks

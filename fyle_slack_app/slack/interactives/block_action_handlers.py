@@ -36,6 +36,7 @@ class BlockActionHandler:
             'report_paid_notification_preference': self.handle_notification_preference_selection,
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
+            'edit_expense': self.handle_edit_expense,
 
             # Dynamic options
             'category_id': self.handle_category_select,
@@ -163,7 +164,7 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        current_view = expense_messages.expense_form_loading_modal()
+        current_view = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
         current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
 
         blocks = slack_payload['view']['blocks']
@@ -210,7 +211,7 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        current_view = expense_messages.expense_form_loading_modal()
+        current_view = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
         current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
 
         blocks = slack_payload['view']['blocks']
@@ -306,6 +307,27 @@ class BlockActionHandler:
         expense_form = expense_messages.expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
 
         slack_client.views_update(view_id=view_id, view=expense_form)
+
+        return JsonResponse({})
+
+
+    def handle_edit_expense(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        loading_modal = expense_messages.expense_form_loading_modal(title='Edit Expense', loading_message='Loading expense details :receipt: ')
+
+        slack_client = get_slack_client(team_id)
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_edit_expense',
+            user,
+            team_id,
+            response['view']['id'],
+            slack_payload
+        )
 
         return JsonResponse({})
 

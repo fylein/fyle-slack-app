@@ -5,6 +5,8 @@ from typing import Callable, Dict, Union
 from django.http.response import JsonResponse
 
 from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app.libs import utils
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 
 
 class ViewSubmissionHandler:
@@ -14,7 +16,7 @@ class ViewSubmissionHandler:
     # Maps action_id with it's respective function
     def _initialize_view_submission_handlers(self):
         self._view_submission_handlers = {
-            'create_expense': self.handle_create_expense
+            'upsert_expense': self.handle_upsert_expense
         }
 
 
@@ -48,12 +50,21 @@ class ViewSubmissionHandler:
         return handler(slack_payload, user_id, team_id)
 
 
-    def handle_create_expense(self, slack_payload: Dict, user_id: str, team_id: str):
+    def handle_upsert_expense(self, slack_payload: Dict, user_id: str, team_id: str):
+
+        print('SLACK PAYLOAD -> ', slack_payload)
 
         form_values = slack_payload['view']['state']['values']
         print('REACHED CREATE EXPENSE -> ', form_values)
 
+        private_metadata = utils.decode_state(slack_payload['view']['private_metadata'])
+
         expense_details, validation_errors = self.extract_form_values_and_validate(form_values)
+
+        expense_id = private_metadata.get('expense_id')
+
+        if expense_id is not None:
+            expense_details['id'] = expense_id
 
         print('VALIDATION ERRORS -> ', validation_errors)
 
@@ -68,81 +79,9 @@ class ViewSubmissionHandler:
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        blocks = [
-            {
-                'type': 'section',
-                'text': {
-                    'type': 'plain_text',
-                    'text': 'Expense created successfully :clipboard:',
-                    'emoji': True,
-                },
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {'type': 'mrkdwn', 'text': '*Amount*: \n {} {}'.format(expense_details['currency'], expense_details['amount'])},
-                    {'type': 'mrkdwn', 'text': '*Merchant*: \n {}'.format(expense_details['merchant'])},
-                ],
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {'type': 'mrkdwn', 'text': '*Date of Spend*: \n {}'.format(expense_details['spent_at'])},
-                    {'type': 'mrkdwn', 'text': '*Purpose*: \n {}'.format(expense_details['purpose'])},
-                ],
-            }
-        ]
+        view_expense_message = expense_messages.view_expense_message(expense_details)
 
-        cf_section = {
-            'type': 'section',
-            'fields': []
-        }
-
-        if len(expense_details['custom_fields']) > 0:
-            for custom_field in expense_details['custom_fields']:
-                for cf in custom_field.keys():
-                    if isinstance(custom_field[cf], list):
-                        value = ', '.join(custom_field[cf])
-                    elif isinstance(custom_field[cf], bool):
-                        value = 'Yes' if custom_field[cf] is True else 'No'
-                    else:
-                        value = custom_field[cf]
-                    cf_section['fields'].append(
-                        {'type': 'mrkdwn', 'text': '*{}*: \n {}'.format(cf.title(), value)}
-                    )
-
-            blocks.append(cf_section)
-        blocks.append(
-            {
-                'type': 'actions',
-                'elements': [
-                    {
-                        'type': 'button',
-                        'text': {
-                            'type': 'plain_text',
-                            'text': 'Edit Expense',
-                            'emoji': True,
-                        },
-                        'value': 'tx123456',
-                        'action_id': 'edit_expense',
-                    }
-                ],
-            }
-        )
-        blocks.append(
-            {
-                'type': 'context',
-                'block_id': 'tx123456',
-                'elements': [
-                    {
-                        'type': 'plain_text',
-                        'text': 'Powered by Fyle',
-                        'emoji': True,
-                    }
-                ],
-            }
-        )
-        slack_client.chat_postMessage(channel='D01K1L9UHBP', blocks=blocks)
+        slack_client.chat_postMessage(channel='D01K1L9UHBP', blocks=view_expense_message)
         return JsonResponse({})
 
 

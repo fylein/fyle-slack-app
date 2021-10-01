@@ -2,9 +2,12 @@ from typing import Any, Dict, List, Union
 
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
+from fyle_slack_app.fyle.utils import get_fyle_profile
 from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
+
+from . import expense
 
 
 def check_project_in_form(fields_render_property: Dict, private_metadata: Dict) -> Union[bool, Any]:
@@ -226,3 +229,62 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
     expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, add_to_report=add_to_report, custom_fields=custom_fields, private_metadata=encoded_private_metadata)
 
     slack_client.views_update(view_id=view_id, view=expense_form)
+
+
+def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: List[Dict]) -> None:
+
+    fyle_expense = FyleExpense(user)
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_profile = get_fyle_profile(user.fyle_refresh_token)
+
+    expense_id = slack_payload['actions'][0]['value']
+
+    home_currency = fyle_profile['org']['currency']
+
+    is_project_available = False
+    is_cost_centers_available = False
+
+    projects_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'is_enabled': 'eq.{}'.format(True)
+    }
+
+    projects = fyle_expense.get_projects(projects_query_params)
+
+    is_project_available = True if projects['count'] > 0 else False
+
+    cost_centers_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'is_enabled': 'eq.{}'.format(True)
+    }
+
+    cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
+
+    is_cost_centers_available = True if cost_centers['count'] > 0 else False
+
+    fields_render_property = {
+        'project': is_project_available,
+        'cost_center': is_cost_centers_available
+    }
+
+    additional_currency_details = {
+        'home_currency': home_currency
+    }
+
+    private_metadata = {
+        'fields_render_property': fields_render_property,
+        'additional_currency_details': additional_currency_details,
+        'expense_id': expense_id
+    }
+
+    encoded_metadata = encode_state(private_metadata)
+
+    expense_form = expense_dialog_form(expense=expense['data'], fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details)
+
+    slack_client.views_update(view=expense_form, view_id=view_id)
