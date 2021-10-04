@@ -144,14 +144,17 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
         'home_currency': home_currency
     }
 
+    add_to_report = 'existing_report'
+
     private_metadata = {
         'fields_render_property': fields_render_property,
         'home_currency': home_currency,
-        'additional_currency_details': additional_currency_details
+        'additional_currency_details': additional_currency_details,
+        'add_to_report': add_to_report
     }
 
     encoded_metadata = utils.encode_state(private_metadata)
 
-    expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details)
+    expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details, add_to_report=add_to_report)
 
     slack_client.views_update(view=expense_form, view_id=view_id)

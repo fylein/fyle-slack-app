@@ -327,6 +327,7 @@ class BlockActionHandler:
         add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'], add_to_report=add_to_report)
 
         slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
+
         return JsonResponse({})
 
 
@@ -335,7 +336,7 @@ class BlockActionHandler:
 
         expense_id = slack_payload['actions'][0]['value']
 
-        view_id = slack_payload['container']['view_id']
+        trigger_id = slack_payload['trigger_id']
 
         slack_client = get_slack_client(team_id)
 
@@ -343,7 +344,7 @@ class BlockActionHandler:
 
         add_expense_to_report_dialog['private_metadata'] = expense_id
 
-        slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
+        slack_client.views_open(trigger_id=trigger_id, user=user_id, view=add_expense_to_report_dialog,)
 
         return JsonResponse({})
 

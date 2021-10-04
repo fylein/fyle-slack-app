@@ -710,45 +710,40 @@ def view_expense_message(expense: Dict) -> Dict:
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
 
+    primary_cta_value = None
+
     report_message = ':x: Not Added'
     if expense['report_id'] is not None:
         report_message = ':white_check_mark: Added'
-        primary_cta = {
-            'type': 'button',
-            'text': {
-                'type': 'plain_text',
-                'text': 'Submit Report',
-                'emoji': True,
-            },
-            'value': expense['report_id'],
-            'action_id': 'submit_report',
-        }
+
+        primary_cta_text = 'Submit Report'
+        primary_cta_action_id = 'submit_report'
+
     else:
-        primary_cta = {
-            'type': 'button',
-            'text': {
-                'type': 'plain_text',
-                'text': 'Add to Report',
-                'emoji': True,
-            },
-            'action_id': 'add_expense_to_report',
-            'value': expense['id']
-        }
+        primary_cta_text = 'Add to Report'
+        primary_cta_action_id = 'add_expense_to_report'
+        primary_cta_value = expense['id']
+
 
     receipt_message = ':x: Not Attached'
     if len(expense['file_ids']) > 0:
         receipt_message = ':white_check_mark: Attached'
     else:
-        primary_cta = {
-            'type': 'button',
-            'text': {
-                'type': 'plain_text',
-                'text': 'Attach Receipt',
-                'emoji': True,
-            },
-            'value': expense['id'],
-            'action_id': 'attach_receipt',
-        }
+        primary_cta_text = 'Attach Receipt'
+        primary_cta_action_id = 'attach_receipt'
+        primary_cta_value = expense['id']
+
+    primary_cta = {
+        'type': 'button',
+        'style': 'primary',
+        'text': {
+            'type': 'plain_text',
+            'text': primary_cta_text,
+            'emoji': True,
+        },
+        'value': primary_cta_value,
+        'action_id': primary_cta_action_id
+    }
 
     view_expense_blocks =  [
         {
