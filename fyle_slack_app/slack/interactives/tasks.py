@@ -103,18 +103,9 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
     slack_client = get_slack_client(team_id)
 
-    custom_fields_query_params = {
-        'offset': 0,
-        'limit': '20',
-        'order': 'created_at.desc',
-        'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
-        'is_enabled': 'eq.{}'.format(True),
-        'category_ids': 'cs.[{}]'.format(int(category_id))
-    }
-
     fyle_expense = FyleExpense(user)
 
-    custom_fields = fyle_expense.get_expense_fields(custom_fields_query_params)
+    custom_fields = fyle_expense.get_custom_fields_by_category_id(category_id)
 
     private_metadata = slack_payload['view']['private_metadata']
 
@@ -267,6 +258,8 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
     cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
 
     is_cost_centers_available = True if cost_centers['count'] > 0 else False
+
+    # custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
 
     fields_render_property = {
         'project': is_project_available,

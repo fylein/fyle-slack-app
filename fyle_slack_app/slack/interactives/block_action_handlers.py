@@ -44,7 +44,9 @@ class BlockActionHandler:
             'is_billable': self.handle_billable,
             'currency': self.handle_currency_select,
             'amount': self.handle_amount_entered,
-            'add_to_report': self.handle_add_to_report
+            'add_to_report': self.handle_add_to_report,
+            'add_expense_to_report': self.handle_add_expense_to_report,
+            'add_expense_to_report_selection': self.handle_add_expense_to_report_selection
         }
 
 
@@ -307,6 +309,41 @@ class BlockActionHandler:
         expense_form = expense_messages.expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
 
         slack_client.views_update(view_id=view_id, view=expense_form)
+
+        return JsonResponse({})
+
+
+    def handle_add_expense_to_report_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        from . import expense
+
+        add_to_report = slack_payload['actions'][0]['selected_option']['value']
+
+        view_id = slack_payload['container']['view_id']
+
+        slack_client = get_slack_client(team_id)
+
+        expense_id = slack_payload['view']['private_metadata']
+
+        add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'], add_to_report=add_to_report)
+
+        slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
+        return JsonResponse({})
+
+
+    def handle_add_expense_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        from . import expense
+
+        expense_id = slack_payload['actions'][0]['value']
+
+        view_id = slack_payload['container']['view_id']
+
+        slack_client = get_slack_client(team_id)
+
+        add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'], add_to_report='existing_report')
+
+        add_expense_to_report_dialog['private_metadata'] = expense_id
+
+        slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
 
         return JsonResponse({})
 

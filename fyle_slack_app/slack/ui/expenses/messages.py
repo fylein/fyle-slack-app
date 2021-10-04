@@ -5,16 +5,23 @@ import datetime
 from fyle_slack_app.libs import utils
 
 
-def get_custom_field_value(custom_fields: List, action_id) -> Any:
-    pass
+def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
+    value = None
+    for custom_field in custom_fields:
+        if custom_field['name'] == action_id:
+            value = custom_field['value']
+            break
+    return value
 
 
 # is_additional_field is for fields which are not custom fields but are part of a specific categories
-def generate_field_ui(field_details: Dict, is_additional_field: bool = False) -> Dict:
+def generate_field_ui(field_details: Dict, is_additional_field: bool = False, expense: Dict = None) -> Dict:
     block_id = '{}_block'.format(field_details['column_name'])
     action_id = field_details['column_name']
 
     custom_field = None
+
+    custom_field_value = None
 
     # We need to define addtional fields as custom fields so that we can clear them out in form when category is changed
     if field_details['is_custom'] is True or is_additional_field is True:
@@ -22,6 +29,13 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
         if field_details['is_custom'] is True:
             block_id = '{}_custom_field_{}_block'.format(field_details['type'], field_details['column_name'])
             action_id = '{}'.format(field_details['field_name'])
+
+    if expense is not None:
+        if is_additional_field is True:
+            custom_field_value = expense[action_id]
+
+        elif field_details['is_custom'] is True and len(expense['custom_fields']) > 0:
+            custom_field_value = get_custom_field_value(expense['custom_fields'], field_details['field_name'])
 
     if field_details['type'] in ['NUMBER', 'TEXT']:
         custom_field = {
@@ -37,9 +51,12 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
                 'placeholder': {
                     'type': 'plain_text',
                     'text': '{}'.format(field_details['placeholder']),
-                },
-            },
+                }
+            }
         }
+
+        if custom_field_value is not None:
+            custom_field['element']['initial_value'] = custom_field_value
 
     elif field_details['type'] in ['SELECT', 'MULTI_SELECT']:
 
@@ -64,7 +81,7 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
                     'emoji': True,
                 },
                 'action_id': action_id,
-            },
+            }
         }
 
         custom_field['element']['options'] = []
@@ -81,30 +98,58 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
                 }
             )
 
+        if custom_field_value is not None:
+            if field_details['type'] == 'SELECT':
+                custom_field['element']['initial_option'] = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': custom_field_value,
+                        'emoji': True,
+                    },
+                    'value': custom_field_value,
+                }
+            elif field_details['type'] == 'MULTI_SELECT':
+                initial_options = []
+                for value in custom_field_value:
+                    initial_options.append(
+                        {
+                            'text': {
+                                'type': 'plain_text',
+                                'text': value,
+                                'emoji': True,
+                            },
+                            'value': value,
+                        }
+                    )
+
+                custom_field['element']['initial_options'] = initial_options
+
     elif field_details['type'] == 'BOOLEAN':
+        checkbox_option = {
+            'text': {
+                'type': 'plain_text',
+                'text': '{}'.format(field_details['field_name']),
+                'emoji': True,
+            }
+        }
         custom_field = {
             'type': 'input',
             'block_id': block_id,
             'optional': True,
             'element': {
                 'type': 'checkboxes',
-                'options': [
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': '{}'.format(field_details['field_name']),
-                            'emoji': True,
-                        }
-                    }
-                ],
+                'options': [checkbox_option],
                 'action_id': action_id,
             },
             'label': {
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
                 'emoji': True,
-            },
+            }
         }
+
+        if custom_field_value is not None:
+            custom_field['element']['initial_option'] = checkbox_option
 
     elif field_details['type'] == 'DATE':
         custom_field = {
@@ -123,8 +168,11 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False) ->
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
                 'emoji': True
-            },
+            }
         }
+
+        if custom_field_value is not None:
+            custom_field['element']['initial_date'] = utils.get_formatted_datetime(custom_field_value, '%B %d, %Y')
 
     return custom_field
 
@@ -492,7 +540,7 @@ def expense_form_loading_modal(title: str, loading_message: str) -> Dict:
     return loading_modal
 
 
-def get_add_to_report_blocks(add_to_report: str) -> Dict:
+def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
     blocks = []
     add_to_existing_report_option = {
         'text': {
@@ -514,11 +562,12 @@ def get_add_to_report_blocks(add_to_report: str) -> Dict:
     add_to_report_block = {
         'type': 'input',
         'block_id': 'add_to_report_block',
+        'optional': True,
         'dispatch_action': True,
         'element': {
             'type': 'radio_buttons',
             'options': [add_to_existing_report_option, add_to_new_report_option],
-            'action_id': 'add_to_report'
+            'action_id': action_id
         },
         'label': {
             'type': 'plain_text',
@@ -631,7 +680,7 @@ def expense_dialog_form(
                 if field['is_custom'] is False:
                     is_additional_field = True
 
-                custom_field = generate_field_ui(field, is_additional_field=is_additional_field)
+                custom_field = generate_field_ui(field, is_additional_field=is_additional_field, expense=expense)
                 if custom_field is not None:
                     view['blocks'].append(custom_field)
 
@@ -648,7 +697,7 @@ def expense_dialog_form(
     })
 
     if add_to_report is not None:
-        add_to_report_blocks = get_add_to_report_blocks(add_to_report)
+        add_to_report_blocks = get_add_to_report_blocks(add_to_report, action_id='add_to_report')
 
         view['blocks'].extend(add_to_report_blocks)
 
@@ -661,13 +710,45 @@ def view_expense_message(expense: Dict) -> Dict:
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
 
-    receipt_message = ':x: Not Attached'
-    if len(expense['file_ids']) > 0:
-        receipt_message = ':white_check_mark: Attached'
-
     report_message = ':x: Not Added'
     if expense['report_id'] is not None:
         report_message = ':white_check_mark: Added'
+        primary_cta = {
+            'type': 'button',
+            'text': {
+                'type': 'plain_text',
+                'text': 'Submit Report',
+                'emoji': True,
+            },
+            'value': expense['report_id'],
+            'action_id': 'submit_report',
+        }
+    else:
+        primary_cta = {
+            'type': 'button',
+            'text': {
+                'type': 'plain_text',
+                'text': 'Add to Report',
+                'emoji': True,
+            },
+            'action_id': 'add_expense_to_report',
+            'value': expense['id']
+        }
+
+    receipt_message = ':x: Not Attached'
+    if len(expense['file_ids']) > 0:
+        receipt_message = ':white_check_mark: Attached'
+    else:
+        primary_cta = {
+            'type': 'button',
+            'text': {
+                'type': 'plain_text',
+                'text': 'Attach Receipt',
+                'emoji': True,
+            },
+            'value': expense['id'],
+            'action_id': 'attach_receipt',
+        }
 
     view_expense_blocks =  [
         {
@@ -706,6 +787,7 @@ def view_expense_message(expense: Dict) -> Dict:
         {
         'type': 'actions',
             'elements': [
+                primary_cta,
                 {
                     'type': 'button',
                     'text': {
@@ -732,3 +814,77 @@ def view_expense_message(expense: Dict) -> Dict:
     ]
 
     return view_expense_blocks
+
+
+def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -> Dict:
+    add_to_report_dialog = {
+        'title': {
+            'type': 'plain_text',
+            'text': ':mailbox:  Add to Report',
+            'emoji': True
+        },
+        'submit': {
+            'type': 'plain_text',
+            'text': 'Add',
+            'emoji': True
+        },
+        'type': 'modal',
+        'close': {
+            'type': 'plain_text',
+            'text': 'Cancel',
+            'emoji': True
+        },
+        'blocks': [
+            {
+                'type': 'divider'
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Amount* \n USD 123.45'
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Date of Spend* \nJuly 02, 2021'
+                    }
+                ]
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Report* \n :x: Not Added'
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Receipt* \n :white_check_mark: Attached'
+                    }
+                ]
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Category* \n Food'
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Project* \n Expensive Project'
+                    }
+                ]
+            },
+            {
+                'type': 'divider'
+            },
+        ]
+    }
+
+    add_to_report_blocks = get_add_to_report_blocks(add_to_report=add_to_report, action_id='add_expense_to_report_selection')
+
+    add_to_report_dialog['blocks'].extend(add_to_report_blocks)
+
+    return add_to_report_dialog

@@ -52,8 +52,6 @@ class ViewSubmissionHandler:
 
     def handle_upsert_expense(self, slack_payload: Dict, user_id: str, team_id: str):
 
-        print('SLACK PAYLOAD -> ', slack_payload)
-
         form_values = slack_payload['view']['state']['values']
         print('REACHED CREATE EXPENSE -> ', form_values)
 
@@ -96,21 +94,21 @@ class ViewSubmissionHandler:
                 for inner_key, inner_value in value.items():
 
                     if inner_value['type'] in ['static_select', 'external_select']:
-                        custom_field_mappings[inner_key] = inner_value['selected_option']['value']
+                        value = inner_value['selected_option']['value']
 
                     if inner_value['type'] == 'multi_static_select':
 
                         values_list = []
                         for val in inner_value['selected_options']:
                             values_list.append(val['value'])
-                        custom_field_mappings[inner_key] = values_list
+                        value = values_list
 
                     elif inner_value['type'] == 'datepicker':
 
                         if datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
                             validation_errors[key] = 'Date selected cannot be in future'
 
-                        custom_field_mappings[inner_key] = inner_value['selected_date']
+                        value = inner_value['selected_date']
 
                     elif inner_value['type'] == 'plain_text_input':
 
@@ -130,13 +128,14 @@ class ViewSubmissionHandler:
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'
 
-                        custom_field_mappings[inner_key] = value
-
                     elif inner_value['type'] == 'checkboxes':
 
-                        custom_field_mappings[inner_key] = False
+                        value = False
                         if len(inner_value['selected_options']) > 0:
-                            custom_field_mappings[inner_key] = True
+                            value = True
+
+                    custom_field_mappings['name'] = inner_key
+                    custom_field_mappings['value'] = value
 
                     custom_fields.append(custom_field_mappings)
             else:

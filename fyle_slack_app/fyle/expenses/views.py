@@ -35,6 +35,21 @@ class FyleExpense:
         return default_expense_fields
 
 
+    def get_custom_fields_by_category_id(self, category_id: str) -> Dict:
+        custom_fields_query_params = {
+            'offset': 0,
+            'limit': '20',
+            'order': 'created_at.desc',
+            'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
+            'is_enabled': 'eq.{}'.format(True),
+            'category_ids': 'cs.[{}]'.format(int(category_id))
+        }
+
+        custom_fields = self.get_expense_fields(custom_fields_query_params)
+
+        return custom_fields
+
+
     def get_categories(self, query_params: Dict) -> Dict:
         categories = self.connection.v1.fyler.categories.list(query_params=query_params)
         return categories
