@@ -76,6 +76,16 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     decoded_private_metadata = decode_state(private_metadata)
 
+    project = project['data'][0]
+
+    project = {
+        'id': project['id'],
+        'name': project['name'],
+        'display_name': project['display_name'],
+        'sub_project': project['sub_project'],
+        'category_ids': project['category_ids']
+    }
+
     decoded_private_metadata['project'] = project
 
     fields_render_property = decoded_private_metadata['fields_render_property']
@@ -166,7 +176,7 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
     decoded_private_metadata['additional_currency_details'] = additional_currency_details
 
-    is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
+    is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
 
     custom_fields = get_custom_field_blocks(current_ui_blocks)
 
@@ -211,7 +221,7 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     custom_fields = get_custom_field_blocks(current_ui_blocks)
 
-    is_project_available, project = check_project_in_form(form_current_state, decoded_private_metadata)
+    is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
 
     fields_render_property['project'] = is_project_available
 

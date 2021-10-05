@@ -83,7 +83,7 @@ class BlockSuggestionHandler:
         is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
 
         if is_project_available is True and project is not None:
-            category_query_params['id'] = 'in.{}'.format(tuple(project['data'][0]['category_ids']))
+            category_query_params['id'] = 'in.{}'.format(tuple(project['category_ids']))
 
         suggested_categories = fyle_expense.get_categories(category_query_params)
 

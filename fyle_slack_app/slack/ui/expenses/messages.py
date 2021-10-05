@@ -426,7 +426,6 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
             'value': str(expense['project']['id']),
         }
     elif selected_project is not None:
-        selected_project = selected_project['data'][0]
 
         project_display_name = selected_project['display_name']
         if selected_project['name'] == selected_project['sub_project']:
