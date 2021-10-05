@@ -4,6 +4,7 @@ from typing import Callable, Dict, Union
 
 from django.http.response import JsonResponse
 
+from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.libs import utils
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
@@ -16,7 +17,8 @@ class ViewSubmissionHandler:
     # Maps action_id with it's respective function
     def _initialize_view_submission_handlers(self):
         self._view_submission_handlers = {
-            'upsert_expense': self.handle_upsert_expense
+            'upsert_expense': self.handle_upsert_expense,
+            'submit_report': self.handle_submit_report
         }
 
 
@@ -50,7 +52,9 @@ class ViewSubmissionHandler:
         return handler(slack_payload, user_id, team_id)
 
 
-    def handle_upsert_expense(self, slack_payload: Dict, user_id: str, team_id: str):
+    def handle_upsert_expense(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
 
         form_values = slack_payload['view']['state']['values']
         print('REACHED CREATE EXPENSE -> ', form_values)
@@ -77,11 +81,19 @@ class ViewSubmissionHandler:
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        view_expense_message = expense_messages.view_expense_message(expense_details)
+        view_expense_message = expense_messages.view_expense_message(expense_details, user)
 
-        slack_client.chat_postMessage(channel='D01K1L9UHBP', blocks=view_expense_message)
+        if expense_id is None:
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
+        else:
+            slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=private_metadata['message_ts'])
+
         return JsonResponse({})
 
+
+    def handle_submit_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        return JsonResponse({})
 
     def extract_form_values_and_validate(self, form_values: Dict) -> Union[Dict, Dict]:
         expense_details = {}
@@ -94,7 +106,8 @@ class ViewSubmissionHandler:
                 for inner_key, inner_value in value.items():
 
                     if inner_value['type'] in ['static_select', 'external_select']:
-                        value = inner_value['selected_option']['value']
+                        if inner_value['selected_option'] is not None:
+                            value = inner_value['selected_option']['value']
 
                     if inner_value['type'] == 'multi_static_select':
 
@@ -142,7 +155,8 @@ class ViewSubmissionHandler:
                 for inner_key, inner_value in value.items():
 
                     if inner_value['type'] in ['static_select', 'external_select']:
-                        expense_details[inner_key] = inner_value['selected_option']['value']
+                        if inner_value['selected_option'] is not None:
+                            expense_details[inner_key] = inner_value['selected_option']['value']
 
                     if inner_value['type'] == 'multi_static_select':
 

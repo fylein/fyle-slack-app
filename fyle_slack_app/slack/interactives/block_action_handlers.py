@@ -46,7 +46,8 @@ class BlockActionHandler:
             'amount': self.handle_amount_entered,
             'add_to_report': self.handle_add_to_report,
             'add_expense_to_report': self.handle_add_expense_to_report,
-            'add_expense_to_report_selection': self.handle_add_expense_to_report_selection
+            'add_expense_to_report_selection': self.handle_add_expense_to_report_selection,
+            'open_submit_report_dialog': self.handle_submit_report_dialog
         }
 
 
@@ -344,7 +345,7 @@ class BlockActionHandler:
 
         add_expense_to_report_dialog['private_metadata'] = expense_id
 
-        slack_client.views_open(trigger_id=trigger_id, user=user_id, view=add_expense_to_report_dialog,)
+        slack_client.views_open(trigger_id=trigger_id, user=user_id, view=add_expense_to_report_dialog)
 
         return JsonResponse({})
 
@@ -366,6 +367,25 @@ class BlockActionHandler:
             response['view']['id'],
             slack_payload
         )
+
+        return JsonResponse({})
+
+
+    def handle_submit_report_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        from . import report, list_expenses
+
+        report_id = slack_payload['actions'][0]['value']
+
+        trigger_id = slack_payload['trigger_id']
+
+        slack_client = get_slack_client(team_id)
+
+        add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(report=report['data'][0], expenses=list_expenses['data'])
+
+        add_expense_to_report_dialog['private_metadata'] = report_id
+
+        slack_client.views_open(trigger_id=trigger_id, user=user_id, view=add_expense_to_report_dialog)
 
         return JsonResponse({})
 

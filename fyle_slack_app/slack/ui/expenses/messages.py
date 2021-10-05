@@ -2,7 +2,9 @@ from typing import Any, Dict, List
 
 import datetime
 
+from fyle_slack_app.models import User
 from fyle_slack_app.libs import utils
+from fyle_slack_app.fyle import utils as fyle_utils
 
 
 def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
@@ -541,6 +543,11 @@ def expense_form_loading_modal(title: str, loading_message: str) -> Dict:
 
 
 def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
+
+    is_report_block_optional = False
+    if action_id == 'add_to_report':
+        is_report_block_optional = True
+
     blocks = []
     add_to_existing_report_option = {
         'text': {
@@ -562,8 +569,8 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
     add_to_report_block = {
         'type': 'input',
         'block_id': 'add_to_report_block',
-        'optional': True,
         'dispatch_action': True,
+        'optional': is_report_block_optional,
         'element': {
             'type': 'radio_buttons',
             'options': [add_to_existing_report_option, add_to_new_report_option],
@@ -582,6 +589,7 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
             'ui': {
                 'type': 'input',
                 'block_id': 'add_to_new_report_block',
+                'optional': is_report_block_optional,
                 'element': {
                     'type': 'plain_text_input',
                     'placeholder': {
@@ -602,6 +610,7 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
         'existing_report': {
             'ui': {
                 'type': 'input',
+                'optional': is_report_block_optional,
                 'block_id': 'add_to_existing_report_block',
                 'element': {
                     'type': 'external_select',
@@ -704,20 +713,25 @@ def expense_dialog_form(
     return view
 
 
-def view_expense_message(expense: Dict) -> Dict:
+def view_expense_message(expense: Dict, user: User) -> Dict:
     from fyle_slack_app.slack.interactives import expense
     expense = expense['data']
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
 
+    primary_cta = None
     primary_cta_value = None
+    primary_cta_text = None
+    primary_cta_action_id = None
 
     report_message = ':x: Not Added'
     if expense['report_id'] is not None:
         report_message = ':white_check_mark: Added'
 
-        primary_cta_text = 'Submit Report'
-        primary_cta_action_id = 'submit_report'
+        if expense['report']['state'] in ['DRAFT', 'APPROVER_INQUIRY']:
+            primary_cta_text = 'Submit Report'
+            primary_cta_action_id = 'open_submit_report_dialog'
+            primary_cta_value = expense['report_id']
 
     else:
         primary_cta_text = 'Add to Report'
@@ -733,21 +747,53 @@ def view_expense_message(expense: Dict) -> Dict:
         primary_cta_action_id = 'attach_receipt'
         primary_cta_value = expense['id']
 
-    primary_cta = {
+    if primary_cta_text is not None and primary_cta_action_id is not None:
+        primary_cta = {
+            'type': 'button',
+            'style': 'primary',
+            'text': {
+                'type': 'plain_text',
+                'text': primary_cta_text,
+                'emoji': True,
+            },
+            'value': primary_cta_value,
+            'action_id': primary_cta_action_id
+        }
+
+    edit_expense_cta = {
         'type': 'button',
-        'style': 'primary',
         'text': {
             'type': 'plain_text',
-            'text': primary_cta_text,
+            'text': 'Edit Expense',
             'emoji': True,
         },
-        'value': primary_cta_value,
-        'action_id': primary_cta_action_id
+        'value': expense['id'],
+        'action_id': 'edit_expense',
     }
+
+    view_in_fyle_cta = {
+        'type': 'button',
+        'text': {
+            'type': 'plain_text',
+            'text': 'View in Fyle',
+            'emoji': True,
+        },
+        'url': fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE'),
+        'action_id': 'expense_view_in_fyle',
+    }
+
+    actions = [
+        edit_expense_cta,
+        view_in_fyle_cta
+    ]
+
+    if primary_cta is not None:
+        actions.insert(0, primary_cta)
 
     view_expense_blocks =  [
         {
             'type': 'section',
+            'block_id': expense['id'],
             'text': {
                 'type': 'mrkdwn',
                 'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
@@ -781,30 +827,7 @@ def view_expense_message(expense: Dict) -> Dict:
         },
         {
         'type': 'actions',
-            'elements': [
-                primary_cta,
-                {
-                    'type': 'button',
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Edit Expense',
-                        'emoji': True,
-                    },
-                    'value': expense['id'],
-                    'action_id': 'edit_expense',
-                }
-            ],
-        },
-        {
-            'type': 'context',
-            'block_id': expense['id'],
-            'elements': [
-                {
-                    'type': 'plain_text',
-                    'text': 'Powered by Fyle',
-                    'emoji': True,
-                }
-            ],
+            'elements': actions
         }
     ]
 
@@ -812,6 +835,16 @@ def view_expense_message(expense: Dict) -> Dict:
 
 
 def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -> Dict:
+
+    report_message = ':x: Not Added'
+    if expense['report_id'] is not None:
+        report_message = ':white_check_mark: Added'
+
+
+    receipt_message = ':x: Not Attached'
+    if len(expense['file_ids']) > 0:
+        receipt_message = ':white_check_mark: Attached'
+
     add_to_report_dialog = {
         'title': {
             'type': 'plain_text',
@@ -824,6 +857,7 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
             'emoji': True
         },
         'type': 'modal',
+        'callback_id': 'add_expense_to_report',
         'close': {
             'type': 'plain_text',
             'text': 'Cancel',
@@ -838,11 +872,11 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
                 'fields': [
                     {
                         'type': 'mrkdwn',
-                        'text': '*Amount* \n USD 123.45'
+                        'text': '*Amount* \n {} {}'.format(expense['currency'], expense['amount'])
                     },
                     {
                         'type': 'mrkdwn',
-                        'text': '*Date of Spend* \nJuly 02, 2021'
+                        'text': '*Date of Spend* \n {}'.format(utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y'))
                     }
                 ]
             },
@@ -851,11 +885,11 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
                 'fields': [
                     {
                         'type': 'mrkdwn',
-                        'text': '*Report* \n :x: Not Added'
+                        'text': '*Report* \n {}'.format(report_message)
                     },
                     {
                         'type': 'mrkdwn',
-                        'text': '*Receipt* \n :white_check_mark: Attached'
+                        'text': '*Receipt* \n {}'.format(receipt_message)
                     }
                 ]
             },
@@ -864,11 +898,11 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
                 'fields': [
                     {
                         'type': 'mrkdwn',
-                        'text': '*Category* \n Food'
+                        'text': '*Category* \n {}'.format(expense['category']['name'])
                     },
                     {
                         'type': 'mrkdwn',
-                        'text': '*Project* \n Expensive Project'
+                        'text': '*Project* \n {}'.format(expense['project']['name'])
                     }
                 ]
             },
@@ -883,3 +917,141 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
     add_to_report_dialog['blocks'].extend(add_to_report_blocks)
 
     return add_to_report_dialog
+
+
+
+def get_view_report_details_dialog(report: Dict, expenses: List[Dict]) -> Dict:
+    view_report_dialog = {
+        'type': 'modal',
+        'callback_id': 'submit_report',
+        'title': {
+            'type': 'plain_text',
+            'text': 'Report Details',
+            'emoji': True
+        },
+        'submit': {
+            'type': 'plain_text',
+            'text': 'Submit Report',
+            'emoji': True
+        },
+        'close': {
+            'type': 'plain_text',
+            'text': 'Cancel',
+            'emoji': True
+        },
+        'blocks': [
+            {
+                'type': 'divider'
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Report Name* \n {}'.format(report['purpose'])
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Amount* \n {} {}'.format(report['currency'], str(report['amount']))
+                    }
+                ]
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Expenses* \n {}'.format(str(report['num_expenses']))
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Created On* \n {}'.format(utils.get_formatted_datetime(report['created_at'], '%B %d, %Y'))
+                    }
+                ]
+            },
+            {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': ':page_facing_up: *Expenses*'
+                }
+            },
+            {
+                'type': 'divider'
+            },
+        ]
+    }
+
+    expenses_list = []
+    for expense in expenses:
+        receipt_message = ':x: Not Attached'
+        if len(expense['file_ids']) > 0:
+            receipt_message = ':white_check_mark: Attached'
+        minimal_expense_detail = [
+            {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': '*{} ({})* expense of :money_with_wings: *{} {}*'.format(expense['purpose'], expense['merchant'], expense['currency'], str(expense['amount']))
+                },
+                'accessory': {
+                    'type': 'overflow',
+                    'options': [
+                        {
+                            'text': {
+                                'type': 'plain_text',
+                                'text': ':pencil: Edit',
+                                'emoji': True
+                            },
+                            'value': 'edit_expense_accessory'
+                        },
+                        {
+                            'text': {
+                                'type': 'plain_text',
+                                'text': ':page_facing_up:  View Details',
+                                'emoji': True
+                            },
+                            'value': 'view_expense_accessory'
+                        },
+                        {
+                            'text': {
+                                'type': 'plain_text',
+                                'text': ':broom: Remove from Report',
+                                'emoji': True
+                            },
+                            'value': 'remove_expense_from_report_accessory'
+                        },
+                        {
+                            'text': {
+                                'type': 'plain_text',
+                                'text': ':arrow_upper_right: Open in Fyle',
+                                'emoji': True
+                            },
+                            'value': 'open_in_fyle_accessory'
+                        }
+                    ],
+                    'action_id': 'expense_accessory'
+                }
+            },
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Date of Spend* \n {}'.format(utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y'))
+                    },
+                    {
+                        'type': 'mrkdwn',
+                        'text': '*Receipt* \n {}'.format(receipt_message)
+                    }
+                ]
+            },
+            {
+                'type': 'divider'
+            }
+        ]
+        expenses_list.extend(minimal_expense_detail)
+
+    view_report_dialog['blocks'].extend(expenses_list)
+
+    return view_report_dialog

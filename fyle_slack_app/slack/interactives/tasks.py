@@ -270,14 +270,18 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
         'home_currency': home_currency
     }
 
+    add_to_report = 'existing_report'
+
     private_metadata = {
         'fields_render_property': fields_render_property,
         'additional_currency_details': additional_currency_details,
-        'expense_id': expense_id
+        'expense_id': expense_id,
+        'add_to_report': add_to_report,
+        'message_ts': slack_payload['container']['message_ts']
     }
 
     encoded_metadata = encode_state(private_metadata)
 
-    expense_form = expense_dialog_form(expense=expense['data'], fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details)
+    expense_form = expense_dialog_form(expense=expense['data'], fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details, add_to_report=add_to_report)
 
     slack_client.views_update(view=expense_form, view_id=view_id)
