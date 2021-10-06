@@ -18,7 +18,8 @@ class ViewSubmissionHandler:
     def _initialize_view_submission_handlers(self):
         self._view_submission_handlers = {
             'upsert_expense': self.handle_upsert_expense,
-            'submit_report': self.handle_submit_report
+            'submit_report': self.handle_submit_report,
+            'add_expense_to_report': self.handle_add_expense_to_report
         }
 
 
@@ -106,6 +107,12 @@ class ViewSubmissionHandler:
         slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=report_submitted_message)
 
         return JsonResponse({})
+
+
+    def handle_add_expense_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        print('SLACK PAYLOAD VALUES -> ', slack_payload['view']['state']['values'])
+        return JsonResponse({})
+
 
     def extract_form_values_and_validate(self, form_values: Dict) -> Union[Dict, Dict]:
         expense_details = {}

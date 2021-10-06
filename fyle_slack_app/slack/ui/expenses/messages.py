@@ -587,7 +587,7 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
         'new_report': {
             'ui': {
                 'type': 'input',
-                'block_id': 'add_to_new_report_block',
+                'block_id': 'TEXT_add_to_new_report_block',
                 'optional': is_report_block_optional,
                 'element': {
                     'type': 'plain_text_input',
@@ -610,7 +610,7 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
             'ui': {
                 'type': 'input',
                 'optional': is_report_block_optional,
-                'block_id': 'add_to_existing_report_block',
+                'block_id': 'SELECT_add_to_existing_report_block',
                 'element': {
                     'type': 'external_select',
                     'placeholder': {
