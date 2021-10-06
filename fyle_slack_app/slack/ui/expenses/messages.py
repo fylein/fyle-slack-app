@@ -253,15 +253,15 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
         amount_block['element']['placeholder']['text'] = 'Enter Amount {}'.format(additional_currency_details['foreign_currency'])
 
         currency_context_block = {
-			'type': 'context',
+            'type': 'context',
             'block_id': 'TEXT_default_field_currency_context_block',
-			'elements': [
-				{
-					'type': 'mrkdwn',
-					'text': ':information_source: Amount ({}) x Exchange Rate = Total ({})'.format(additional_currency_details['foreign_currency'], additional_currency_details['home_currency'])
-				}
-			]
-		}
+            'elements': [
+                {
+                    'type': 'mrkdwn',
+                    'text': ':information_source: Amount ({}) x Exchange Rate = Total ({})'.format(additional_currency_details['foreign_currency'], additional_currency_details['home_currency'])
+                }
+            ]
+        }
 
         blocks.insert(1, currency_context_block)
 
@@ -778,13 +778,16 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
             'emoji': True,
         },
         'url': fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE'),
+        'value': expense['id'],
         'action_id': 'expense_view_in_fyle',
     }
 
     actions = [
-        edit_expense_cta,
         view_in_fyle_cta
     ]
+
+    if expense['state'] in ['DRAFT', 'COMPLETE']:
+        actions.insert(0, edit_expense_cta)
 
     if primary_cta is not None:
         actions.insert(0, primary_cta)
@@ -919,10 +922,11 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
 
 
 
-def get_view_report_details_dialog(report: Dict, expenses: List[Dict]) -> Dict:
+def get_view_report_details_dialog(user: User, report: Dict, expenses: List[Dict]) -> Dict:
     view_report_dialog = {
         'type': 'modal',
         'callback_id': 'submit_report',
+        'private_metadata': report['id'],
         'title': {
             'type': 'plain_text',
             'text': 'Report Details',
@@ -983,9 +987,13 @@ def get_view_report_details_dialog(report: Dict, expenses: List[Dict]) -> Dict:
 
     expenses_list = []
     for expense in expenses:
+
+        expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
+
         receipt_message = ':x: Not Attached'
         if len(expense['file_ids']) > 0:
             receipt_message = ':white_check_mark: Attached'
+
         minimal_expense_detail = [
             {
                 'type': 'section',
@@ -1026,7 +1034,8 @@ def get_view_report_details_dialog(report: Dict, expenses: List[Dict]) -> Dict:
                                 'text': ':arrow_upper_right: Open in Fyle',
                                 'emoji': True
                             },
-                            'value': 'open_in_fyle_accessory'
+                            'url': expense_url,
+                            'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
                         }
                     ],
                     'action_id': 'expense_accessory'
@@ -1054,3 +1063,55 @@ def get_view_report_details_dialog(report: Dict, expenses: List[Dict]) -> Dict:
     view_report_dialog['blocks'].extend(expenses_list)
 
     return view_report_dialog
+
+
+def report_submitted_message(user: User, report: Dict) -> List[Dict]:
+    report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
+    report_message_blocks = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': ':open_file_folder: An expense report *{}* has been submitted'.format(report['purpose'])
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Amount* \n {} {}'.format(report['currency'], report['amount'])
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Expenses* \n {}'.format(report['num_expenses'])
+                }
+            ]
+        },
+        {
+            "type": "context",
+            "elements": [
+                {
+                    "type": "mrkdwn",
+                    "text": ":bell: You will be notified when any action is taken by your approver"
+                }
+            ]
+        },
+        {
+            'type': 'actions',
+            'elements': [
+                {
+                    'type': 'button',
+                    'text': {
+                        'type': 'plain_text',
+                        'text': 'View in Fyle',
+                    },
+                    'url': report_url,
+                    'value': report['id'],
+                    'action_id': 'review_report_in_fyle'
+                }
+            ]
+        }
+    ]
+
+    return report_message_blocks

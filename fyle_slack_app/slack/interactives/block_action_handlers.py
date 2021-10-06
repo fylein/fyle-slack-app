@@ -41,13 +41,13 @@ class BlockActionHandler:
             # Dynamic options
             'category_id': self.handle_category_select,
             'project_id': self.handle_project_select,
-            'is_billable': self.handle_billable,
             'currency': self.handle_currency_select,
             'amount': self.handle_amount_entered,
             'add_to_report': self.handle_add_to_report,
             'add_expense_to_report': self.handle_add_expense_to_report,
             'add_expense_to_report_selection': self.handle_add_expense_to_report_selection,
-            'open_submit_report_dialog': self.handle_submit_report_dialog
+            'open_submit_report_dialog': self.handle_submit_report_dialog,
+            'expense_accessory': self.handle_expense_accessory
         }
 
 
@@ -155,7 +155,13 @@ class BlockActionHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_billable(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def handle_expense_accessory(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        expense_accessory_value = slack_payload['actions'][0]['value']
+        accessory_type, expense_id = expense_accessory_value.split('.')
+
+        if accessory_type == 'open_in_fyle_accessory':
+            self.track_view_in_fyle_action(user_id, 'Expense Viewed in Fyle', {'expense_id': expense_id})
+
         return JsonResponse({})
 
 
@@ -281,6 +287,7 @@ class BlockActionHandler:
 
 
     def handle_add_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
         add_to_report = slack_payload['actions'][0]['selected_option']['value']
 
         view_id = slack_payload['container']['view_id']
@@ -375,13 +382,15 @@ class BlockActionHandler:
 
         from . import report, list_expenses
 
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
         report_id = slack_payload['actions'][0]['value']
 
         trigger_id = slack_payload['trigger_id']
 
         slack_client = get_slack_client(team_id)
 
-        add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(report=report['data'][0], expenses=list_expenses['data'])
+        add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(user, report=report['data'][0], expenses=list_expenses['data'])
 
         add_expense_to_report_dialog['private_metadata'] = report_id
 

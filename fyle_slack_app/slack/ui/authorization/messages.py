@@ -111,7 +111,6 @@ def get_post_authorization_message() -> List[Dict]:
 				{
 					"type": "button",
 					"style": "primary",
-					"url": "slack://app?id=ARHATN286&team=TAQR2JNTF&tab=messages",
 					"text": {
 						"type": "plain_text",
 						"text": "Approve",
@@ -121,7 +120,6 @@ def get_post_authorization_message() -> List[Dict]:
 				},
 				{
 					"type": "button",
-					"url": "https://demo-bot-fyle.slack.com/archives/D01K1L9UHBP/p1630583475001000?thread_ts=1630583475.001000&cid=D01K1L9UHBP",
 					"text": {
 						"type": "plain_text",
 						"text": "Review in Fyle",

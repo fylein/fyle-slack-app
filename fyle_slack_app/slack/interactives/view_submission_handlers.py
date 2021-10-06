@@ -93,6 +93,18 @@ class ViewSubmissionHandler:
 
     def handle_submit_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        report_id = slack_payload['view']['private_metadata']
+
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        from . import report
+
+        report_submitted_message = expense_messages.report_submitted_message(user, report['data'][0])
+
+        slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=report_submitted_message)
+
         return JsonResponse({})
 
     def extract_form_values_and_validate(self, form_values: Dict) -> Union[Dict, Dict]:
