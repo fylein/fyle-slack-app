@@ -1,10 +1,10 @@
-from fyle_slack_app.fyle.expenses.views import FyleExpense
 from typing import Callable, Dict
 
 from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
@@ -88,6 +88,7 @@ class BlockActionHandler:
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
 
+
     def link_fyle_account(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         # Empty function because slack still sends an interactive event on button click and expects a 200 response
         return JsonResponse({}, status=200)
@@ -157,11 +158,15 @@ class BlockActionHandler:
 
 
     def handle_expense_accessory(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        expense_accessory_value = slack_payload['actions'][0]['value']
+        expense_accessory_value = slack_payload['actions'][0]['selected_option']['value']
         accessory_type, expense_id = expense_accessory_value.split('.')
 
         if accessory_type == 'open_in_fyle_accessory':
             self.track_view_in_fyle_action(user_id, 'Expense Viewed in Fyle', {'expense_id': expense_id})
+
+        elif accessory_type == 'edit_expense_accessory':
+            slack_payload['actions'][0]['value'] = expense_id
+            self.handle_edit_expense(slack_payload, user_id, team_id)
 
         return JsonResponse({})
 
@@ -323,7 +328,6 @@ class BlockActionHandler:
 
 
     def handle_add_expense_to_report_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        from . import expense
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
@@ -335,18 +339,18 @@ class BlockActionHandler:
 
         expense_id = slack_payload['view']['private_metadata']
 
-        # fyle_expense = FyleExpense(user)
+        fyle_expense = FyleExpense(user)
 
-        # expense_query_params = {
-        #     'offset': 0,
-        #     'limit': '1',
-        #     'order': 'created_at.desc',
-        #     'id': 'eq.{}'.format(expense_id)
-        # }
+        expense_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'id': 'eq.{}'.format(expense_id)
+        }
 
-        # expense = fyle_expense.get_expenses(query_params=expense_query_params)
+        expense = fyle_expense.get_expenses(query_params=expense_query_params)
 
-        add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'], add_to_report=add_to_report)
+        add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'][0], add_to_report=add_to_report)
 
         slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
 
@@ -354,7 +358,6 @@ class BlockActionHandler:
 
 
     def handle_add_expense_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        from . import expense
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
@@ -364,18 +367,20 @@ class BlockActionHandler:
 
         slack_client = get_slack_client(team_id)
 
-        # fyle_expense = FyleExpense(user)
+        expense_id = 'txCCVGvNpDMM'
 
-        # expense_query_params = {
-        #     'offset': 0,
-        #     'limit': '1',
-        #     'order': 'created_at.desc',
-        #     'id': 'eq.{}'.format(expense_id)
-        # }
+        fyle_expense = FyleExpense(user)
 
-        # expense = fyle_expense.get_expenses(query_params=expense_query_params)
+        expense_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'id': 'eq.{}'.format(expense_id)
+        }
 
-        add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'], add_to_report='existing_report')
+        expense = fyle_expense.get_expenses(query_params=expense_query_params)
+
+        add_expense_to_report_dialog = expense_messages.get_add_expense_to_report_dialog(expense=expense['data'][0], add_to_report='existing_report')
 
         add_expense_to_report_dialog['private_metadata'] = expense_id
 
@@ -407,35 +412,35 @@ class BlockActionHandler:
 
     def handle_submit_report_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
-        from . import report, list_expenses as expenses
-
         user = utils.get_or_none(User, slack_user_id=user_id)
 
         report_id = slack_payload['actions'][0]['value']
+
+        report_id = 'rpKJGi7nRzMF'
 
         trigger_id = slack_payload['trigger_id']
 
         slack_client = get_slack_client(team_id)
 
-        # fyle_expense = FyleExpense(user)
+        fyle_expense = FyleExpense(user)
 
-        # expense_query_params = {
-        #     'offset': 0,
-        #     'limit': '30',
-        #     'order': 'created_at.desc',
-        #     'report_id': 'eq.{}'.format(report_id)
-        # }
+        expense_query_params = {
+            'offset': 0,
+            'limit': '30',
+            'order': 'created_at.desc',
+            'report_id': 'eq.{}'.format(report_id)
+        }
 
-        # expenses = fyle_expense.get_expenses(query_params=expense_query_params)
+        expenses = fyle_expense.get_expenses(query_params=expense_query_params)
 
-        # report_query_params = {
-        #     'offset': 0,
-        #     'limit': '1',
-        #     'order': 'created_at.desc',
-        #     'id': 'eq.{}'.format(report_id)
-        # }
+        report_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'id': 'eq.{}'.format(report_id)
+        }
 
-        # report = fyle_expense.get_reports(query_params=report_query_params)
+        report = fyle_expense.get_reports(query_params=report_query_params)
 
         add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(user, report=report['data'][0], expenses=expenses['data'])
 

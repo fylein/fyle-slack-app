@@ -65,14 +65,14 @@ class FyleExpense:
         return cost_centers
 
 
-    # def get_expenses(self, query_params: Dict) -> Dict:
-    #     expenses = self.connection.v1.fyler.expenses.list(query_params=query_params)
-    #     return expenses
+    def get_expenses(self, query_params: Dict) -> Dict:
+        expenses = self.connection.v1.fyler.expenses.list(query_params=query_params)
+        return expenses
 
 
-    # def get_reports(self, query_params: Dict) -> Dict:
-    #     reports = self.connection.v1.fyler.reports.list(query_params=query_params)
-    #     return reports
+    def get_reports(self, query_params: Dict) -> Dict:
+        reports = self.connection.v1.fyler.reports.list(query_params=query_params)
+        return reports
 
 
     @staticmethod

@@ -7,8 +7,6 @@ from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 
-from . import expense
-
 
 def check_project_in_form(fields_render_property: Dict, private_metadata: Dict) -> Union[bool, Any]:
 
@@ -241,6 +239,20 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
     fyle_profile = get_fyle_profile(user.fyle_refresh_token)
 
     expense_id = slack_payload['actions'][0]['value']
+    expense_id = 'txCCVGvNpDMM'
+
+    fyle_expense = FyleExpense(user)
+
+    expense_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'id': 'eq.{}'.format(expense_id)
+    }
+
+    expense = fyle_expense.get_expenses(query_params=expense_query_params)
+
+    expense = expense['data'][0]
 
     home_currency = fyle_profile['org']['currency']
 
@@ -269,7 +281,7 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
 
     is_cost_centers_available = True if cost_centers['count'] > 0 else False
 
-    # custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
+    custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
 
     fields_render_property = {
         'project': is_project_available,
@@ -292,6 +304,6 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
 
     encoded_metadata = encode_state(private_metadata)
 
-    expense_form = expense_dialog_form(expense=expense['data'], fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details, add_to_report=add_to_report)
+    expense_form = expense_dialog_form(expense=expense, fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details, add_to_report=add_to_report, custom_fields=custom_fields)
 
     slack_client.views_update(view=expense_form, view_id=view_id)

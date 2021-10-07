@@ -4,6 +4,7 @@ from typing import Callable, Dict, Union
 
 from django.http.response import JsonResponse
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.libs import utils
@@ -66,6 +67,8 @@ class ViewSubmissionHandler:
 
         expense_id = private_metadata.get('expense_id')
 
+        message_ts = private_metadata.get('message_ts')
+
         if expense_id is not None:
             expense_details['id'] = expense_id
 
@@ -82,12 +85,25 @@ class ViewSubmissionHandler:
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        view_expense_message = expense_messages.view_expense_message(expense_details, user)
+        expense_id = 'txCCVGvNpDMM'
 
-        if expense_id is None:
+        fyle_expense = FyleExpense(user)
+
+        expense_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'id': 'eq.{}'.format(expense_id)
+        }
+
+        expense = fyle_expense.get_expenses(query_params=expense_query_params)
+
+        view_expense_message = expense_messages.view_expense_message(expense['data'][0], user)
+
+        if expense_id is None or message_ts is None:
             slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
         else:
-            slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=private_metadata['message_ts'])
+            slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=message_ts)
 
         return JsonResponse({})
 
@@ -98,9 +114,18 @@ class ViewSubmissionHandler:
 
         report_id = slack_payload['view']['private_metadata']
 
-        slack_client = slack_utils.get_slack_client(team_id)
+        fyle_expense = FyleExpense(user)
 
-        from . import report
+        report_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'id': 'eq.{}'.format(report_id)
+        }
+
+        report = fyle_expense.get_reports(query_params=report_query_params)
+
+        slack_client = slack_utils.get_slack_client(team_id)
 
         report_submitted_message = expense_messages.report_submitted_message(user, report['data'][0])
 

@@ -22,7 +22,8 @@ class BlockSuggestionHandler:
             'category_id': self.handle_category_suggestion,
             'project_id': self.handle_project_suggestion,
             'cost_center_id': self.handle_cost_center_suggestion,
-            'currency': self.handle_currency_suggestion
+            'currency': self.handle_currency_suggestion,
+            'existing_report': self.handle_existing_report_suggestion
         }
 
 
@@ -195,3 +196,42 @@ class BlockSuggestionHandler:
                 cost_center_options.append(option)
 
         return cost_center_options
+
+
+    def handle_existing_report_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        report_name_value_entered = slack_payload['value']
+        query_params = {
+            'offset': 0,
+            'limit': '10',
+            'order': 'state.asc',
+            'purpose': 'ilike.%{}%'.format(report_name_value_entered),
+            'state': 'in.(DRAFT, APPROVER_PENDING, APPROVER_INQUIRY)'
+        }
+
+        fyle_expense = FyleExpense(user)
+        suggested_reports = fyle_expense.get_reports(query_params)
+
+        report_state_emoji_text_mapping = {
+            'DRAFT': ':mailbox: Draft',
+            'APPROVER_PENDING': ':outbox_tray: Reported',
+            'APPROVER_INQUIRY': ':back: Sent Back'
+        }
+
+        report_options = []
+        if suggested_reports['count'] > 0:
+            for report in suggested_reports['data']:
+                report_display_text = '{} ({} expenses) •'.format(report['purpose'], report['num_expenses'])
+                report_emoji = report_state_emoji_text_mapping[report['state']]
+                report_display_text = '{} {}'.format(report_display_text, report_emoji)
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': report_display_text,
+                        'emoji': True,
+                    },
+                    'value': str(report['id']),
+                }
+                report_options.append(option)
+
+        return report_options

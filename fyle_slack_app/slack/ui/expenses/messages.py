@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 from typing import Any, Dict, List
 
 import datetime
@@ -16,6 +17,7 @@ def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
     return value
 
 
+# pylint: disable=too-many-branches
 # is_additional_field is for fields which are not custom fields but are part of a specific categories
 def generate_field_ui(field_details: Dict, is_additional_field: bool = False, expense: Dict = None) -> Dict:
     block_id = '{}_block'.format(field_details['column_name'])
@@ -613,6 +615,7 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
                 'block_id': 'SELECT_add_to_existing_report_block',
                 'element': {
                     'type': 'external_select',
+                    'min_query_length': 0,
                     'placeholder': {
                         'type': 'plain_text',
                         'text': 'Select a Report',
@@ -713,62 +716,79 @@ def expense_dialog_form(
 
 
 def view_expense_message(expense: Dict, user: User) -> Dict:
-    from fyle_slack_app.slack.interactives import expense
-    expense = expense['data']
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
 
-    primary_cta = None
-    primary_cta_value = None
-    primary_cta_text = None
-    primary_cta_action_id = None
+    actions = []
+
+    receipt_message = ':x: Not Attached'
+    if len(expense['file_ids']) > 0:
+        receipt_message = ':white_check_mark: Attached'
+    else:
+
+        attach_receipt_cta = {
+            'type': 'button',
+            'style': 'primary',
+            'text': {
+                'type': 'plain_text',
+                'text': 'Attach Receipt',
+                'emoji': True,
+            },
+            'value': 'attach_receipt',
+            'action_id': expense['id']
+        }
+
+        actions.append(attach_receipt_cta)
 
     report_message = ':x: Not Added'
     if expense['report_id'] is not None:
         report_message = ':white_check_mark: Added'
 
         if expense['report']['state'] in ['DRAFT', 'APPROVER_INQUIRY']:
-            primary_cta_text = 'Submit Report'
-            primary_cta_action_id = 'open_submit_report_dialog'
-            primary_cta_value = expense['report_id']
+
+            submit_report_cta = {
+                'type': 'button',
+                'style': 'primary',
+                'text': {
+                    'type': 'plain_text',
+                    'text': 'Submit Report',
+                    'emoji': True,
+                },
+                'value': expense['report_id'],
+                'action_id': 'open_submit_report_dialog'
+            }
+
+            actions.append(submit_report_cta)
 
     else:
-        primary_cta_text = 'Add to Report'
-        primary_cta_action_id = 'add_expense_to_report'
-        primary_cta_value = expense['id']
 
-
-    receipt_message = ':x: Not Attached'
-    if len(expense['file_ids']) > 0:
-        receipt_message = ':white_check_mark: Attached'
-    else:
-        primary_cta_text = 'Attach Receipt'
-        primary_cta_action_id = 'attach_receipt'
-        primary_cta_value = expense['id']
-
-    if primary_cta_text is not None and primary_cta_action_id is not None:
-        primary_cta = {
+        add_to_report_cta = {
             'type': 'button',
             'style': 'primary',
             'text': {
                 'type': 'plain_text',
-                'text': primary_cta_text,
+                'text': 'Submit Report',
                 'emoji': True,
             },
-            'value': primary_cta_value,
-            'action_id': primary_cta_action_id
+            'value': expense['id'],
+            'action_id': 'add_expense_to_report'
         }
 
-    edit_expense_cta = {
+        actions.append(add_to_report_cta)
+
+    complete_expense_cta = {
         'type': 'button',
         'text': {
             'type': 'plain_text',
-            'text': 'Edit Expense',
+            'text': 'Complete Expense',
             'emoji': True,
         },
         'value': expense['id'],
         'action_id': 'edit_expense',
     }
+
+    if expense['state'] == 'DRAFT':
+        actions.insert(0, complete_expense_cta)
 
     view_in_fyle_cta = {
         'type': 'button',
@@ -782,15 +802,10 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
         'action_id': 'expense_view_in_fyle',
     }
 
-    actions = [
-        view_in_fyle_cta
-    ]
+    if len(actions) == 0:
+        actions.append(view_in_fyle_cta)
 
-    if expense['state'] in ['DRAFT', 'COMPLETE']:
-        actions.insert(0, edit_expense_cta)
-
-    if primary_cta is not None:
-        actions.insert(0, primary_cta)
+    expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
     view_expense_blocks =  [
         {
@@ -799,7 +814,30 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
             'text': {
                 'type': 'mrkdwn',
                 'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
-            }
+            },
+            "accessory": {
+				"type": "overflow",
+				"options": [
+					{
+						"text": {
+							"type": "plain_text",
+							"text": ":pencil: Edit",
+							"emoji": True
+						},
+						"value": "edit_expense_accessory.{}".format(expense['id'])
+					},
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': ':arrow_upper_right: Open in Fyle',
+                            'emoji': True
+                        },
+                        'url': expense_url,
+                        'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
+                    }
+				],
+				"action_id": "expense_accessory"
+			}
         },
         {
             'type': 'section',
@@ -1004,30 +1042,6 @@ def get_view_report_details_dialog(user: User, report: Dict, expenses: List[Dict
                 'accessory': {
                     'type': 'overflow',
                     'options': [
-                        {
-                            'text': {
-                                'type': 'plain_text',
-                                'text': ':pencil: Edit',
-                                'emoji': True
-                            },
-                            'value': 'edit_expense_accessory'
-                        },
-                        {
-                            'text': {
-                                'type': 'plain_text',
-                                'text': ':page_facing_up:  View Details',
-                                'emoji': True
-                            },
-                            'value': 'view_expense_accessory'
-                        },
-                        {
-                            'text': {
-                                'type': 'plain_text',
-                                'text': ':broom: Remove from Report',
-                                'emoji': True
-                            },
-                            'value': 'remove_expense_from_report_accessory'
-                        },
                         {
                             'text': {
                                 'type': 'plain_text',
