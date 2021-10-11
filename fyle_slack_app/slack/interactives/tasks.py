@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Union
+from typing import Dict, List
 
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
@@ -6,20 +6,6 @@ from fyle_slack_app.fyle.utils import get_fyle_profile
 from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
-
-
-def check_project_in_form(fields_render_property: Dict, private_metadata: Dict) -> Union[bool, Any]:
-
-    is_project_available = False
-    project = None
-
-    if fields_render_property['project'] is True:
-
-        is_project_available = True
-
-        project = private_metadata.get('project')
-
-    return is_project_available, project
 
 
 def get_custom_field_blocks(current_blocks: List[Dict]) -> List[Dict]:
@@ -98,8 +84,6 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
     project_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'project_loading_block'), None)
     current_ui_blocks.pop(project_loading_block_index)
 
-    fields_render_property['project'] = True
-
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
     new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, selected_project=project, additional_currency_details=additional_currency_details, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
@@ -131,9 +115,7 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
     category_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'category_loading_block'), None)
     current_ui_blocks.pop(category_loading_block_index)
 
-    is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
-
-    fields_render_property['project'] = is_project_available
+    project = decoded_private_metadata.get('project')
 
     new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, custom_fields=custom_fields, selected_project=project, additional_currency_details=additional_currency_details, add_to_report=add_to_report, private_metadata=private_metadata)
 
@@ -174,11 +156,9 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
     decoded_private_metadata['additional_currency_details'] = additional_currency_details
 
-    is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
+    project = decoded_private_metadata.get('project')
 
     custom_fields = get_custom_field_blocks(current_ui_blocks)
-
-    fields_render_property['project'] = is_project_available
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
@@ -219,9 +199,7 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     custom_fields = get_custom_field_blocks(current_ui_blocks)
 
-    is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
-
-    fields_render_property['project'] = is_project_available
+    project = decoded_private_metadata.get('project')
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 

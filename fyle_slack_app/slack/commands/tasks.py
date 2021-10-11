@@ -132,6 +132,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     is_cost_centers_available = True if cost_centers['count'] > 0 else False
 
+    # Create a expense fields render property and set them optional in the form
     fields_render_property = {
         'project': is_project_available,
         'cost_center': is_cost_centers_available,
@@ -146,6 +147,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     add_to_report = 'existing_report'
 
+    # Caching details in slack private metadata so that they can be reused again in the form without computing them again
     private_metadata = {
         'fields_render_property': fields_render_property,
         'home_currency': home_currency,

@@ -6,7 +6,6 @@ from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.libs import logger, utils
 from fyle_slack_app.slack import utils as slack_utils
-from fyle_slack_app.slack.interactives.tasks import check_project_in_form
 
 
 logger = logger.get_logger(__name__)
@@ -79,11 +78,9 @@ class BlockSuggestionHandler:
 
         decoded_private_metadata = utils.decode_state(private_metadata)
 
-        fields_render_property = decoded_private_metadata['fields_render_property']
+        project = decoded_private_metadata.get('project')
 
-        is_project_available, project = check_project_in_form(fields_render_property, decoded_private_metadata)
-
-        if is_project_available is True and project is not None:
+        if project is not None:
             category_query_params['id'] = 'in.{}'.format(tuple(project['category_ids']))
 
         suggested_categories = fyle_expense.get_categories(category_query_params)

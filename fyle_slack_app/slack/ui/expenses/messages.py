@@ -20,6 +20,7 @@ def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
 # pylint: disable=too-many-branches
 # is_additional_field is for fields which are not custom fields but are part of a specific categories
 def generate_field_ui(field_details: Dict, is_additional_field: bool = False, expense: Dict = None) -> Dict:
+
     block_id = '{}_block'.format(field_details['column_name'])
     action_id = field_details['column_name']
 
@@ -29,11 +30,15 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False, ex
 
     # We need to define addtional fields as custom fields so that we can clear them out in form when category is changed
     if field_details['is_custom'] is True or is_additional_field is True:
+
+        # block_id for additional field
         block_id = '{}_additional_field_{}_block'.format(field_details['type'], field_details['column_name'])
+
         if field_details['is_custom'] is True:
             block_id = '{}_custom_field_{}_block'.format(field_details['type'], field_details['column_name'])
             action_id = '{}'.format(field_details['field_name'])
 
+    # If already exisiting expense is passed then get the custom field value for that expense and add it to input fields
     if expense is not None:
         if is_additional_field is True:
             custom_field_value = expense[action_id]
@@ -181,6 +186,7 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False, ex
     return custom_field
 
 
+# Amount and currency block as individual function since Fyle has foreign amount and currency business logic
 def get_amount_and_currency_block(additional_currency_details: Dict = None, expense: Dict = None) -> List:
     blocks = []
 
@@ -585,6 +591,7 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
     }
     blocks.append(add_to_report_block)
 
+    # Mapping of input UI to generate based on `Add to Exisiting Report` or `Add to New Report` selection
     add_to_report_mapping = {
         'new_report': {
             'ui': {
@@ -681,8 +688,13 @@ def expense_dialog_form(
 
     # If custom fields are present, render them in the form
     if custom_fields is not None:
+
+        # If cached custom fields are pass, render/ add them to UI directly
+        # Cached custom fields come from slack request payload which sends UI blocks on interaction
         if isinstance(custom_fields, list):
             view['blocks'].extend(custom_fields)
+
+        # Generated custom fields UI and then add them to UI
         elif 'count' in custom_fields and custom_fields['count'] > 0:
             for field in custom_fields['data']:
 
@@ -695,6 +707,7 @@ def expense_dialog_form(
                 if custom_field is not None:
                     view['blocks'].append(custom_field)
 
+    # Putting cost center block at end to maintain Fyle expense form order
     if fields_render_property['cost_center'] is True:
 
         cost_center_block = get_cost_centers_block(expense)
@@ -707,6 +720,7 @@ def expense_dialog_form(
         'type': 'divider'
     })
 
+    # Add to report section
     if add_to_report is not None:
         add_to_report_blocks = get_add_to_report_blocks(add_to_report, action_id='add_to_report')
 
@@ -815,17 +829,17 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
                 'type': 'mrkdwn',
                 'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
             },
-            "accessory": {
-				"type": "overflow",
-				"options": [
-					{
-						"text": {
-							"type": "plain_text",
-							"text": ":pencil: Edit",
-							"emoji": True
-						},
-						"value": "edit_expense_accessory.{}".format(expense['id'])
-					},
+            'accessory': {
+                'type': 'overflow',
+                'options': [
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': ':pencil: Edit',
+                            'emoji': True
+                        },
+                        'value': 'edit_expense_accessory.{}'.format(expense['id'])
+                    },
                     {
                         'text': {
                             'type': 'plain_text',
@@ -835,9 +849,9 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
                         'url': expense_url,
                         'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
                     }
-				],
-				"action_id": "expense_accessory"
-			}
+                ],
+                'action_id': 'expense_accessory'
+            }
         },
         {
             'type': 'section',
@@ -1103,11 +1117,11 @@ def report_submitted_message(user: User, report: Dict) -> List[Dict]:
             ]
         },
         {
-            "type": "context",
-            "elements": [
+            'type': 'context',
+            'elements': [
                 {
-                    "type": "mrkdwn",
-                    "text": ":bell: You will be notified when any action is taken by your approver"
+                    'type': 'mrkdwn',
+                    'text': ':bell: You will be notified when any action is taken by your approver'
                 }
             ]
         },
