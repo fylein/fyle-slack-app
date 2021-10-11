@@ -748,8 +748,8 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
                 'text': 'Attach Receipt',
                 'emoji': True,
             },
-            'value': 'attach_receipt',
-            'action_id': expense['id']
+            'value': expense['id'],
+            'action_id': 'attach_receipt'
         }
 
         actions.append(attach_receipt_cta)

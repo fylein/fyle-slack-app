@@ -38,8 +38,7 @@ class BlockActionHandler:
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
             'edit_expense': self.handle_edit_expense,
-
-            # Dynamic options
+            'attach_receipt': self.handle_attach_receipt,
             'category_id': self.handle_category_select,
             'project_id': self.handle_project_select,
             'currency': self.handle_currency_select,
@@ -449,6 +448,24 @@ class BlockActionHandler:
         add_expense_to_report_dialog['private_metadata'] = report_id
 
         slack_client.views_open(trigger_id=trigger_id, user=user_id, view=add_expense_to_report_dialog)
+
+        return JsonResponse({})
+
+
+    def handle_attach_receipt(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        message_ts = slack_payload['container']['message_ts']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        attach_receipt_message = '*Drag* or *attach* a receipt (to the message box) for this expense!'
+
+        slack_client = get_slack_client(team_id)
+
+        slack_client.chat_postMessage(
+            text=attach_receipt_message,
+            thread_ts=message_ts,
+            channel=user.slack_dm_channel_id
+        )
 
         return JsonResponse({})
 
