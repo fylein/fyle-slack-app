@@ -781,7 +781,7 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
             'style': 'primary',
             'text': {
                 'type': 'plain_text',
-                'text': 'Submit Report',
+                'text': 'Add to Report',
                 'emoji': True,
             },
             'value': expense['id'],
@@ -899,6 +899,8 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
     if len(expense['file_ids']) > 0:
         receipt_message = ':white_check_mark: Attached'
 
+    add_to_report_blocks = get_add_to_report_blocks(add_to_report=add_to_report, action_id='add_expense_to_report_selection')
+
     add_to_report_dialog = {
         'title': {
             'type': 'plain_text',
@@ -912,63 +914,81 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
         },
         'type': 'modal',
         'callback_id': 'add_expense_to_report',
+        'private_metadata': expense['id'],
         'close': {
             'type': 'plain_text',
             'text': 'Cancel',
             'emoji': True
         },
-        'blocks': [
-            {
-                'type': 'divider'
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Amount* \n {} {}'.format(expense['currency'], expense['amount'])
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Date of Spend* \n {}'.format(utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y'))
-                    }
-                ]
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Report* \n {}'.format(report_message)
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Receipt* \n {}'.format(receipt_message)
-                    }
-                ]
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Category* \n {}'.format(expense['category']['name'])
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Project* \n {}'.format(expense['project']['name'])
-                    }
-                ]
-            },
-            {
-                'type': 'divider'
-            },
-        ]
     }
 
-    add_to_report_blocks = get_add_to_report_blocks(add_to_report=add_to_report, action_id='add_expense_to_report_selection')
+    add_to_report_dialog['blocks'] = []
 
-    add_to_report_dialog['blocks'].extend(add_to_report_blocks)
+    add_to_report_dialog['blocks'] = add_to_report_blocks
+
+    expense_details_block = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '\n'
+            },
+        },
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': ':page_facing_up: *Expense Details*'
+            },
+        },
+        {
+            'type': 'divider'
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Amount* \n {} {}'.format(expense['currency'], expense['amount'])
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Date of Spend* \n {}'.format(utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y'))
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Report* \n {}'.format(report_message)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Receipt* \n {}'.format(receipt_message)
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Category* \n {}'.format(expense['category']['name'])
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Project* \n {}'.format(expense['project']['name'])
+                }
+            ]
+        },
+        {
+            'type': 'divider'
+        }
+    ]
+
+    add_to_report_dialog['blocks'].extend(expense_details_block)
 
     return add_to_report_dialog
 

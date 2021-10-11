@@ -341,6 +341,8 @@ class BlockActionHandler:
 
         fyle_expense = FyleExpense(user)
 
+        expense_id = 'txCCVGvNpDMM'
+
         expense_query_params = {
             'offset': 0,
             'limit': '1',

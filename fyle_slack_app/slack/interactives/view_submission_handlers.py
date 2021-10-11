@@ -135,7 +135,17 @@ class ViewSubmissionHandler:
 
 
     def handle_add_expense_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        print('SLACK PAYLOAD VALUES -> ', slack_payload['view']['state']['values'])
+
+        add_expense_to_report_form_values = slack_payload['view']['state']['values']
+        expense_id = slack_payload['view']['private_metadata']
+
+        if 'TEXT_add_to_new_report_block' in add_expense_to_report_form_values:
+            report_name = add_expense_to_report_form_values['TEXT_add_to_new_report_block']['report_name']['value']
+
+        elif 'SELECT_add_to_existing_report_block' in add_expense_to_report_form_values:
+            existing_report_id = add_expense_to_report_form_values['SELECT_add_to_existing_report_block']['existing_report']['selected_option']['value']
+
+
         return JsonResponse({})
 
 
