@@ -86,7 +86,13 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
-    new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, selected_project=project, additional_currency_details=additional_currency_details, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
+    new_expense_dialog_form = expense_dialog_form(
+        fields_render_property=fields_render_property,
+        selected_project=project,
+        additional_currency_details=additional_currency_details,
+        add_to_report=add_to_report,
+        private_metadata=encoded_private_metadata
+    )
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
@@ -117,7 +123,14 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
 
     project = decoded_private_metadata.get('project')
 
-    new_expense_dialog_form = expense_dialog_form(fields_render_property=fields_render_property, custom_fields=custom_fields, selected_project=project, additional_currency_details=additional_currency_details, add_to_report=add_to_report, private_metadata=private_metadata)
+    new_expense_dialog_form = expense_dialog_form(
+        fields_render_property=fields_render_property,
+        custom_fields=custom_fields,
+        selected_project=project,
+        additional_currency_details=additional_currency_details,
+        add_to_report=add_to_report,
+        private_metadata=private_metadata
+    )
 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
@@ -162,7 +175,14 @@ def handle_currency_select(user: User, team_id: str, slack_payload: str) -> None
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
-    expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
+    expense_form = expense_dialog_form(
+        selected_project=project,
+        fields_render_property=fields_render_property,
+        additional_currency_details=additional_currency_details,
+        custom_fields=custom_fields,
+        add_to_report=add_to_report,
+        private_metadata=encoded_private_metadata
+    )
 
     slack_client.views_update(view_id=view_id, view=expense_form)
 
@@ -203,7 +223,14 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
     encoded_private_metadata = encode_state(decoded_private_metadata)
 
-    expense_form = expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, add_to_report=add_to_report, custom_fields=custom_fields, private_metadata=encoded_private_metadata)
+    expense_form = expense_dialog_form(
+        selected_project=project,
+        fields_render_property=fields_render_property,
+        additional_currency_details=additional_currency_details,
+        add_to_report=add_to_report,
+        custom_fields=custom_fields,
+        private_metadata=encoded_private_metadata
+    )
 
     slack_client.views_update(view_id=view_id, view=expense_form)
 
@@ -282,6 +309,13 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
 
     encoded_metadata = encode_state(private_metadata)
 
-    expense_form = expense_dialog_form(expense=expense, fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details, add_to_report=add_to_report, custom_fields=custom_fields)
+    expense_form = expense_dialog_form(
+        expense=expense,
+        fields_render_property=fields_render_property,
+        private_metadata=encoded_metadata,
+        additional_currency_details=additional_currency_details,
+        add_to_report=add_to_report,
+        custom_fields=custom_fields
+    )
 
     slack_client.views_update(view=expense_form, view_id=view_id)
