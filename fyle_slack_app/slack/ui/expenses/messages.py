@@ -824,7 +824,7 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
     view_expense_blocks =  [
         {
             'type': 'section',
-            'block_id': expense['id'],
+            'block_id': 'expense_id.{}'.format(expense['id']),
             'text': {
                 'type': 'mrkdwn',
                 'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])

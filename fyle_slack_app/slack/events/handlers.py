@@ -25,7 +25,8 @@ class SlackEventHandler:
         self._event_callback_handlers = {
             'team_join': self.handle_new_user_joined,
             'app_home_opened': self.handle_app_home_opened,
-            'app_uninstalled': self.handle_app_uninstalled
+            'app_uninstalled': self.handle_app_uninstalled,
+            'file_shared': self.handle_file_shared
         }
 
 
@@ -95,3 +96,52 @@ class SlackEventHandler:
         slack_client.views_publish(user_id=user_id, view=dashboard_view)
 
         return JsonResponse({}, status=200)
+
+
+    def handle_file_shared(self, slack_payload: Dict, team_id: str) -> JsonResponse:
+
+        slack_client = slack_utils.get_slack_client(team_id)
+        file_id = slack_payload['event']['file_id']
+
+        file_info =  slack_client.files_info(file=file_id)
+
+        print('FILE INFO -> ', file_info)
+
+        user_id = slack_payload['event']['user_id']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        file_message_details = file_info['file']['shares']['private'][user.slack_dm_channel_id][0]
+
+        # If thread_ts is present in message, this means file has been shared in a thread
+        if 'thread_ts' in file_message_details:
+            thread_ts = file_message_details['thread_ts']
+
+            message_history = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)
+
+            parent_message = message_history['messages'][0]
+
+            # If a user upload a file which doesn't contain blocks, don't do anything
+            if 'blocks' in parent_message:
+                expense_block_id = parent_message['blocks'][0]['block_id']
+
+                # If `expense_id` is present in message block id, this means user has uploaded the file to an expense thread
+                # i.e. this file needs to be attached to an expense as a receipt
+                if 'expense_id' in expense_block_id:
+                    _ , expense_id = expense_block_id.split('.')
+
+                    print('ATTACH RECEIPT TO EXPENSE FLOW')
+                    print('EXPENSE ID -> ', expense_id)
+
+        # This else block means file has been shared as a new message and an expense will be created with the file as receipt
+        # i.e. data extraction flow
+        else:
+            print('DE FLOW')
+
+
+        response = JsonResponse({}, status=200)
+
+        # Passing this for slack not to retry `file_shared` event again
+        response['X-Slack-No-Retry'] = 1
+
+        return response
