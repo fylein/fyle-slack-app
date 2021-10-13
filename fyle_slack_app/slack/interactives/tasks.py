@@ -237,11 +237,7 @@ def handle_amount_entered(user: User, team_id: str, slack_payload: str) -> None:
 
 def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: List[Dict]) -> None:
 
-    fyle_expense = FyleExpense(user)
-
     slack_client = get_slack_client(team_id)
-
-    fyle_profile = get_fyle_profile(user.fyle_refresh_token)
 
     expense_id = slack_payload['actions'][0]['value']
     expense_id = 'txCCVGvNpDMM'
@@ -259,63 +255,25 @@ def handle_edit_expense(user: User, team_id: str, view_id: str, slack_payload: L
 
     expense = expense['data'][0]
 
-    home_currency = fyle_profile['org']['currency']
-
-    is_project_available = False
-    is_cost_centers_available = False
-
-    projects_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'is_enabled': 'eq.{}'.format(True)
-    }
-
-    projects = fyle_expense.get_projects(projects_query_params)
-
-    is_project_available = True if projects['count'] > 0 else False
-
-    cost_centers_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'is_enabled': 'eq.{}'.format(True)
-    }
-
-    cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
-
-    is_cost_centers_available = True if cost_centers['count'] > 0 else False
-
     custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
 
-    fields_render_property = {
-        'project': is_project_available,
-        'cost_center': is_cost_centers_available
-    }
+    expense_form_details = FyleExpense.get_expense_form_details(user)
 
-    additional_currency_details = {
-        'home_currency': home_currency
-    }
+    private_metadata = decode_state(expense_form_details['private_metadata'])
 
-    add_to_report = 'existing_report'
-
-    private_metadata = {
-        'fields_render_property': fields_render_property,
-        'additional_currency_details': additional_currency_details,
-        'expense_id': expense_id,
-        'add_to_report': add_to_report,
-        'message_ts': slack_payload['container']['message_ts']
-    }
+    # Add additional metadata to differentiate create and edit expense
+    # message_ts to update message in edit case
+    private_metadata['expense_id'] = expense_id
+    private_metadata['message_ts'] = slack_payload['container']['message_ts']
 
     encoded_metadata = encode_state(private_metadata)
 
+    expense_form_details['private_metadata'] = encoded_metadata
+
     expense_form = expense_dialog_form(
         expense=expense,
-        fields_render_property=fields_render_property,
-        private_metadata=encoded_metadata,
-        additional_currency_details=additional_currency_details,
-        add_to_report=add_to_report,
-        custom_fields=custom_fields
+        custom_fields=custom_fields,
+        **expense_form_details
     )
 
     slack_client.views_update(view=expense_form, view_id=view_id)

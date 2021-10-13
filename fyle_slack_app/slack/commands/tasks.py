@@ -95,68 +95,79 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
 
 def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
-    fyle_expense = FyleExpense(user)
-
-    default_expense_fields = fyle_expense.get_default_expense_fields()
-
     slack_client = slack_utils.get_slack_client(team_id)
 
-    fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
+    # fyle_expense = FyleExpense(user)
 
-    home_currency = fyle_profile['org']['currency']
+    # default_expense_fields = fyle_expense.get_default_expense_fields()
 
-    field_type_mandatory_mapping = fyle_expense.get_expense_fields_type_mandatory_mapping(default_expense_fields)
+    # fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
 
-    is_project_available = False
-    is_cost_centers_available = False
+    # home_currency = fyle_profile['org']['currency']
 
-    projects_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'is_enabled': 'eq.{}'.format(True)
-    }
+    # default_expense_fields = fyle_expense.get_default_expense_fields()
 
-    projects = fyle_expense.get_projects(projects_query_params)
+    # field_type_mandatory_mapping = fyle_expense.get_expense_fields_type_mandatory_mapping(default_expense_fields)
 
-    is_project_available = True if projects['count'] > 0 else False
+    # is_project_available = False
+    # is_cost_center_available = False
 
-    cost_centers_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'is_enabled': 'eq.{}'.format(True)
-    }
+    # projects_query_params = {
+    #     'offset': 0,
+    #     'limit': '1',
+    #     'order': 'created_at.desc',
+    #     'is_enabled': 'eq.{}'.format(True)
+    # }
 
-    cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
+    # projects = fyle_expense.get_projects(projects_query_params)
 
-    is_cost_centers_available = True if cost_centers['count'] > 0 else False
+    # is_project_available = True if projects['count'] > 0 else False
 
-    # Create a expense fields render property and set them optional in the form
-    fields_render_property = {
-        'project': is_project_available,
-        'cost_center': is_cost_centers_available,
-        'purpose': field_type_mandatory_mapping['purpose'],
-        'transaction_date': field_type_mandatory_mapping['txn_dt'],
-        'vendor': field_type_mandatory_mapping['vendor_id']
-    }
+    # cost_centers_query_params = {
+    #     'offset': 0,
+    #     'limit': '1',
+    #     'order': 'created_at.desc',
+    #     'is_enabled': 'eq.{}'.format(True)
+    # }
 
-    additional_currency_details = {
-        'home_currency': home_currency
-    }
+    # cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
 
-    add_to_report = 'existing_report'
+    # is_cost_center_available = True if cost_centers['count'] > 0 else False
 
-    # Caching details in slack private metadata so that they can be reused again in the form without computing them again
-    private_metadata = {
-        'fields_render_property': fields_render_property,
-        'home_currency': home_currency,
-        'additional_currency_details': additional_currency_details,
-        'add_to_report': add_to_report
-    }
+    # # Create a expense fields render property and set them optional in the form
+    # fields_render_property = {
+    #     'project': {
+    #         'is_project_available': is_project_available,
+    #         'is_mandatory': field_type_mandatory_mapping['project_id']
+    #     },
+    #     'cost_center': {
+    #         'is_cost_center_available': is_cost_center_available,
+    #         'is_mandatory': field_type_mandatory_mapping['cost_center_id']
+    #     },
+    #     'purpose': field_type_mandatory_mapping['purpose'],
+    #     'transaction_date': field_type_mandatory_mapping['txn_dt'],
+    #     'vendor': field_type_mandatory_mapping['vendor_id']
+    # }
 
-    encoded_metadata = utils.encode_state(private_metadata)
+    # additional_currency_details = {
+    #     'home_currency': home_currency
+    # }
 
-    expense_form = expense_messages.expense_dialog_form(fields_render_property=fields_render_property, private_metadata=encoded_metadata, additional_currency_details=additional_currency_details, add_to_report=add_to_report)
+    # add_to_report = 'existing_report'
+
+    # # Caching details in slack private metadata so that they can be reused again in the form without computing them again
+    # private_metadata = {
+    #     'fields_render_property': fields_render_property,
+    #     'additional_currency_details': additional_currency_details,
+    #     'add_to_report': add_to_report
+    # }
+
+    # encoded_metadata = utils.encode_state(private_metadata)
+
+    expense_form_details = FyleExpense.get_expense_form_details(user)
+
+    expense_form = expense_messages.expense_dialog_form(
+        **expense_form_details
+    )
 
     slack_client.views_update(view=expense_form, view_id=view_id)

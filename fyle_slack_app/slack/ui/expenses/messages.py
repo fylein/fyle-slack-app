@@ -50,6 +50,7 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False, ex
         custom_field = {
             'type': 'input',
             'block_id': block_id,
+            'optional': not field_details['is_mandatory'],
             'label': {
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
@@ -82,6 +83,7 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False, ex
                 'emoji': True,
             },
             'block_id': block_id,
+            'optional': not field_details['is_mandatory'],
             'element': {
                 'type': field_type,
                 'placeholder': {
@@ -164,6 +166,7 @@ def generate_field_ui(field_details: Dict, is_additional_field: bool = False, ex
         custom_field = {
             'type': 'input',
             'block_id': block_id,
+            'optional': not field_details['is_mandatory'],
             'element': {
                 'type': 'datepicker',
                 'placeholder': {
@@ -406,6 +409,8 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
 
 
 def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict = None) -> Dict:
+    billable_block = None
+
     project_block = {
         'type': 'input',
         'block_id': 'project_block',
@@ -447,24 +452,26 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
             'value': str(selected_project['id']),
         }
 
-    billable_block = {
-        'type': 'input',
-        'block_id': 'billable_block',
-        'element': {
-            'type': 'checkboxes',
-            'options': [
-                {
-                    'text': {
-                        'type': 'plain_text',
-                        'text': 'Billable',
-                        'emoji': True
+        # Render billable block only when project is selected
+        billable_block = {
+            'type': 'input',
+            'block_id': 'billable_block',
+            'optional': True,
+            'element': {
+                'type': 'checkboxes',
+                'options': [
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': 'Billable',
+                            'emoji': True
+                        }
                     }
-                }
-            ],
-            'action_id': 'is_billable'
-        },
-        'label': {'type': 'plain_text', 'text': 'Billable', 'emoji': True},
-    }
+                ],
+                'action_id': 'is_billable'
+            },
+            'label': {'type': 'plain_text', 'text': 'Billable', 'emoji': True},
+        }
 
     return project_block, billable_block
 
@@ -673,13 +680,16 @@ def expense_dialog_form(
 
     view['blocks'] = get_default_fields_blocks(additional_currency_details, expense)
 
-    if fields_render_property['project'] is True:
+    if fields_render_property['project']['is_project_available'] is True:
 
         project_block, billable_block = get_projects_and_billable_block(selected_project, expense)
 
+        project_block['optional'] = not fields_render_property['project']['is_mandatory']
+
         view['blocks'].append(project_block)
 
-        view['blocks'].append(billable_block)
+        if billable_block is not None:
+            view['blocks'].append(billable_block)
 
     category_block = get_categories_block(expense)
 
@@ -708,9 +718,11 @@ def expense_dialog_form(
                     view['blocks'].append(custom_field)
 
     # Putting cost center block at end to maintain Fyle expense form order
-    if fields_render_property['cost_center'] is True:
+    if fields_render_property['cost_center']['is_cost_center_available'] is True:
 
         cost_center_block = get_cost_centers_block(expense)
+
+        cost_center_block['optional'] = not fields_render_property['cost_center']['is_mandatory']
 
         view['blocks'].append(cost_center_block)
 
