@@ -86,6 +86,7 @@ class ViewSubmissionHandler:
         slack_client = slack_utils.get_slack_client(team_id)
 
         expense_id = 'txCCVGvNpDMM'
+        # expense_id = 'tx0mjvrfuizk'
 
         fyle_expense = FyleExpense(user)
 
