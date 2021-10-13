@@ -10,7 +10,6 @@ from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
-from fyle_slack_app.slack.interactives import tasks
 from fyle_slack_app import tracking
 
 
@@ -265,11 +264,17 @@ class BlockActionHandler:
 
 
     def handle_currency_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
         user = utils.get_or_none(User, slack_user_id=user_id)
+
+        selected_currency = slack_payload['actions'][0]['selected_option']['value']
+
+        view_id = slack_payload['container']['view_id']
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_currency_select',
-            user,
+            selected_currency,
+            view_id,
             team_id,
             slack_payload
         )
@@ -281,9 +286,14 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
+        amount_entered = slack_payload['actions'][0]['value']
+
+        view_id = slack_payload['container']['view_id']
+
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_amount_entered',
-            user,
+            amount_entered,
+            view_id,
             team_id,
             slack_payload
         )
@@ -299,27 +309,23 @@ class BlockActionHandler:
 
         slack_client = get_slack_client(team_id)
 
-        private_metadata = slack_payload['view']['private_metadata']
+        current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
+
+        private_metadata = current_expense_form_details['private_metadata']
 
         decoded_private_metadata = utils.decode_state(private_metadata)
 
-        fields_render_property = decoded_private_metadata['fields_render_property']
-
-        current_ui_blocks = slack_payload['view']['blocks']
-
-        additional_currency_details = decoded_private_metadata.get('additional_currency_details')
-
-        is_project_available, project = tasks.check_project_in_form(fields_render_property, decoded_private_metadata)
-
-        custom_fields = tasks.get_custom_field_blocks(current_ui_blocks)
-
-        fields_render_property['project'] = is_project_available
+        current_expense_form_details['add_to_report'] = add_to_report
 
         decoded_private_metadata['add_to_report'] = add_to_report
 
         encoded_private_metadata = utils.encode_state(decoded_private_metadata)
 
-        expense_form = expense_messages.expense_dialog_form(selected_project=project, fields_render_property=fields_render_property, additional_currency_details=additional_currency_details, custom_fields=custom_fields, add_to_report=add_to_report, private_metadata=encoded_private_metadata)
+        current_expense_form_details['private_metadata'] = encoded_private_metadata
+
+        expense_form = expense_messages.expense_dialog_form(
+            **current_expense_form_details
+        )
 
         slack_client.views_update(view_id=view_id, view=expense_form)
 
@@ -398,11 +404,14 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
+        expense_id = slack_payload['actions'][0]['value']
+
         response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_edit_expense',
             user,
+            expense_id,
             team_id,
             response['view']['id'],
             slack_payload
