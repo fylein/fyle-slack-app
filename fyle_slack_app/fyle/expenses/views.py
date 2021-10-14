@@ -17,8 +17,7 @@ class FyleExpense:
 
 
     def get_expense_fields(self, query_params: Dict) -> Dict:
-        expense_fields = self.connection.v1.fyler.expense_fields.list(query_params=query_params)
-        return expense_fields
+        return self.connection.v1.fyler.expense_fields.list(query_params=query_params)
 
 
     def get_default_expense_fields(self) -> Dict:
@@ -32,9 +31,7 @@ class FyleExpense:
             'is_mandatory': 'eq.{}'.format(True)
         }
 
-        default_expense_fields = self.get_expense_fields(default_expense_fields_query_params)
-
-        return default_expense_fields
+        return self.get_expense_fields(default_expense_fields_query_params)
 
 
     def get_custom_fields_by_category_id(self, category_id: str) -> Dict:
@@ -47,34 +44,27 @@ class FyleExpense:
             'category_ids': 'cs.[{}]'.format(int(category_id))
         }
 
-        custom_fields = self.get_expense_fields(custom_fields_query_params)
-
-        return custom_fields
+        return self.get_expense_fields(custom_fields_query_params)
 
 
     def get_categories(self, query_params: Dict) -> Dict:
-        categories = self.connection.v1.fyler.categories.list(query_params=query_params)
-        return categories
+        return self.connection.v1.fyler.categories.list(query_params=query_params)
 
 
     def get_projects(self, query_params: Dict) -> Dict:
-        projects = self.connection.v1.fyler.projects.list(query_params=query_params)
-        return projects
+        return self.connection.v1.fyler.projects.list(query_params=query_params)
 
 
     def get_cost_centers(self, query_params: Dict) -> Dict:
-        cost_centers = self.connection.v1.fyler.cost_centers.list(query_params=query_params)
-        return cost_centers
+        return self.connection.v1.fyler.cost_centers.list(query_params=query_params)
 
 
     def get_expenses(self, query_params: Dict) -> Dict:
-        expenses = self.connection.v1.fyler.expenses.list(query_params=query_params)
-        return expenses
+        return self.connection.v1.fyler.expenses.list(query_params=query_params)
 
 
     def get_reports(self, query_params: Dict) -> Dict:
-        reports = self.connection.v1.fyler.reports.list(query_params=query_params)
-        return reports
+        return self.connection.v1.fyler.reports.list(query_params=query_params)
 
 
     @staticmethod
