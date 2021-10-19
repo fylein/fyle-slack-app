@@ -424,39 +424,23 @@ class BlockActionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
+        loading_modal = expense_messages.expense_form_loading_modal(title='Report Details', loading_message='Loading report details :open_file_folder: ')
+
+        slack_client = get_slack_client(team_id)
+
         report_id = slack_payload['actions'][0]['value']
 
         report_id = 'rpKJGi7nRzMF'
 
-        trigger_id = slack_payload['trigger_id']
+        response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
 
-        slack_client = get_slack_client(team_id)
-
-        fyle_expense = FyleExpense(user)
-
-        expense_query_params = {
-            'offset': 0,
-            'limit': '30',
-            'order': 'created_at.desc',
-            'report_id': 'eq.{}'.format(report_id)
-        }
-
-        expenses = fyle_expense.get_expenses(query_params=expense_query_params)
-
-        report_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'id': 'eq.{}'.format(report_id)
-        }
-
-        report = fyle_expense.get_reports(query_params=report_query_params)
-
-        add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(user, report=report['data'][0], expenses=expenses['data'])
-
-        add_expense_to_report_dialog['private_metadata'] = report_id
-
-        slack_client.views_open(trigger_id=trigger_id, user=user_id, view=add_expense_to_report_dialog)
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_submit_report_dialog',
+            user,
+            team_id,
+            report_id,
+            response['view']['id']
+        )
 
         return JsonResponse({})
 
