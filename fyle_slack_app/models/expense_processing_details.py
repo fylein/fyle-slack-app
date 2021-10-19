@@ -25,4 +25,4 @@ class ExpenseProcessingDetails(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return '{} - {} - {}'.format(self.slack_user_id, self.view_id, self.is_successfully_processed)
+        return '{} - {} - {}'.format(self.slack_user.slack_user_id, self.slack_view_id, self.is_successfully_processed)
