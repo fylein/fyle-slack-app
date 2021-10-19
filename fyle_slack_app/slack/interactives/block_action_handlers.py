@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django_q.tasks import async_task
 
 from fyle_slack_app.fyle.expenses.views import FyleExpense
-from fyle_slack_app.models import User, NotificationPreference
+from fyle_slack_app.models import User, NotificationPreference, ExpenseProcessingDetails
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
@@ -311,17 +311,18 @@ class BlockActionHandler:
 
         current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
 
-        private_metadata = current_expense_form_details['private_metadata']
+        expense_processing_details = ExpenseProcessingDetails.objects.get(
+            slack_view_id=slack_payload['view']['id']
+        )
 
-        decoded_private_metadata = utils.decode_state(private_metadata)
+        form_metadata = expense_processing_details.form_metadata
 
         current_expense_form_details['add_to_report'] = add_to_report
 
-        decoded_private_metadata['add_to_report'] = add_to_report
+        form_metadata['add_to_report'] = add_to_report
 
-        encoded_private_metadata = utils.encode_state(decoded_private_metadata)
-
-        current_expense_form_details['private_metadata'] = encoded_private_metadata
+        expense_processing_details.form_metadata = form_metadata
+        expense_processing_details.save()
 
         expense_form = expense_messages.expense_dialog_form(
             **current_expense_form_details

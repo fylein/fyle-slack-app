@@ -1,9 +1,9 @@
 from typing import Dict, List
 
-from fyle_slack_app.models import User
+from fyle_slack_app.models import User, ExpenseProcessingDetails
+from fyle_slack_app.models.expense_processing_details import ExpenseFlowType
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
-from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 
@@ -55,7 +55,11 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
-    private_metadata = current_expense_form_details['private_metadata']
+    expense_processing_details = ExpenseProcessingDetails.objects.get(
+        slack_view_id=slack_payload['view']['id']
+    )
+
+    form_metadata = expense_processing_details.form_metadata
 
     current_expense_form_details['selected_project'] = project
 
@@ -65,13 +69,10 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
     project_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'project_loading_block'), None)
     current_ui_blocks.pop(project_loading_block_index)
 
-    decoded_private_metadata = decode_state(private_metadata)
+    form_metadata['project'] = project
 
-    decoded_private_metadata['project'] = project
-
-    encoded_private_metadata = encode_state(decoded_private_metadata)
-
-    current_expense_form_details['private_metadata'] = encoded_private_metadata
+    expense_processing_details.form_metadata = form_metadata
+    expense_processing_details.save()
 
     new_expense_dialog_form = expense_dialog_form(
         **current_expense_form_details
@@ -111,9 +112,11 @@ def handle_currency_select(selected_currency: str, view_id: str, team_id: str, s
 
     current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
 
-    private_metadata = current_expense_form_details['private_metadata']
+    expense_processing_details = ExpenseProcessingDetails.objects.get(
+        slack_view_id=slack_payload['view']['id']
+    )
 
-    decoded_private_metadata = decode_state(private_metadata)
+    form_metadata = expense_processing_details.form_metadata
 
     additional_currency_details = current_expense_form_details['additional_currency_details']
 
@@ -131,11 +134,10 @@ def handle_currency_select(selected_currency: str, view_id: str, team_id: str, s
 
     current_expense_form_details['additional_currency_details'] = additional_currency_details
 
-    decoded_private_metadata['additional_currency_details'] = additional_currency_details
+    form_metadata['additional_currency_details'] = additional_currency_details
 
-    encoded_private_metadata = encode_state(decoded_private_metadata)
-
-    current_expense_form_details['private_metadata'] = encoded_private_metadata
+    expense_processing_details.form_metadata = form_metadata
+    expense_processing_details.save()
 
     expense_form = expense_dialog_form(
         **current_expense_form_details
@@ -154,9 +156,11 @@ def handle_amount_entered(amount_entered: float, view_id: str, team_id: str, sla
 
     current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
 
-    private_metadata = current_expense_form_details['private_metadata']
+    expense_processing_details = ExpenseProcessingDetails.objects.get(
+        slack_view_id=slack_payload['view']['id']
+    )
 
-    decoded_private_metadata = decode_state(private_metadata)
+    form_metadata = expense_processing_details.form_metadata
 
     exchange_rate = 70.12
 
@@ -166,11 +170,10 @@ def handle_amount_entered(amount_entered: float, view_id: str, team_id: str, sla
 
     current_expense_form_details['additional_currency_details'] = additional_currency_details
 
-    decoded_private_metadata['additional_currency_details'] = additional_currency_details
+    form_metadata['additional_currency_details'] = additional_currency_details
 
-    encoded_private_metadata = encode_state(decoded_private_metadata)
-
-    current_expense_form_details['private_metadata'] = encoded_private_metadata
+    expense_processing_details.form_metadata = form_metadata
+    expense_processing_details.save()
 
     expense_form = expense_dialog_form(
         **current_expense_form_details
@@ -200,18 +203,21 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
 
-    expense_form_details = FyleExpense.get_expense_form_details(user)
+    expense_form_details = FyleExpense.get_expense_form_details(user, view_id, ExpenseFlowType.EXPENSE_FORM)
 
-    private_metadata = decode_state(expense_form_details['private_metadata'])
+    expense_processing_details = ExpenseProcessingDetails.objects.get(
+        slack_view_id=view_id
+    )
+
+    form_metadata = expense_processing_details.form_metadata
 
     # Add additional metadata to differentiate create and edit expense
     # message_ts to update message in edit case
-    private_metadata['expense_id'] = expense_id
-    private_metadata['message_ts'] = slack_payload['container']['message_ts']
+    form_metadata['expense_id'] = expense_id
+    form_metadata['message_ts'] = slack_payload['container']['message_ts']
 
-    encoded_metadata = encode_state(private_metadata)
-
-    expense_form_details['private_metadata'] = encoded_metadata
+    expense_processing_details.form_metadata = form_metadata
+    expense_processing_details.save()
 
     expense_form = expense_dialog_form(
         expense=expense,
