@@ -5,6 +5,7 @@ from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 
 
 def get_additional_currency_details(amount: int, home_currency: str, selected_currency: str, exchange_rate: float) -> Dict:
@@ -219,3 +220,34 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
     )
 
     slack_client.views_update(view=expense_form, view_id=view_id)
+
+
+def handle_submit_report_dialog(user: User, team_id: str, report_id: str, view_id: str):
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    expense_query_params = {
+        'offset': 0,
+        'limit': '30',
+        'order': 'created_at.desc',
+        'report_id': 'eq.{}'.format(report_id)
+    }
+
+    expenses = fyle_expense.get_expenses(query_params=expense_query_params)
+
+    report_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'id': 'eq.{}'.format(report_id)
+    }
+
+    report = fyle_expense.get_reports(query_params=report_query_params)
+
+    add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(user, report=report['data'][0], expenses=expenses['data'])
+
+    add_expense_to_report_dialog['private_metadata'] = report_id
+
+    slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
