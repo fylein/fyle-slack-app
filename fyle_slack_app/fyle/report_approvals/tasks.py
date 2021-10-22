@@ -25,8 +25,10 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
     user = utils.get_or_none(User, slack_user_id=user_id)
     assertions.assert_found(user, 'Approver not found')
 
+    fyle_report_approval = FyleReportApproval(user)
+
     try:
-        report = FyleReportApproval.get_report_by_id(user, report_id)
+        report = fyle_report_approval.get_report_by_id(report_id)
     except exceptions.NotFoundItemError as error:
         logger.error('Report not found with id -> %s', report_id)
         logger.error('Error -> %s', error)
@@ -52,7 +54,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         report_notification_message.insert(3, report_deleted_section)
     else:
         report = report['data']
-        can_approve_report, report_message = FyleReportApproval.can_approve_report(
+        can_approve_report, report_message = fyle_report_approval.can_approve_report(
             report,
             user.fyle_user_id
         )
@@ -63,12 +65,12 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
         if can_approve_report is True:
             try:
-                report = FyleReportApproval.approve_report(user, report_id)
+                report = fyle_report_approval.approve_report(report_id)
                 report = report['data']
                 report_message = 'Expense report approved :rocket:'
 
                 # Track report approved
-                FyleReportApproval.track_report_approved(user, report)
+                fyle_report_approval.track_report_approved(user, report)
 
             except exceptions.PlatformError as error:
                 logger.error('Error while processing report approve -> %s', error)
