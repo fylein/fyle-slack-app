@@ -87,7 +87,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 )
                 return None
 
-        report_notification_message = notification_messages.get_report_approval_notification(
+        report_notification_message, title_text = notification_messages.get_report_approval_notification(
             report,
             user_display_name,
             report_url,
@@ -95,6 +95,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
         )
 
     slack_client.chat_update(
+        text=title_text,
         channel=user.slack_dm_channel_id,
         blocks=report_notification_message,
         ts=message_timestamp
