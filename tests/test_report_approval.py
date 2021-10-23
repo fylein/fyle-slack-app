@@ -39,7 +39,7 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     mock_approved_report = mock_fyle.approver.reports.approve()
     fyle_report_approval.approve_report.return_value = mock_approved_report
 
-    notification_messages.get_report_approval_notification.return_value = 'mock-report-approval-notification-message'
+    notification_messages.get_report_approval_notification.return_value = 'mock-report-approval-notification-message', 'mock-title-text'
 
     mock_chat_post_message = 'chat-post-message'
     slack_client.chat_postMessage.return_value = mock_chat_post_message
