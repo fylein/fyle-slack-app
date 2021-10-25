@@ -30,6 +30,7 @@ jobs:
       DB_PASSWORD: fakedbpassword
       DB_HOST: fakedbhost
       DB_PORT: fakedbport
+      FYLE_STOPLIGHT_URL: https://stoplight.io/mocks/fyle/fyle-platform-docs
 
     steps:
     - uses: actions/checkout@v2
