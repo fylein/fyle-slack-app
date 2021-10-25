@@ -1,5 +1,7 @@
 from typing import Dict, Tuple
 
+from fyle.platform.platform import Platform
+
 from fyle_slack_app import tracking
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -8,24 +10,24 @@ from fyle_slack_app.fyle.notifications.views import FyleNotificationView
 
 class FyleReportApproval:
 
-    @staticmethod
-    def get_approver_reports(user: User, query_params: Dict) -> Dict:
-        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
-        approver_reports = connection.v1.approver.reports.list(query_params=query_params)
+    connection: Platform = None
+
+    def __init__(self, user: User) -> None:
+        self.connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
+
+
+    def get_approver_reports(self, query_params: Dict) -> Dict:
+        approver_reports = self.connection.v1.approver.reports.list(query_params=query_params)
         return approver_reports
 
 
-    @staticmethod
-    def get_report_by_id(user: User, report_id: str) -> Dict:
-        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
-        approver_report = connection.v1.approver.reports.get_by_id(report_id)
+    def get_report_by_id(self, report_id: str) -> Dict:
+        approver_report = self.connection.v1.approver.reports.get_by_id(report_id)
         return approver_report
 
 
-    @staticmethod
-    def approve_report(user: User, report_id: str) -> Dict:
-        connection = fyle_utils.get_fyle_sdk_connection(user.fyle_refresh_token)
-        approved_report = connection.v1.approver.reports.approve(report_id)
+    def approve_report(self, report_id: str) -> Dict:
+        approved_report = self.connection.v1.approver.reports.approve(report_id)
         return approved_report
 
 

@@ -130,12 +130,13 @@ class FyleFylerNotification(FyleNotificationView):
 
         report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
-        report_notification_message = notification_messages.get_report_approved_notification(
+        report_notification_message, title_text = notification_messages.get_report_approved_notification(
             report,
             report_url
         )
 
         slack_client.chat_postMessage(
+            text=title_text,
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
@@ -151,12 +152,13 @@ class FyleFylerNotification(FyleNotificationView):
 
         report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
-        report_notification_message = notification_messages.get_report_payment_processing_notification(
+        report_notification_message, title_text = notification_messages.get_report_payment_processing_notification(
             report,
             report_url
         )
 
         slack_client.chat_postMessage(
+            text=title_text,
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
@@ -174,13 +176,14 @@ class FyleFylerNotification(FyleNotificationView):
 
         report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
-        report_notification_message = notification_messages.get_report_approver_sendback_notification(
+        report_notification_message, title_text = notification_messages.get_report_approver_sendback_notification(
             report,
             report_url,
             report_sendback_reason
         )
 
         slack_client.chat_postMessage(
+            text=title_text,
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
@@ -196,12 +199,13 @@ class FyleFylerNotification(FyleNotificationView):
 
         report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
-        report_notification_message = notification_messages.get_report_submitted_notification(
+        report_notification_message, title_text = notification_messages.get_report_submitted_notification(
             report,
             report_url
         )
 
         slack_client.chat_postMessage(
+            text=title_text,
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
@@ -227,9 +231,10 @@ class FyleFylerNotification(FyleNotificationView):
                 report['updated_by_user']
             )
 
-            report_notification_message = notification_messages.get_report_commented_notification(report, user_display_name, report_url, report_comment)
+            report_notification_message, title_text = notification_messages.get_report_commented_notification(report, user_display_name, report_url, report_comment)
 
             slack_client.chat_postMessage(
+                text=title_text,
                 channel=user.slack_dm_channel_id,
                 blocks=report_notification_message
             )
@@ -244,7 +249,7 @@ class FyleFylerNotification(FyleNotificationView):
         expense = webhook_data['data']
 
         # Send comment notification only if the commenter is not SYSTEM and not the user itself
-        if expense['updated_by_user']['id'] not in ['SYSTEM', expense['user']['id']]:
+        if expense['updated_by_user']['id'] not in ['SYSTEM', expense['employee']['user']['id']]:
 
             expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
@@ -255,9 +260,10 @@ class FyleFylerNotification(FyleNotificationView):
                 expense['updated_by_user']
             )
 
-            expense_notification_message = notification_messages.get_expense_commented_notification(expense, user_display_name, expense_url, expense_comment)
+            expense_notification_message, title_text = notification_messages.get_expense_commented_notification(expense, user_display_name, expense_url, expense_comment)
 
             slack_client.chat_postMessage(
+                text=title_text,
                 channel=user.slack_dm_channel_id,
                 blocks=expense_notification_message
             )
@@ -273,12 +279,13 @@ class FyleFylerNotification(FyleNotificationView):
 
         report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
-        report_notification_message = notification_messages.get_report_paid_notification(
+        report_notification_message, title_text = notification_messages.get_report_paid_notification(
             report,
             report_url
         )
 
         slack_client.chat_postMessage(
+            text=title_text,
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message
         )
@@ -309,13 +316,14 @@ class FyleApproverNotification(FyleNotificationView):
                 report['user']
             )
 
-            report_notification_message = notification_messages.get_report_approval_notification(
+            report_notification_message, title_text = notification_messages.get_report_approval_notification(
                 report,
                 user_display_name,
                 report_url
             )
 
             slack_client.chat_postMessage(
+                text=title_text,
                 channel=user.slack_dm_channel_id,
                 blocks=report_notification_message
             )

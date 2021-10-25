@@ -23,6 +23,8 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
 
     mock_approver_report = mock_fyle.approver.reports.get()
 
+    fyle_report_approval = fyle_report_approval(mock_user)
+
     fyle_report_approval.get_report_by_id.return_value = mock_approver_report
 
     mock_user_display_name = 'mock-employee-display-name'
@@ -37,7 +39,7 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     mock_approved_report = mock_fyle.approver.reports.approve()
     fyle_report_approval.approve_report.return_value = mock_approved_report
 
-    notification_messages.get_report_approval_notification.return_value = 'mock-report-approval-notification-message'
+    notification_messages.get_report_approval_notification.return_value = 'mock-report-approval-notification-message', 'mock-title-text'
 
     mock_chat_post_message = 'chat-post-message'
     slack_client.chat_postMessage.return_value = mock_chat_post_message
@@ -67,7 +69,7 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     utils.get_or_none.assert_has_calls(expected_calls)
 
     fyle_report_approval.get_report_by_id.assert_called()
-    fyle_report_approval.get_report_by_id.assert_called_with(mock_user, mock_report_id)
+    fyle_report_approval.get_report_by_id.assert_called_with(mock_report_id)
 
     fyle_report_approval.can_approve_report.assert_called()
     fyle_report_approval.can_approve_report.assert_called_with(mock_approver_report['data'], mock_fyle_user_id)
@@ -79,7 +81,7 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     fyle_utils.get_fyle_resource_url.assert_called_with(mock_fyle_refresh_token, mock_approver_report['data'], 'REPORT')
 
     fyle_report_approval.approve_report.assert_called()
-    fyle_report_approval.approve_report.assert_called_with(mock_user, mock_report_id)
+    fyle_report_approval.approve_report.assert_called_with(mock_report_id)
 
     notification_messages.get_report_approval_notification.assert_called()
     notification_messages.get_report_approval_notification.assert_called_with(mock_approved_report['data'], mock_user_display_name, mock_report_url, report_approved_message)
