@@ -276,7 +276,7 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
 
     report_section_block.insert(3, report_approval_state_section)
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_report_payment_processing_notification(report: Dict, report_url: str) -> List[Dict]:
@@ -288,7 +288,7 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
@@ -300,7 +300,7 @@ def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_report_approver_sendback_notification(report: Dict, report_url: str, report_sendback_reason: str) -> List[Dict]:
@@ -328,7 +328,7 @@ def get_report_approver_sendback_notification(report: Dict, report_url: str, rep
 
     report_section_block.insert(1, report_sendback_reason_section)
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dict]:
@@ -343,7 +343,7 @@ def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dic
 
     report_section_block.insert(3, report_approval_state_section)
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_report_approval_notification(report: Dict, user_display_name: str, report_url: str, message: str = None) -> List[Dict]:
@@ -409,7 +409,7 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
     )
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_report_commented_notification(report: Dict, user_display_name: str, report_url: str, report_comment: str) -> List[Dict]:
@@ -436,7 +436,7 @@ def get_report_commented_notification(report: Dict, user_display_name: str, repo
 
     report_section_block.insert(1, report_comment_block)
 
-    return report_section_block
+    return report_section_block, title_text
 
 
 def get_expense_commented_notification(expense: Dict, user_display_name: str, expense_url: str, expense_comment: str) -> List[Dict]:
@@ -463,4 +463,4 @@ def get_expense_commented_notification(expense: Dict, user_display_name: str, ex
 
     expense_section_block.insert(1, expense_comment_block)
 
-    return expense_section_block
+    return expense_section_block, title_text
