@@ -53,13 +53,18 @@ def decode_state(state: str) -> Dict:
     return state_params
 
 
+def get_hashed_args(*factors) -> str:
+    hashed_args= hashlib.sha256(str(factors).encode('utf-8'))
+    return hashed_args.hexdigest()
+
+
 def cache_this(key, timeout: int  = 60) -> Callable:
     def decorator(function: Callable) -> Callable:
         @wraps(function)
         def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
 
-            hashed_args = hashlib.sha256(str(*args).encode('utf-8'))
-            cache_key = '{}.{}'.format(key, hashed_args.hexdigest())
+            hashed_args = get_hashed_args(args, kwargs)
+            cache_key = '{}.{}'.format(key, hashed_args)
             response = cache.get(cache_key)
 
             if response is None:
