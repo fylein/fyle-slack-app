@@ -23,8 +23,6 @@ def http_request(method: str, url: str) -> Dict:
 
 @pytest.fixture
 def mock_fyle() -> Platform:
-    mock_data = open('tests/mock_data.json')
-    mock_data = json.load(mock_data)
 
     fyle = mock.Mock()
 
