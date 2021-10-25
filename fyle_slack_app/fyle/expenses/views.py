@@ -1,8 +1,9 @@
 from typing import Dict, List
 
 from fyle.platform.platform import Platform
+import requests
 
-from fyle_slack_app.fyle.utils import get_fyle_sdk_connection
+from fyle_slack_app.fyle.utils import get_fyle_access_token, get_fyle_sdk_connection
 from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -70,6 +71,17 @@ class FyleExpense:
     @staticmethod
     def get_currencies():
         return ['ADP','AED','AFA','ALL','AMD','ANG','AOA','ARS','ATS','AUD','AWG','AZM','BAM','BBD','BDT','BEF','BGL','BGN','BHD','BIF','BMD','BND','BOB','BOV','BRL','BSD','BTN','BWP','BYB','BZD','CAD','CDF','CHF','CLF','CLP','CNY','COP','CRC','CUP','CVE','CYP','CZK','DEM','DJF','DKK','DOP','DZD','ECS','ECV','EEK','EGP','ERN','ESP','ETB','EUR','FIM','FJD','FKP','FRF','GBP','GEL','GHC','GIP','GMD','GNF','GRD','GTQ','GWP','GYD','HKD','HNL','HRK','HTG','HUF','IDE','IDR','IEP','ILS','INR','IQD','IRR','ISK','ITL','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT','LAK','LBP','LKR','LRD','LSL','LTL','LUF','LVL','LYD','MAD','MDL','MGF','MKD','MMK','MNT','MOP','MRO','MTL','MUR','MVR','MWK','MXN','MXV','MYR','MZM','NAD','NGN','NIO','NLG','NOK','NPR','NZD','OMR','PAB','PEN','PGK','PHP','PKR','PLN','PTE','PYG','QAR','ROL','RUB','RUR','RWF','RYR','SAR','SBD','SCR','SDP','SEK','SGD','SHP','SIT','SKK','SLL','SOS','SRG','STD','SVC','SYP','SZL','THB','TJR','TMM','TND','TOP','TPE','TRL','TTD','TWD','TZS','UAH','UGX','USD','USN','USS','UYU','UZS','VEB','VND','VUV','WST','XAF','XCD','XDR','XEU','XOF','XPF','YER','YUN','ZAR','ZMK','ZRN','ZWD']
+
+    @staticmethod
+    def extract_data_from_file(payload: Dict, fyle_refresh_token: str) -> Dict:
+        access_token = get_fyle_access_token(fyle_refresh_token)
+        url = 'https://staging.fyle.tech/platform/v1/common/expense_extract/v1'
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+        response = requests.post(url=url, headers=headers, json=payload)
+        return response.json()
 
 
     @staticmethod

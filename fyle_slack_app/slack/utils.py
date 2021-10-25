@@ -1,5 +1,7 @@
 from typing import Dict
 
+import requests
+
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
 
@@ -27,3 +29,11 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
         user_display_name = user_details['full_name']
 
     return user_display_name
+
+
+def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
+    headers = {
+        'Authorization': 'Bearer {}'.format(bot_access_token)
+    }
+    file = requests.get(url, headers=headers)
+    return file.content
