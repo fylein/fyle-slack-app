@@ -1,11 +1,14 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Callable
 
 import base64
 import datetime
 import json
+import hashlib
 
+from functools import wraps
 from urllib.parse import quote_plus, urlencode
 
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.db.models.base import Model
@@ -48,3 +51,21 @@ def decode_state(state: str) -> Dict:
     decoded_state = base64.urlsafe_b64decode(state.encode())
     state_params = json.loads(decoded_state.decode())
     return state_params
+
+
+def cache_this(key, timeout: int  = 60) -> Callable:
+    def decorator(function: Callable) -> Callable:
+        @wraps(function)
+        def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
+
+            hashed_args = hashlib.sha256(str(*args).encode('utf-8'))
+            cache_key = '{}.{}'.format(key, hashed_args.hexdigest())
+            response = cache.get(cache_key)
+
+            if response is None:
+                response = function(*args, **kwargs)
+                cache.set(cache_key, response, timeout)
+
+            return response
+        return function_wrapper
+    return decorator

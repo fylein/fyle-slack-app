@@ -89,16 +89,22 @@ DATABASES = {
         'PASSWORD': os.environ['DB_PASSWORD'],
         'HOST': os.environ['DB_HOST'],
         'PORT': os.environ['DB_PORT'],
+    },
+    # Cache DB
+    'cache': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'cache.db.sqlite3'
     }
 }
 
-# Cache
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'slack_cache',
     }
 }
+
+DATABASE_ROUTERS = ['fyle_slack_service.cache_router.CacheRouter']
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
