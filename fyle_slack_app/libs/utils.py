@@ -58,13 +58,13 @@ def get_hashed_args(*factors) -> str:
     return hashed_args.hexdigest()
 
 
-def cache_this(key, timeout: int  = 60) -> Callable:
+def cache_this(timeout: int  = 60) -> Callable:
     def decorator(function: Callable) -> Callable:
         @wraps(function)
         def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
 
             hashed_args = get_hashed_args(args, kwargs)
-            cache_key = '{}.{}'.format(key, hashed_args)
+            cache_key = '{}.{}'.format(function.__name__, hashed_args)
             response = cache.get(cache_key)
 
             if response is None:

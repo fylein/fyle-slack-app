@@ -28,7 +28,7 @@ def get_fyle_sdk_connection(refresh_token: str) -> Platform:
         refresh_token=refresh_token
     )
 
-@utils.cache_this(key='cluster_domain', timeout=60)
+@utils.cache_this(timeout=60)
 def get_cluster_domain(fyle_refresh_token: str) -> str:
     print('INSIDE CLUSTER DOMAIN')
     access_token = get_fyle_access_token(fyle_refresh_token)
@@ -78,7 +78,7 @@ def get_fyle_refresh_token(code: str) -> str:
     return oauth_response.json()['refresh_token']
 
 
-@utils.cache_this(key='my_profile')
+@utils.cache_this()
 def get_fyle_profile(refresh_token: str) -> Dict:
     print('MY PROFILE')
     connection = get_fyle_sdk_connection(refresh_token)
