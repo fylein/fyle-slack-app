@@ -58,15 +58,23 @@ def get_hashed_args(*factors) -> str:
     return hashed_args.hexdigest()
 
 
+# Default timeout for cache is 60 seconds
 def cache_this(timeout: int  = 60) -> Callable:
     def decorator(function: Callable) -> Callable:
         @wraps(function)
         def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
 
+            # Creating hash of the function arguments passed
             hashed_args = get_hashed_args(args, kwargs)
+
+            # Creating a cache key with prefix as function name
+            # and suffix as hashed function arguments
             cache_key = '{}.{}'.format(function.__name__, hashed_args)
+
             response = cache.get(cache_key)
 
+            # If cache doesn't return anything call the original function
+            # and cache the function response
             if response is None:
                 response = function(*args, **kwargs)
                 cache.set(cache_key, response, timeout)
