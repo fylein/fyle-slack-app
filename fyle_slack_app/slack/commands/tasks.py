@@ -1,6 +1,7 @@
 from django.conf import settings
 
 from fyle_slack_app.libs import utils, assertions, logger
+from fyle_slack_app.models.expense_processing_details import ExpenseFlowType
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.models import User, UserSubscriptionDetail
@@ -97,7 +98,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     slack_client = slack_utils.get_slack_client(team_id)
 
-    expense_form_details = FyleExpense.get_expense_form_details(user)
+    expense_form_details = FyleExpense.get_expense_form_details(user, view_id, ExpenseFlowType.EXPENSE_FORM)
 
     expense_form = expense_messages.expense_dialog_form(
         **expense_form_details

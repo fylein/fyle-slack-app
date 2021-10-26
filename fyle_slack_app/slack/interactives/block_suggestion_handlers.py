@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from django.http import JsonResponse
 
-from fyle_slack_app.models.users import User
+from fyle_slack_app.models import User, ExpenseProcessingDetails
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.libs import logger, utils
 from fyle_slack_app.slack import utils as slack_utils
@@ -74,11 +74,13 @@ class BlockSuggestionHandler:
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        private_metadata = slack_payload['view']['private_metadata']
+        expense_processing_details = ExpenseProcessingDetails.objects.get(
+            slack_view_id=slack_payload['view']['id']
+        )
 
-        decoded_private_metadata = utils.decode_state(private_metadata)
+        form_metadata = expense_processing_details.form_metadata
 
-        project = decoded_private_metadata.get('project')
+        project = form_metadata.get('project')
 
         if project is not None:
             category_query_params['id'] = 'in.{}'.format(tuple(project['category_ids']))

@@ -3,3 +3,4 @@ from fyle_slack_app.models.users import User
 from fyle_slack_app.models.report_polling_details import ReportPollingDetail
 from fyle_slack_app.models.notification_preferences import NotificationPreference
 from fyle_slack_app.models.user_subscription_details import UserSubscriptionDetail
+from fyle_slack_app.models.expense_processing_details import ExpenseProcessingDetails
