@@ -57,11 +57,6 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
-    # expense_processing_details = ExpenseProcessingDetails.objects.get(
-    #     slack_view_id=slack_payload['view']['id']
-    # )
-
-    # form_metadata = expense_processing_details.form_metadata
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
 
@@ -76,9 +71,6 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
     form_metadata['project'] = project
 
     cache.set(cache_key, form_metadata)
-
-    # expense_processing_details.form_metadata = form_metadata
-    # expense_processing_details.save()
 
     new_expense_dialog_form = expense_dialog_form(
         **current_expense_form_details
@@ -118,11 +110,6 @@ def handle_currency_select(selected_currency: str, view_id: str, team_id: str, s
 
     current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
 
-    # expense_processing_details = ExpenseProcessingDetails.objects.get(
-    #     slack_view_id=slack_payload['view']['id']
-    # )
-
-    # form_metadata = expense_processing_details.form_metadata
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
 
@@ -146,9 +133,6 @@ def handle_currency_select(selected_currency: str, view_id: str, team_id: str, s
 
     cache.set(cache_key, form_metadata)
 
-    # expense_processing_details.form_metadata = form_metadata
-    # expense_processing_details.save()
-
     expense_form = expense_dialog_form(
         **current_expense_form_details
     )
@@ -166,12 +150,6 @@ def handle_amount_entered(amount_entered: float, view_id: str, team_id: str, sla
 
     current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
 
-    # expense_processing_details = ExpenseProcessingDetails.objects.get(
-    #     slack_view_id=slack_payload['view']['id']
-    # )
-
-    # form_metadata = expense_processing_details.form_metadata
-
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
 
@@ -186,9 +164,6 @@ def handle_amount_entered(amount_entered: float, view_id: str, team_id: str, sla
     form_metadata['additional_currency_details'] = additional_currency_details
 
     cache.set(cache_key, form_metadata)
-
-    # expense_processing_details.form_metadata = form_metadata
-    # expense_processing_details.save()
 
     expense_form = expense_dialog_form(
         **current_expense_form_details
@@ -220,12 +195,6 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     expense_form_details = FyleExpense.get_expense_form_details(user, view_id, ExpenseFlowType.EXPENSE_FORM)
 
-    # expense_processing_details = ExpenseProcessingDetails.objects.get(
-    #     slack_view_id=view_id
-    # )
-
-    # form_metadata = expense_processing_details.form_metadata
-
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
 
@@ -235,9 +204,6 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
     form_metadata['message_ts'] = slack_payload['container']['message_ts']
 
     cache.set(cache_key, form_metadata)
-
-    # expense_processing_details.form_metadata = form_metadata
-    # expense_processing_details.save()
 
     expense_form = expense_dialog_form(
         expense=expense,
