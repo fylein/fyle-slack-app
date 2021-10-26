@@ -15,7 +15,6 @@ FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
 
 def get_fyle_sdk_connection(refresh_token: str) -> Platform:
-    # access_token = get_fyle_access_token(refresh_token)
     cluster_domain = get_cluster_domain(refresh_token)
 
     FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
@@ -30,7 +29,6 @@ def get_fyle_sdk_connection(refresh_token: str) -> Platform:
 
 @utils.cache_this(timeout=60)
 def get_cluster_domain(fyle_refresh_token: str) -> str:
-    print('INSIDE CLUSTER DOMAIN')
     access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain_url = '{}/oauth/cluster'.format(settings.FYLE_ACCOUNTS_URL)
     headers = {
@@ -80,14 +78,12 @@ def get_fyle_refresh_token(code: str) -> str:
 
 @utils.cache_this()
 def get_fyle_profile(refresh_token: str) -> Dict:
-    print('MY PROFILE')
     connection = get_fyle_sdk_connection(refresh_token)
     fyle_profile_response = connection.v1.fyler.my_profile.get()
     return fyle_profile_response['data']
 
 
 def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type: str) -> str:
-    # access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain = get_cluster_domain(fyle_refresh_token)
 
     RESOURCE_URL_MAPPING = {
