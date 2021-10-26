@@ -6,13 +6,14 @@ from django_q.tasks import async_task
 
 from fyle.platform import exceptions
 
-from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 from fyle_slack_app.slack.ui.notifications import preference_messages as notification_preference_messages
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app import tracking
 
 
 logger = logger.get_logger(__name__)
@@ -25,10 +26,11 @@ class SlackCommandHandler:
     def _initialize_command_handlers(self):
         self._command_handlers = {
             'fyle_unlink_account': self.handle_fyle_unlink_account,
-            'fyle_notification_preferences': self.handle_fyle_notification_preferences
+            'fyle_notification_preferences': self.handle_fyle_notification_preferences,
+            'expense_form': self.handle_expense_form
         }
 
-    def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
         slack_client = slack_utils.get_slack_client(team_id)
 
         slack_client.chat_postMessage(
@@ -38,17 +40,17 @@ class SlackCommandHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_slack_command(self, command: str, user_id: str, team_id: str, user_dm_channel_id: str) -> Callable:
+    def handle_slack_command(self, command: str, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> Callable:
 
         # Initialize slack command handlers
         self._initialize_command_handlers()
 
         handler = self._command_handlers.get(command, self.handle_invalid_command)
 
-        return handler(user_id, team_id, user_dm_channel_id)
+        return handler(user_id, team_id, user_dm_channel_id, trigger_id)
 
 
-    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
         async_task(
             'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
             user_id,
@@ -74,7 +76,7 @@ class SlackCommandHandler:
         slack_client.views_publish(user_id=user_id, view=pre_auth_message_view)
 
 
-    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_fyle_notification_preferences(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Slack user not found')
 
@@ -94,6 +96,25 @@ class SlackCommandHandler:
         except exceptions.NotFoundItemError as error:
             logger.info('Fyle profile not found for user %s - %s', user.slack_user_id, user.fyle_user_id)
             logger.info('API call error %s', error)
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_expense_form(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str):
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        loading_modal = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
+
+        response = slack_client.views_open(user=user_id, view=loading_modal, trigger_id=trigger_id)
+
+        async_task(
+            'fyle_slack_app.slack.commands.tasks.open_expense_form',
+            user,
+            team_id,
+            response['view']['id']
+        )
 
         return JsonResponse({}, status=200)
 

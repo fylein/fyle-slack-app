@@ -200,7 +200,7 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False
         },
-        'fyle_slack_app ': {
+        'fyle_slack_app': {
             'handlers': ['debug_logs'],
             'level': 'ERROR',
             'propagate': False

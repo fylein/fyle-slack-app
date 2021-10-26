@@ -6,6 +6,8 @@ from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.models import User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
+from fyle_slack_app.fyle.expenses.views import FyleExpense
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 
 
 logger = logger.get_logger(__name__)
@@ -89,3 +91,16 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
         channel=user_dm_channel_id,
         text=text
     )
+
+
+def open_expense_form(user: User, team_id: str, view_id: str) -> None:
+
+    slack_client = slack_utils.get_slack_client(team_id)
+
+    expense_form_details = FyleExpense.get_expense_form_details(user)
+
+    expense_form = expense_messages.expense_dialog_form(
+        **expense_form_details
+    )
+
+    slack_client.views_update(view=expense_form, view_id=view_id)
