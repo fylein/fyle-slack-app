@@ -55,6 +55,9 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
+    # Removing custom fields when project is selected
+    current_expense_form_details['custom_fields'] = None
+
     private_metadata = current_expense_form_details['private_metadata']
 
     current_expense_form_details['selected_project'] = project
