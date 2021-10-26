@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from django.core.cache import cache
 from django.http import JsonResponse
 
 from fyle_slack_app.models import User, ExpenseProcessingDetails
@@ -74,11 +75,13 @@ class BlockSuggestionHandler:
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        expense_processing_details = ExpenseProcessingDetails.objects.get(
-            slack_view_id=slack_payload['view']['id']
-        )
+        # expense_processing_details = ExpenseProcessingDetails.objects.get(
+        #     slack_view_id=slack_payload['view']['id']
+        # )
 
-        form_metadata = expense_processing_details.form_metadata
+        # form_metadata = expense_processing_details.form_metadata
+        cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+        form_metadata = cache.get(cache_key)
 
         project = form_metadata.get('project')
 

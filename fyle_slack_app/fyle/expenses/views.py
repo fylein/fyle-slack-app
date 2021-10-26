@@ -156,13 +156,15 @@ class FyleExpense:
             'add_to_report': add_to_report
         }
 
-        expense_processing_details = ExpenseProcessingDetails.objects.create(
-            slack_view_id=view_id,
-            slack_user_id=user.slack_user_id,
-            form_metadata=expense_form_details,
-            expense_flow_type=expense_flow_type.value
-        )
-        expense_processing_details.save()
+        # expense_processing_details = ExpenseProcessingDetails.objects.create(
+        #     slack_view_id=view_id,
+        #     slack_user_id=user.slack_user_id,
+        #     form_metadata=expense_form_details,
+        #     expense_flow_type=expense_flow_type.value
+        # )
+        # expense_processing_details.save()
+        cache_key = '{}.form_metadata'.format(view_id)
+        cache.set(cache_key, expense_form_details, 3600)
 
         return expense_form_details
 
@@ -170,11 +172,13 @@ class FyleExpense:
     @staticmethod
     def get_current_expense_form_details(slack_payload: Dict) -> Dict:
 
-        expense_processing_details = ExpenseProcessingDetails.objects.get(
-            slack_view_id=slack_payload['view']['id']
-        )
+        # expense_processing_details = ExpenseProcessingDetails.objects.get(
+        #     slack_view_id=slack_payload['view']['id']
+        # )
 
-        form_metadata = expense_processing_details.form_metadata
+        # form_metadata = expense_processing_details.form_metadata
+        cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+        form_metadata =  cache.get(cache_key)
 
         fields_render_property = form_metadata['fields_render_property']
 
