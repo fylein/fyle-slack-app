@@ -19,7 +19,7 @@ def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
 
 # pylint: disable=too-many-branches
 # is_additional_field is for fields which are not custom fields but are part of a specific categories
-def generate_field_ui(field_details: Dict, is_additional_field: bool = False, expense: Dict = None) -> Dict:
+def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = False, expense: Dict = None) -> Dict:
 
     block_id = '{}_block'.format(field_details['column_name'])
     action_id = field_details['column_name']
@@ -713,7 +713,7 @@ def expense_dialog_form(
                 if field['is_custom'] is False:
                     is_additional_field = True
 
-                custom_field = generate_field_ui(field, is_additional_field=is_additional_field, expense=expense)
+                custom_field = generate_custom_fields_ui(field, is_additional_field=is_additional_field, expense=expense)
                 if custom_field is not None:
                     view['blocks'].append(custom_field)
 
@@ -741,9 +741,78 @@ def expense_dialog_form(
     return view
 
 
-def view_expense_message(expense: Dict, user: User) -> Dict:
+def get_expense_message_details_section(expense: Dict, expense_url: str, actions: List[Dict], receipt_message: str, report_message: str) -> List[Dict]:
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
+
+    expense_message_details_section = [
+        {
+            'type': 'section',
+            'block_id': expense['id'],
+            'text': {
+                'type': 'mrkdwn',
+                'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
+            },
+            'accessory': {
+                'type': 'overflow',
+                'options': [
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': ':pencil: Edit',
+                            'emoji': True
+                        },
+                        'value': 'edit_expense_accessory.{}'.format(expense['id'])
+                    },
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': ':arrow_upper_right: Open in Fyle',
+                            'emoji': True
+                        },
+                        'url': expense_url,
+                        'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
+                    }
+                ],
+                'action_id': 'expense_accessory'
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Date of spend: * \n {}'.format(spent_at)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Receipt: * \n {}'.format(receipt_message)
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Report: * \n {}'.format(report_message)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Expense Details: * \n Travel to Office (Uber)'
+                }
+            ]
+        },
+        {
+            'type': 'actions',
+            'elements': actions
+        }
+    ]
+
+    return expense_message_details_section
+
+
+def view_expense_message(expense: Dict, user: User) -> Dict:
 
     actions = []
 
@@ -833,112 +902,13 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
 
     expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
-    view_expense_blocks =  [
-        {
-            'type': 'section',
-            'block_id': expense['id'],
-            'text': {
-                'type': 'mrkdwn',
-                'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
-            },
-            'accessory': {
-                'type': 'overflow',
-                'options': [
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': ':pencil: Edit',
-                            'emoji': True
-                        },
-                        'value': 'edit_expense_accessory.{}'.format(expense['id'])
-                    },
-                    {
-                        'text': {
-                            'type': 'plain_text',
-                            'text': ':arrow_upper_right: Open in Fyle',
-                            'emoji': True
-                        },
-                        'url': expense_url,
-                        'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
-                    }
-                ],
-                'action_id': 'expense_accessory'
-            }
-        },
-        {
-            'type': 'section',
-            'fields': [
-                {
-                    'type': 'mrkdwn',
-                    'text': '*Date of spend: * \n {}'.format(spent_at)
-                },
-                {
-                    'type': 'mrkdwn',
-                    'text': '*Receipt: * \n {}'.format(receipt_message)
-                }
-            ]
-        },
-        {
-            'type': 'section',
-            'fields': [
-                {
-                    'type': 'mrkdwn',
-                    'text': '*Report: * \n {}'.format(report_message)
-                },
-                {
-                    'type': 'mrkdwn',
-                    'text': '*Expense Details: * \n Travel to Office (Uber)'
-                }
-            ]
-        },
-        {
-        'type': 'actions',
-            'elements': actions
-        }
-    ]
+    view_expense_blocks = get_expense_message_details_section(expense, expense_url, actions, receipt_message, report_message)
 
     return view_expense_blocks
 
 
-def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -> Dict:
-
-    report_message = ':x: Not Added'
-    if expense['report_id'] is not None:
-        report_message = ':white_check_mark: Added'
-
-
-    receipt_message = ':x: Not Attached'
-    if len(expense['file_ids']) > 0:
-        receipt_message = ':white_check_mark: Attached'
-
-    add_to_report_blocks = get_add_to_report_blocks(add_to_report=add_to_report, action_id='add_expense_to_report_selection')
-
-    add_to_report_dialog = {
-        'title': {
-            'type': 'plain_text',
-            'text': ':mailbox:  Add to Report',
-            'emoji': True
-        },
-        'submit': {
-            'type': 'plain_text',
-            'text': 'Add',
-            'emoji': True
-        },
-        'type': 'modal',
-        'callback_id': 'add_expense_to_report',
-        'private_metadata': expense['id'],
-        'close': {
-            'type': 'plain_text',
-            'text': 'Cancel',
-            'emoji': True
-        },
-    }
-
-    add_to_report_dialog['blocks'] = []
-
-    add_to_report_dialog['blocks'] = add_to_report_blocks
-
-    expense_details_block = [
+def get_expense_details_block(expense: Dict, receipt_message: str, report_message: str) -> List[Dict]:
+    expense_details = [
         {
             'type': 'section',
             'text': {
@@ -1000,10 +970,143 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
         }
     ]
 
+    return expense_details
+
+
+def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -> Dict:
+
+    report_message = ':x: Not Added'
+    if expense['report_id'] is not None:
+        report_message = ':white_check_mark: Added'
+
+
+    receipt_message = ':x: Not Attached'
+    if len(expense['file_ids']) > 0:
+        receipt_message = ':white_check_mark: Attached'
+
+    add_to_report_blocks = get_add_to_report_blocks(add_to_report=add_to_report, action_id='add_expense_to_report_selection')
+
+    add_to_report_dialog = {
+        'title': {
+            'type': 'plain_text',
+            'text': ':mailbox:  Add to Report',
+            'emoji': True
+        },
+        'submit': {
+            'type': 'plain_text',
+            'text': 'Add',
+            'emoji': True
+        },
+        'type': 'modal',
+        'callback_id': 'add_expense_to_report',
+        'private_metadata': expense['id'],
+        'close': {
+            'type': 'plain_text',
+            'text': 'Cancel',
+            'emoji': True
+        },
+    }
+
+    add_to_report_dialog['blocks'] = []
+
+    add_to_report_dialog['blocks'] = add_to_report_blocks
+
+    expense_details_block = get_expense_details_block(expense, receipt_message, report_message)
+
     add_to_report_dialog['blocks'].extend(expense_details_block)
 
     return add_to_report_dialog
 
+
+
+def get_minimal_expense_details(expense: Dict, expense_url: str, receipt_message: str) -> List[Dict]:
+    minimal_expense_details = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*{} ({})* expense of :money_with_wings: *{} {}*'.format(expense['purpose'], expense['merchant'], expense['currency'], str(expense['amount']))
+            },
+            'accessory': {
+                'type': 'overflow',
+                'options': [
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': ':arrow_upper_right: Open in Fyle',
+                            'emoji': True
+                        },
+                        'url': expense_url,
+                        'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
+                    }
+                ],
+                'action_id': 'expense_accessory'
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Date of Spend* \n {}'.format(utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y'))
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Receipt* \n {}'.format(receipt_message)
+                }
+            ]
+        },
+        {
+            'type': 'divider'
+        }
+    ]
+
+    return minimal_expense_details
+
+
+def get_report_details_section(report: Dict) -> List[Dict]:
+    report_details_section = [
+        {
+            'type': 'divider'
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Report Name* \n {}'.format(report['purpose'])
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Amount* \n {} {}'.format(report['currency'], str(report['amount']))
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Expenses* \n {}'.format(str(report['num_expenses']))
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': '*Created On* \n {}'.format(utils.get_formatted_datetime(report['created_at'], '%B %d, %Y'))
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': ':page_facing_up: *Expenses*'
+            }
+        },
+        {
+            'type': 'divider'
+        }
+    ]
+    return report_details_section
 
 
 def get_view_report_details_dialog(user: User, report: Dict, expenses: List[Dict]) -> Dict:
@@ -1025,49 +1128,11 @@ def get_view_report_details_dialog(user: User, report: Dict, expenses: List[Dict
             'type': 'plain_text',
             'text': 'Cancel',
             'emoji': True
-        },
-        'blocks': [
-            {
-                'type': 'divider'
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Report Name* \n {}'.format(report['purpose'])
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Amount* \n {} {}'.format(report['currency'], str(report['amount']))
-                    }
-                ]
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Expenses* \n {}'.format(str(report['num_expenses']))
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Created On* \n {}'.format(utils.get_formatted_datetime(report['created_at'], '%B %d, %Y'))
-                    }
-                ]
-            },
-            {
-                'type': 'section',
-                'text': {
-                    'type': 'mrkdwn',
-                    'text': ':page_facing_up: *Expenses*'
-                }
-            },
-            {
-                'type': 'divider'
-            },
-        ]
+        }
     }
+
+    view_report_dialog['blocks'] = []
+    view_report_dialog['blocks'] = get_report_details_section(report)
 
     expenses_list = []
     for expense in expenses:
@@ -1078,46 +1143,7 @@ def get_view_report_details_dialog(user: User, report: Dict, expenses: List[Dict
         if len(expense['file_ids']) > 0:
             receipt_message = ':white_check_mark: Attached'
 
-        minimal_expense_detail = [
-            {
-                'type': 'section',
-                'text': {
-                    'type': 'mrkdwn',
-                    'text': '*{} ({})* expense of :money_with_wings: *{} {}*'.format(expense['purpose'], expense['merchant'], expense['currency'], str(expense['amount']))
-                },
-                'accessory': {
-                    'type': 'overflow',
-                    'options': [
-                        {
-                            'text': {
-                                'type': 'plain_text',
-                                'text': ':arrow_upper_right: Open in Fyle',
-                                'emoji': True
-                            },
-                            'url': expense_url,
-                            'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
-                        }
-                    ],
-                    'action_id': 'expense_accessory'
-                }
-            },
-            {
-                'type': 'section',
-                'fields': [
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Date of Spend* \n {}'.format(utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y'))
-                    },
-                    {
-                        'type': 'mrkdwn',
-                        'text': '*Receipt* \n {}'.format(receipt_message)
-                    }
-                ]
-            },
-            {
-                'type': 'divider'
-            }
-        ]
+        minimal_expense_detail = get_minimal_expense_details(expense, expense_url, receipt_message)
         expenses_list.extend(minimal_expense_detail)
 
     view_report_dialog['blocks'].extend(expenses_list)
