@@ -741,7 +741,7 @@ def expense_dialog_form(
     return view
 
 
-def get_expense_message_details_section(expense: Dict, expense_url: str, receipt_message: str, report_message: str) -> List[Dict]:
+def get_expense_message_details_section(expense: Dict, expense_url: str, actions: List[Dict], receipt_message: str, report_message: str) -> List[Dict]:
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
 
@@ -804,7 +804,7 @@ def get_expense_message_details_section(expense: Dict, expense_url: str, receipt
             ]
         },
         {
-        'type': 'actions',
+            'type': 'actions',
             'elements': actions
         }
     ]
@@ -902,7 +902,7 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
 
     expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
-    view_expense_blocks = get_expense_message_details_section(expense, expense_url, receipt_message, report_message)
+    view_expense_blocks = get_expense_message_details_section(expense, expense_url, actions, receipt_message, report_message)
 
     return view_expense_blocks
 
