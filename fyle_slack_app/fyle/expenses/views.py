@@ -67,14 +67,44 @@ class FyleExpense:
         return self.connection.v1.fyler.reports.list(query_params=query_params)
 
 
+    def check_project_availability(self) -> bool:
+        projects_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'is_enabled': 'eq.{}'.format(True)
+        }
+
+        projects = self.get_projects(projects_query_params)
+
+        is_project_available = True if projects['count'] > 0 else False
+
+        return is_project_available
+
+
+    def check_cost_center_availability(self) -> bool:
+        cost_centers_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'is_enabled': 'eq.{}'.format(True)
+        }
+
+        cost_centers = self.get_cost_centers(cost_centers_query_params)
+
+        is_cost_center_available = True if cost_centers['count'] > 0 else False
+
+        return is_cost_center_available
+
+
     @staticmethod
     def get_currencies():
         return ['ADP','AED','AFA','ALL','AMD','ANG','AOA','ARS','ATS','AUD','AWG','AZM','BAM','BBD','BDT','BEF','BGL','BGN','BHD','BIF','BMD','BND','BOB','BOV','BRL','BSD','BTN','BWP','BYB','BZD','CAD','CDF','CHF','CLF','CLP','CNY','COP','CRC','CUP','CVE','CYP','CZK','DEM','DJF','DKK','DOP','DZD','ECS','ECV','EEK','EGP','ERN','ESP','ETB','EUR','FIM','FJD','FKP','FRF','GBP','GEL','GHC','GIP','GMD','GNF','GRD','GTQ','GWP','GYD','HKD','HNL','HRK','HTG','HUF','IDE','IDR','IEP','ILS','INR','IQD','IRR','ISK','ITL','JMD','JOD','JPY','KES','KGS','KHR','KMF','KPW','KRW','KWD','KYD','KZT','LAK','LBP','LKR','LRD','LSL','LTL','LUF','LVL','LYD','MAD','MDL','MGF','MKD','MMK','MNT','MOP','MRO','MTL','MUR','MVR','MWK','MXN','MXV','MYR','MZM','NAD','NGN','NIO','NLG','NOK','NPR','NZD','OMR','PAB','PEN','PGK','PHP','PKR','PLN','PTE','PYG','QAR','ROL','RUB','RUR','RWF','RYR','SAR','SBD','SCR','SDP','SEK','SGD','SHP','SIT','SKK','SLL','SOS','SRG','STD','SVC','SYP','SZL','THB','TJR','TMM','TND','TOP','TPE','TRL','TTD','TWD','TZS','UAH','UGX','USD','USN','USS','UYU','UZS','VEB','VND','VUV','WST','XAF','XCD','XDR','XEU','XOF','XPF','YER','YUN','ZAR','ZMK','ZRN','ZWD']
 
 
     @staticmethod
-    def get_expense_fields_type_mandatory_mapping(expense_fields: List[Dict]) -> Dict:
-        mandatory_mapping = {
+    def get_expense_fields_mandatory_mapping(expense_fields: List[Dict]) -> Dict:
+        mandatory_fields_mapping = {
             'purpose': False,
             'txn_dt': False,
             'vendor_id': False,
@@ -83,10 +113,10 @@ class FyleExpense:
         }
 
         for field in expense_fields['data']:
-            if field['column_name'] in mandatory_mapping:
-                mandatory_mapping[field['column_name']] = field['is_mandatory']
+            if field['column_name'] in mandatory_fields_mapping:
+                mandatory_fields_mapping[field['column_name']] = field['is_mandatory']
 
-        return mandatory_mapping
+        return mandatory_fields_mapping
 
 
     @staticmethod
@@ -100,46 +130,24 @@ class FyleExpense:
 
         default_expense_fields = fyle_expense.get_default_expense_fields()
 
-        field_type_mandatory_mapping = fyle_expense.get_expense_fields_type_mandatory_mapping(default_expense_fields)
+        mandatory_fields_mapping = fyle_expense.get_expense_fields_mandatory_mapping(default_expense_fields)
 
-        is_project_available = False
-        is_cost_center_available = False
-
-        projects_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
-
-        projects = fyle_expense.get_projects(projects_query_params)
-
-        is_project_available = True if projects['count'] > 0 else False
-
-        cost_centers_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'is_enabled': 'eq.{}'.format(True)
-        }
-
-        cost_centers = fyle_expense.get_cost_centers(cost_centers_query_params)
-
-        is_cost_center_available = True if cost_centers['count'] > 0 else False
+        is_project_available = fyle_expense.check_project_availability()
+        is_cost_center_available = fyle_expense.check_cost_center_availability()
 
         # Create a expense fields render property and set them optional in the form
         fields_render_property = {
             'project': {
                 'is_project_available': is_project_available,
-                'is_mandatory': field_type_mandatory_mapping['project_id']
+                'is_mandatory': mandatory_fields_mapping['project_id']
             },
             'cost_center': {
                 'is_cost_center_available': is_cost_center_available,
-                'is_mandatory': field_type_mandatory_mapping['cost_center_id']
+                'is_mandatory': mandatory_fields_mapping['cost_center_id']
             },
-            'purpose': field_type_mandatory_mapping['purpose'],
-            'transaction_date': field_type_mandatory_mapping['txn_dt'],
-            'vendor': field_type_mandatory_mapping['vendor_id']
+            'purpose': mandatory_fields_mapping['purpose'],
+            'transaction_date': mandatory_fields_mapping['txn_dt'],
+            'vendor': mandatory_fields_mapping['vendor_id']
         }
 
         additional_currency_details = {
