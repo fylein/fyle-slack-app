@@ -54,7 +54,7 @@ def decode_state(state: str) -> Dict:
 
 
 def get_hashed_args(*factors) -> str:
-    hashed_args= hashlib.sha256(str(factors).encode('utf-8'))
+    hashed_args= hashlib.md5(str(factors).encode('utf-8'))
     return hashed_args.hexdigest()
 
 
