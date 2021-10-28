@@ -254,3 +254,23 @@ def handle_submit_report_dialog(user: User, team_id: str, report_id: str, view_i
     add_expense_to_report_dialog['private_metadata'] = report_id
 
     slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
+
+
+def handle_unreported_expenses(user: User, team_id: str, view_id: str):
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    unreported_expenses_query_params = {
+        'offset': 0,
+        'limit': 50,
+        'order': 'created_at.desc',
+        'and': '(state.eq.COMPLETE, report_id.is.null)'
+    }
+
+    unreported_expenses = fyle_expense.get_expenses(unreported_expenses_query_params)
+
+    unreported_expenses_dialog = expense_messages.get_unreported_expenses_dialog(user, unreported_expenses['data'])
+
+    slack_client.views_update(view_id=view_id, view=unreported_expenses_dialog)

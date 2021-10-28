@@ -4,6 +4,7 @@ from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
+from fyle_slack_app.slack.commands.handlers import SlackCommandHandler
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
@@ -46,7 +47,10 @@ class BlockActionHandler:
             'add_expense_to_report': self.handle_add_expense_to_report,
             'add_expense_to_report_selection': self.handle_add_expense_to_report_selection,
             'open_submit_report_dialog': self.handle_submit_report_dialog,
-            'expense_accessory': self.handle_expense_accessory
+            'expense_accessory': self.handle_expense_accessory,
+            'create_expense_using_receipts': self.handle_create_expense_using_receipts,
+            'create_expense_manually': self.handle_create_expense_manually,
+            'unreported_expenses': self.handle_unreported_expenses
         }
 
 
@@ -460,6 +464,48 @@ class BlockActionHandler:
             channel=user.slack_dm_channel_id
         )
 
+        return JsonResponse({})
+
+
+    def handle_create_expense_using_receipts(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        slack_client = get_slack_client(team_id)
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        slack_client.chat_postMessage(
+            text=':paperclip: *Drag* or *attach* :receipt: a receipt to create an expense :zap: instantly!',
+            channel=user.slack_dm_channel_id
+        )
+
+        return JsonResponse({})
+
+
+    def handle_create_expense_manually(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        trigger_id = slack_payload['trigger_id']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        SlackCommandHandler().handle_expense_form(user_id, team_id, user.slack_dm_channel_id, trigger_id)
+
+        return JsonResponse({})
+
+
+    def handle_unreported_expenses(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        slack_client = get_slack_client(team_id)
+
+        loading_modal = expense_messages.expense_form_loading_modal(title='Submit New Report', loading_message='Loading unreported expenses :dollar: ')
+
+        response = slack_client.views_open(user=user_id, view=loading_modal, trigger_id=slack_payload['trigger_id'])
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_unreported_expenses',
+            user,
+            team_id,
+            response['view']['id']
+        )
         return JsonResponse({})
 
 

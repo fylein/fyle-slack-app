@@ -83,7 +83,25 @@ class SlackEventHandler:
 
         # User is not present i.e. user hasn't done Fyle authorization
         if user is not None:
-            dashboard_view = messages.get_post_authorization_message()
+            dashboard_view = messages.get_base_dashboard_view(team_id)
+
+            # Adding loading element
+            dashboard_view['blocks'].append(
+                {
+                    'type': 'section',
+                    'text': {
+                        'type': 'mrkdwn',
+                        'text': 'Loading addtional details :open_file_folder:'
+                    }
+                }
+            )
+
+            async_task(
+                'fyle_slack_app.slack.events.tasks.handle_dashboard_view',
+                user,
+                team_id
+            )
+
         else:
             user_info = slack_client.users_info(user=user_id)
             assertions.assert_good(user_info['ok'] is True)

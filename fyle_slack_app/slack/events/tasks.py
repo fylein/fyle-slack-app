@@ -2,13 +2,15 @@ from slack_sdk import WebClient
 
 from django.conf import settings
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
+from fyle_slack_app.slack.utils import get_slack_client, get_slack_user_dm_channel_id
 from fyle_slack_app.slack.ui.authorization import messages
+from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 
 
 logger = logger.get_logger(__name__)
@@ -97,3 +99,44 @@ def uninstall_app(team_id: str) -> None:
 
         # Deleting team :)
         team.delete()
+
+
+def handle_dashboard_view(user: User, team_id: str):
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    unreported_expenses_query_params = {
+        'offset': 0,
+        'limit': 50,
+        'order': 'created_at.desc',
+        'and': '(state.eq.COMPLETE, report_id.is.null)'
+    }
+
+    unreported_expenses = fyle_expense.get_expenses(unreported_expenses_query_params)
+
+    incomplete_expenses_query_params = {
+        'offset': 0,
+        'limit': 50,
+        'order': 'created_at.desc',
+        'state': 'eq.DRAFT'
+    }
+
+    incomplete_expenses = fyle_expense.get_expenses(incomplete_expenses_query_params)
+
+    draft_reports_query_params = {
+        'offset': 0,
+        'limit': 50,
+        'order': 'created_at.desc',
+        'state': 'eq.DRAFT'
+    }
+
+    draft_reports = fyle_expense.get_reports(draft_reports_query_params)
+
+    dashboard_view = dashboard_messages.get_post_authorization_message(team_id, unreported_expenses, incomplete_expenses, draft_reports)
+
+    # Removing loading details section from view
+    dashboard_view['blocks'] = dashboard_view['blocks'][:-1]
+
+    slack_client.views_publish(user_id=user.slack_user_id, view=dashboard_view)

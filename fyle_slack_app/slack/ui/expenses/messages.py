@@ -1201,3 +1201,70 @@ def report_submitted_message(user: User, report: Dict) -> List[Dict]:
     ]
 
     return report_message_blocks
+
+
+def get_unreported_expenses_dialog(user: User, expenses: List[Dict]) -> List[Dict]:
+    unreported_expenses_dialog = {
+        'type': 'modal',
+        'callback_id': 'submit_unreported_expenses',
+        'title': {
+            'type': 'plain_text',
+            'text': 'Submit New Report',
+            'emoji': True
+        },
+        'submit': {
+            'type': 'plain_text',
+            'text': 'Submit Report',
+            'emoji': True
+        },
+        'close': {
+            'type': 'plain_text',
+            'text': 'Cancel',
+            'emoji': True
+        }
+    }
+
+    unreported_expenses_dialog['blocks'] = []
+    unreported_expenses_dialog['blocks'].append(
+        {
+            'type': 'divider'
+        },
+        {
+            'type': 'input',
+            'block_id': 'TEXT_add_to_new_report_block',
+            'optional': False,
+            'element': {
+                'type': 'plain_text_input',
+                'placeholder': {
+                    'type': 'plain_text',
+                    'text': 'Report Name',
+                    'emoji': True
+                },
+                'action_id': 'report_name'
+            },
+            'label': {
+                'type': 'plain_text',
+                'text': 'Report Name',
+                'emoji': True
+            }
+        },
+        {
+            'type': 'divider'
+        }
+    )
+
+    expenses_list = []
+    for expense in expenses:
+
+        expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
+
+        receipt_message = ':x: Not Attached'
+        if len(expense['file_ids']) > 0:
+            receipt_message = ':white_check_mark: Attached'
+
+        minimal_expense_detail = get_minimal_expense_details(expense, expense_url, receipt_message)
+        expenses_list.extend(minimal_expense_detail)
+
+    unreported_expenses_dialog['blocks'].extend(expenses_list)
+
+    return unreported_expenses_dialog

@@ -6,6 +6,7 @@ from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
 from django.db import transaction
+from django_q.tasks import async_task
 
 from slack_sdk.web.client import WebClient
 
@@ -85,7 +86,7 @@ class FyleAuthorization(View):
                 self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
 
                 # Update user home tab with post auth message
-                self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
+                self.update_user_home_tab_with_post_auth_message(slack_client, user, state_params['team_id'])
 
                 # Track fyle account link to slack
                 self.track_fyle_authorization(user, fyle_profile)
@@ -130,9 +131,27 @@ class FyleAuthorization(View):
         )
 
 
-    def update_user_home_tab_with_post_auth_message(self, slack_client: WebClient, user_id: str) -> None:
-        post_authorization_message_view = dashboard_messages.get_post_authorization_message()
-        slack_client.views_publish(user_id=user_id, view=post_authorization_message_view)
+    def update_user_home_tab_with_post_auth_message(self, slack_client: WebClient, user: User , team_id: str) -> None:
+        dashboard_view = dashboard_messages.get_base_dashboard_view(team_id)
+
+        # Adding loading element
+        dashboard_view['blocks'].append(
+            {
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': 'Loading addtional details :open_file_folder:'
+                }
+            }
+        )
+
+        async_task(
+            'fyle_slack_app.slack.events.tasks.handle_dashboard_view',
+            user,
+            team_id
+        )
+
+        slack_client.views_publish(user_id=user.slack_user_id, view=dashboard_view)
 
 
     def create_notification_subscription(self, user: User, fyle_profile: Dict) -> None:
