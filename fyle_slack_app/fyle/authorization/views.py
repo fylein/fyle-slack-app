@@ -6,7 +6,6 @@ from django.http import HttpResponseRedirect, HttpRequest
 from django.views import View
 from django.conf import settings
 from django.db import transaction
-from django_q.tasks import async_task
 
 from slack_sdk.web.client import WebClient
 
@@ -143,12 +142,6 @@ class FyleAuthorization(View):
                     'text': 'Loading addtional details :open_file_folder:'
                 }
             }
-        )
-
-        async_task(
-            'fyle_slack_app.slack.events.tasks.handle_dashboard_view',
-            user,
-            team_id
         )
 
         slack_client.views_publish(user_id=user.slack_user_id, view=dashboard_view)
