@@ -23,12 +23,11 @@ class FyleExpense:
     def get_default_expense_fields(self) -> Dict:
         default_expense_fields_query_params = {
             'offset': 0,
-            'limit': '20',
+            'limit': '50',
             'order': 'created_at.desc',
             'column_name': 'in.(purpose, txn_dt, vendor_id, cost_center_id, project_id)',
             'is_enabled': 'eq.{}'.format(True),
-            'is_custom': 'eq.{}'.format(False),
-            'is_mandatory': 'eq.{}'.format(True)
+            'is_custom': 'eq.{}'.format(False)
         }
 
         return self.get_expense_fields(default_expense_fields_query_params)
@@ -37,7 +36,7 @@ class FyleExpense:
     def get_custom_fields_by_category_id(self, category_id: str) -> Dict:
         custom_fields_query_params = {
             'offset': 0,
-            'limit': '20',
+            'limit': '50',
             'order': 'created_at.desc',
             'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
             'is_enabled': 'eq.{}'.format(True),

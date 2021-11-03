@@ -67,7 +67,7 @@ class BlockSuggestionHandler:
 
         category_query_params = {
             'offset': 0,
-            'limit': '30',
+            'limit': '10',
             'order': 'display_name.asc',
             'display_name': 'ilike.%{}%'.format(category_value_entered),
             'system_category': 'not_in.(Unspecified, Per Diem, Mileage, Activity)',

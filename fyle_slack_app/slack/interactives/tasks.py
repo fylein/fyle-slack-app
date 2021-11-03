@@ -108,7 +108,7 @@ def handle_category_select(user: User, team_id: str, category_id: str, view_id: 
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
 
-def handle_currency_select(selected_currency: str, view_id: str, team_id: str, slack_payload: str) -> None:
+def handle_currency_selection(selected_currency: str, view_id: str, team_id: str, slack_payload: str) -> None:
 
     slack_client = get_slack_client(team_id)
 
