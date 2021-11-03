@@ -80,7 +80,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
             'label': {
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
-                'emoji': True,
             },
             'block_id': block_id,
             'optional': not field_details['is_mandatory'],
@@ -89,7 +88,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                 'placeholder': {
                     'type': 'plain_text',
                     'text': '{}'.format(field_details['placeholder']),
-                    'emoji': True,
                 },
                 'action_id': action_id,
             }
@@ -103,7 +101,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                     'text': {
                         'type': 'plain_text',
                         'text': option,
-                        'emoji': True,
                     },
                     'value': option,
                 }
@@ -115,7 +112,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                     'text': {
                         'type': 'plain_text',
                         'text': custom_field_value,
-                        'emoji': True,
                     },
                     'value': custom_field_value,
                 }
@@ -127,7 +123,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                             'text': {
                                 'type': 'plain_text',
                                 'text': value,
-                                'emoji': True,
                             },
                             'value': value,
                         }
@@ -140,7 +135,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
             'text': {
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
-                'emoji': True,
             }
         }
         custom_field = {
@@ -155,7 +149,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
             'label': {
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
-                'emoji': True,
             }
         }
 
@@ -172,14 +165,12 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                 'placeholder': {
                     'type': 'plain_text',
                     'text': '{}'.format(field_details['placeholder']),
-                    'emoji': True,
                 },
                 'action_id': 'spent_at',
             },
             'label': {
                 'type': 'plain_text',
                 'text': '{}'.format(field_details['field_name']),
-                'emoji': True
             }
         }
 
@@ -202,20 +193,18 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Select Currency',
-                'emoji': True,
             },
             'min_query_length': 1,
             'initial_option': {
                 'text': {
                     'type': 'plain_text',
                     'text': additional_currency_details['home_currency'],
-                    'emoji': True,
                 },
                 'value': additional_currency_details['home_currency'],
             },
             'action_id': 'currency',
         },
-        'label': {'type': 'plain_text', 'text': 'Currency', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Currency'},
     }
 
     if expense is not None:
@@ -234,11 +223,10 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Enter Amount',
-                'emoji': True,
             },
             'action_id': 'amount',
         },
-        'label': {'type': 'plain_text', 'text': 'Amount', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Amount'},
     }
 
     if expense is not None:
@@ -284,11 +272,10 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
                 'placeholder': {
                     'type': 'plain_text',
                     'text': 'Enter Total Amount {}'.format(additional_currency_details['home_currency']),
-                    'emoji': True,
                 },
                 'action_id': 'foreign_amount',
             },
-            'label': {'type': 'plain_text', 'text': 'Total Amount', 'emoji': True},
+            'label': {'type': 'plain_text', 'text': 'Total Amount'},
         }
 
         if int(additional_currency_details['total_amount']) != 0:
@@ -312,11 +299,10 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Select a date',
-                'emoji': True,
             },
             'action_id': 'spent_at',
         },
-        'label': {'type': 'plain_text', 'text': 'Date of Spend', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Date of Spend'},
     }
 
     if expense is not None:
@@ -332,58 +318,16 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Eg. Client Meeting',
-                'emoji': True,
             },
             'action_id': 'purpose',
         },
-        'label': {'type': 'plain_text', 'text': 'Purpose', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Purpose'},
     }
 
     if expense is not None:
         purpose_block['element']['initial_value'] = expense['purpose']
 
     default_fields_blocks.append(purpose_block)
-
-    paid_by_me_option = {
-        'text': {
-            'type': 'plain_text',
-            'text': 'Paid by me',
-            'emoji': True,
-        },
-        'value': 'true',
-    }
-
-    paid_by_company_option = {
-        'text': {
-            'type': 'plain_text',
-            'text': 'Paid by company',
-            'emoji': True,
-        },
-        'value': 'false',
-    }
-
-    payment_mode_block = {
-        'type': 'input',
-        'block_id': 'SELECT_default_field_payment_mode_block',
-        'element': {
-            'type': 'static_select',
-            'placeholder': {
-                'type': 'plain_text',
-                'text': 'Select Payment Mode',
-                'emoji': True,
-            },
-            'initial_option': paid_by_me_option,
-            'options': [paid_by_me_option, paid_by_company_option],
-            'action_id': 'is_reimbursable',
-        },
-        'label': {'type': 'plain_text', 'text': 'Payment Mode', 'emoji': True},
-    }
-
-    if expense is not None:
-        if expense['is_reimbursable'] is False:
-            payment_mode_block['element']['initial_option'] = paid_by_company_option
-
-    default_fields_blocks.append(payment_mode_block)
 
     merchant_block = {
         'type': 'input',
@@ -393,11 +337,10 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Eg. Uber',
-                'emoji': True,
             },
             'action_id': 'merchant',
         },
-        'label': {'type': 'plain_text', 'text': 'Merchant', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Merchant'},
     }
 
     if expense is not None:
@@ -421,12 +364,11 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Eg. Travel',
-                'emoji': True,
             },
 
             'action_id': 'project_id',
         },
-        'label': {'type': 'plain_text', 'text': 'Project', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Project'},
     }
 
     if expense is not None:
@@ -434,7 +376,6 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
             'text': {
                 'type': 'plain_text',
                 'text': expense['project']['name'],
-                'emoji': True,
             },
             'value': str(expense['project']['id']),
         }
@@ -447,7 +388,6 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
             'text': {
                 'type': 'plain_text',
                 'text': project_display_name,
-                'emoji': True,
             },
             'value': str(selected_project['id']),
         }
@@ -464,13 +404,12 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
                         'text': {
                             'type': 'plain_text',
                             'text': 'Billable',
-                            'emoji': True
                         }
                     }
                 ],
                 'action_id': 'is_billable'
             },
-            'label': {'type': 'plain_text', 'text': 'Billable', 'emoji': True},
+            'label': {'type': 'plain_text', 'text': 'Billable'},
         }
 
     return project_block, billable_block
@@ -487,11 +426,10 @@ def get_categories_block(expense: Dict = None) -> Dict:
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Eg. Food',
-                'emoji': True,
             },
             'action_id': 'category_id',
         },
-        'label': {'type': 'plain_text', 'text': 'Category', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Category'},
     }
 
     if expense is not None:
@@ -499,7 +437,6 @@ def get_categories_block(expense: Dict = None) -> Dict:
             'text': {
                 'type': 'plain_text',
                 'text': expense['category']['name'],
-                'emoji': True,
             },
             'value': str(expense['category']['id']),
         }
@@ -517,11 +454,10 @@ def get_cost_centers_block(expense: Dict = None) -> Dict:
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Eg. Accounting',
-                'emoji': True,
             },
             'action_id': 'cost_center_id',
         },
-        'label': {'type': 'plain_text', 'text': 'Cost Center', 'emoji': True},
+        'label': {'type': 'plain_text', 'text': 'Cost Center'},
     }
 
     if expense is not None:
@@ -529,7 +465,6 @@ def get_cost_centers_block(expense: Dict = None) -> Dict:
             'text': {
                 'type': 'plain_text',
                 'text': expense['cost_center']['name'],
-                'emoji': True,
             },
             'value': str(expense['cost_center']['id']),
         }
@@ -540,8 +475,8 @@ def expense_form_loading_modal(title: str, loading_message: str) -> Dict:
     loading_modal = {
         'type': 'modal',
         'callback_id': 'upsert_expense',
-        'title': {'type': 'plain_text', 'text': '{}'.format(title), 'emoji': True},
-        'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True},
+        'title': {'type': 'plain_text', 'text': '{}'.format(title)},
+        'close': {'type': 'plain_text', 'text': 'Cancel'},
         'blocks': [
             {
                 'type': 'section',
@@ -567,7 +502,6 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
         'text': {
             'type': 'plain_text',
             'text': 'Add to Existing Report',
-            'emoji': True
         },
         'value': 'existing_report'
     }
@@ -576,7 +510,6 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
         'text': {
             'type': 'plain_text',
             'text': 'Add to New Report',
-            'emoji': True
         },
         'value': 'new_report'
     }
@@ -593,7 +526,6 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
         'label': {
             'type': 'plain_text',
             'text': 'Add to Report',
-            'emoji': True
         }
     }
     blocks.append(add_to_report_block)
@@ -610,14 +542,12 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
                     'placeholder': {
                         'type': 'plain_text',
                         'text': 'Enter Report Name',
-                        'emoji': True
                     },
                     'action_id': 'report_name'
                 },
                 'label': {
                     'type': 'plain_text',
                     'text': 'Report Name',
-                    'emoji': True
                 }
             },
             'option': add_to_new_report_option
@@ -633,14 +563,12 @@ def get_add_to_report_blocks(add_to_report: str, action_id: str) -> Dict:
                     'placeholder': {
                         'type': 'plain_text',
                         'text': 'Select a Report',
-                        'emoji': True
                     },
                     'action_id': 'existing_report'
                 },
                 'label': {
                     'type': 'plain_text',
                     'text': 'Select Report',
-                    'emoji': True
                 }
             },
             'option': add_to_existing_report_option
@@ -671,9 +599,9 @@ def expense_dialog_form(
         'type': 'modal',
         'callback_id': 'upsert_expense',
         'private_metadata': private_metadata,
-        'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
-        'submit': {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True},
-        'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True}
+        'title': {'type': 'plain_text', 'text': 'Create Expense'},
+        'submit': {'type': 'plain_text', 'text': 'Add Expense'},
+        'close': {'type': 'plain_text', 'text': 'Cancel'}
     }
 
     view['blocks'] = []
@@ -760,7 +688,6 @@ def get_expense_message_details_section(expense: Dict, expense_url: str, actions
                         'text': {
                             'type': 'plain_text',
                             'text': ':pencil: Edit',
-                            'emoji': True
                         },
                         'value': 'edit_expense_accessory.{}'.format(expense['id'])
                     },
@@ -768,7 +695,6 @@ def get_expense_message_details_section(expense: Dict, expense_url: str, actions
                         'text': {
                             'type': 'plain_text',
                             'text': ':arrow_upper_right: Open in Fyle',
-                            'emoji': True
                         },
                         'url': expense_url,
                         'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
@@ -827,7 +753,6 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
             'text': {
                 'type': 'plain_text',
                 'text': 'Attach Receipt',
-                'emoji': True,
             },
             'value': expense['id'],
             'action_id': 'attach_receipt'
@@ -847,7 +772,6 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
                 'text': {
                     'type': 'plain_text',
                     'text': 'Submit Report',
-                    'emoji': True,
                 },
                 'value': expense['report_id'],
                 'action_id': 'open_submit_report_dialog'
@@ -863,7 +787,6 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
             'text': {
                 'type': 'plain_text',
                 'text': 'Add to Report',
-                'emoji': True,
             },
             'value': expense['id'],
             'action_id': 'add_expense_to_report'
@@ -876,7 +799,6 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
         'text': {
             'type': 'plain_text',
             'text': 'Complete Expense',
-            'emoji': True,
         },
         'value': expense['id'],
         'action_id': 'edit_expense',
@@ -890,7 +812,6 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
         'text': {
             'type': 'plain_text',
             'text': 'View in Fyle',
-            'emoji': True,
         },
         'url': fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE'),
         'value': expense['id'],
@@ -990,12 +911,10 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
         'title': {
             'type': 'plain_text',
             'text': ':mailbox:  Add to Report',
-            'emoji': True
         },
         'submit': {
             'type': 'plain_text',
             'text': 'Add',
-            'emoji': True
         },
         'type': 'modal',
         'callback_id': 'add_expense_to_report',
@@ -1003,7 +922,6 @@ def get_add_expense_to_report_dialog(expense: Dict, add_to_report: str = None) -
         'close': {
             'type': 'plain_text',
             'text': 'Cancel',
-            'emoji': True
         },
     }
 
@@ -1034,7 +952,6 @@ def get_minimal_expense_details(expense: Dict, expense_url: str, receipt_message
                         'text': {
                             'type': 'plain_text',
                             'text': ':arrow_upper_right: Open in Fyle',
-                            'emoji': True
                         },
                         'url': expense_url,
                         'value': 'open_in_fyle_accessory.{}'.format(expense['id'])
@@ -1117,17 +1034,14 @@ def get_view_report_details_dialog(user: User, report: Dict, expenses: List[Dict
         'title': {
             'type': 'plain_text',
             'text': 'Report Details',
-            'emoji': True
         },
         'submit': {
             'type': 'plain_text',
             'text': 'Submit Report',
-            'emoji': True
         },
         'close': {
             'type': 'plain_text',
             'text': 'Cancel',
-            'emoji': True
         }
     }
 
