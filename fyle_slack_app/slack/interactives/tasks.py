@@ -27,7 +27,7 @@ def get_additional_currency_details(amount: int, home_currency: str, selected_cu
     return additional_currency_details
 
 
-def handle_project_select(user: User, team_id: str, project_id: str, view_id: str, slack_payload: Dict) -> None:
+def handle_project_selection(user: User, team_id: str, project_id: str, view_id: str, slack_payload: Dict) -> None:
 
     slack_client = get_slack_client(team_id)
 
@@ -83,7 +83,7 @@ def handle_project_select(user: User, team_id: str, project_id: str, view_id: st
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
 
-def handle_category_select(user: User, team_id: str, category_id: str, view_id: str, slack_payload: str) -> None:
+def handle_category_selection(user: User, team_id: str, category_id: str, view_id: str, slack_payload: str) -> None:
 
     slack_client = get_slack_client(team_id)
 

@@ -1,6 +1,7 @@
 import sentry_sdk
 
 from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk import capture_exception, capture_message
 
 from django.conf import settings
 
@@ -26,3 +27,9 @@ class Sentry:
                 return 0
 
         return 0.2
+
+
+    @staticmethod
+    def capture_exception(message=None):
+        error = Exception(message)
+        capture_exception(error)

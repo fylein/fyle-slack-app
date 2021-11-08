@@ -38,9 +38,9 @@ class BlockActionHandler:
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
             'edit_expense': self.handle_edit_expense,
             'attach_receipt': self.handle_attach_receipt,
-            'category_id': self.handle_category_select,
-            'project_id': self.handle_project_select,
-            'currency': self.handle_currency_select,
+            'category_id': self.handle_category_selection,
+            'project_id': self.handle_project_selection,
+            'currency': self.handle_currency_selection,
             'amount': self.handle_amount_entered,
             'add_to_report': self.handle_add_to_report,
             'add_expense_to_report': self.handle_add_expense_to_report,
@@ -169,7 +169,7 @@ class BlockActionHandler:
         return JsonResponse({})
 
 
-    def handle_project_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def handle_project_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         project_id = slack_payload['actions'][0]['selected_option']['value']
 
@@ -205,7 +205,7 @@ class BlockActionHandler:
         slack_client.views_update(view_id=view_id, view=current_view)
 
         async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_project_select',
+            'fyle_slack_app.slack.interactives.tasks.handle_project_selection',
             user,
             team_id,
             project_id,
@@ -216,7 +216,7 @@ class BlockActionHandler:
         return JsonResponse({})
 
 
-    def handle_category_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def handle_category_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         category_id = slack_payload['actions'][0]['selected_option']['value']
 
@@ -252,7 +252,7 @@ class BlockActionHandler:
         slack_client.views_update(view_id=view_id, view=current_view)
 
         async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_category_select',
+            'fyle_slack_app.slack.interactives.tasks.handle_category_selection',
             user,
             team_id,
             category_id,

@@ -880,16 +880,18 @@ def get_expense_details_block(expense: Dict, receipt_message: str, report_messag
                     'type': 'mrkdwn',
                     'text': '*Category* \n {}'.format(expense['category']['name'])
                 },
-                {
-                    'type': 'mrkdwn',
-                    'text': '*Project* \n {}'.format(expense['project']['name'])
-                }
             ]
         },
         {
             'type': 'divider'
         }
     ]
+
+    if expense['project'] is not None:
+        expense_details[5]['fields'].append({
+            'type': 'mrkdwn',
+            'text': '*Project* \n {}'.format(expense['project']['name'])
+        })
 
     return expense_details
 

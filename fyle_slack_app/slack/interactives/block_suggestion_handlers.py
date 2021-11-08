@@ -2,6 +2,8 @@ from typing import Dict, List
 
 from django.http import JsonResponse
 
+from fyle_slack_service.sentry import Sentry
+
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.libs import logger, utils
@@ -35,6 +37,9 @@ class BlockSuggestionHandler:
             channel=user_dm_channel_id,
             text='Looks like something went wrong :zipper_mouth_face: \n Please try again'
         )
+
+        Sentry.capture_exception('Invalid block suggestion -> {}'.format(slack_payload['action_id']))
+
         return JsonResponse({}, status=200)
 
 
@@ -89,15 +94,10 @@ class BlockSuggestionHandler:
         if suggested_categories['count'] > 0:
             for category in suggested_categories['data']:
 
-                category_display_name = category['display_name']
-                if category['name'] == category['sub_category']:
-                    category_display_name = category['name']
-
                 option = {
                     'text': {
                         'type': 'plain_text',
-                        'text': category_display_name,
-                        'emoji': True,
+                        'text': category['display_name']
                     },
                     'value': str(category['id']),
                 }
@@ -118,8 +118,7 @@ class BlockSuggestionHandler:
                 option = {
                     'text': {
                         'type': 'plain_text',
-                        'text': currency,
-                        'emoji': True,
+                        'text': currency
                     },
                     'value': currency,
                 }
@@ -147,15 +146,10 @@ class BlockSuggestionHandler:
         if suggested_projects['count'] > 0:
             for project in suggested_projects['data']:
 
-                project_display_name = project['display_name']
-                if project['name'] == project['sub_project']:
-                    project_display_name = project['name']
-
                 option = {
                     'text': {
                         'type': 'plain_text',
-                        'text': project_display_name,
-                        'emoji': True,
+                        'text': project['display_name']
                     },
                     'value': str(project['id']),
                 }
@@ -185,8 +179,7 @@ class BlockSuggestionHandler:
                 option = {
                     'text': {
                         'type': 'plain_text',
-                        'text': cost_center['name'],
-                        'emoji': True,
+                        'text': cost_center['name']
                     },
                     'value': str(cost_center['id']),
                 }
@@ -224,8 +217,7 @@ class BlockSuggestionHandler:
                 option = {
                     'text': {
                         'type': 'plain_text',
-                        'text': report_display_text,
-                        'emoji': True,
+                        'text': report_display_text
                     },
                     'value': str(report['id']),
                 }
