@@ -38,9 +38,9 @@ class BlockActionHandler:
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
             'edit_expense': self.handle_edit_expense,
             'attach_receipt': self.handle_attach_receipt,
-            'category_id': self.handle_category_select,
-            'project_id': self.handle_project_select,
-            'currency': self.handle_currency_select,
+            'category_id': self.handle_category_selection,
+            'project_id': self.handle_project_selection,
+            'currency': self.handle_currency_selection,
             'amount': self.handle_amount_entered,
             'add_to_report': self.handle_add_to_report,
             'add_expense_to_report': self.handle_add_expense_to_report,
@@ -169,7 +169,7 @@ class BlockActionHandler:
         return JsonResponse({})
 
 
-    def handle_project_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def handle_project_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         project_id = slack_payload['actions'][0]['selected_option']['value']
 
@@ -186,15 +186,15 @@ class BlockActionHandler:
         project_block_index = next((index for (index, d) in enumerate(blocks) if d['block_id'] == 'project_block'), None)
 
         project_loading_block = {
-			'type': 'context',
+            'type': 'context',
             'block_id': 'project_loading_block',
-			'elements': [
-				{
-					'type': 'mrkdwn',
-					'text': 'Loading categories for this project'
-				}
-			]
-		}
+            'elements': [
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Loading categories for this project'
+                }
+            ]
+        }
 
         blocks.insert(project_block_index + 1, project_loading_block)
 
@@ -205,7 +205,7 @@ class BlockActionHandler:
         slack_client.views_update(view_id=view_id, view=current_view)
 
         async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_project_select',
+            'fyle_slack_app.slack.interactives.tasks.handle_project_selection',
             user,
             team_id,
             project_id,
@@ -216,7 +216,7 @@ class BlockActionHandler:
         return JsonResponse({})
 
 
-    def handle_category_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def handle_category_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         category_id = slack_payload['actions'][0]['selected_option']['value']
 
@@ -233,15 +233,15 @@ class BlockActionHandler:
         category_block_index = next((index for (index, d) in enumerate(blocks) if d['block_id'] == 'category_block'), None)
 
         category_loading_block = {
-			'type': 'context',
+            'type': 'context',
             'block_id': 'category_loading_block',
-			'elements': [
-				{
-					'type': 'mrkdwn',
-					'text': 'Loading additional fields for this category if any'
-				}
-			]
-		}
+            'elements': [
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Loading additional fields for this category if any'
+                }
+            ]
+        }
 
         blocks.insert(category_block_index + 1, category_loading_block)
 
@@ -252,7 +252,7 @@ class BlockActionHandler:
         slack_client.views_update(view_id=view_id, view=current_view)
 
         async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_category_select',
+            'fyle_slack_app.slack.interactives.tasks.handle_category_selection',
             user,
             team_id,
             category_id,
@@ -263,7 +263,7 @@ class BlockActionHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_currency_select(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def handle_currency_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
@@ -272,7 +272,7 @@ class BlockActionHandler:
         view_id = slack_payload['container']['view_id']
 
         async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_currency_select',
+            'fyle_slack_app.slack.interactives.tasks.handle_currency_selection',
             selected_currency,
             view_id,
             team_id,
@@ -346,6 +346,7 @@ class BlockActionHandler:
 
         fyle_expense = FyleExpense(user)
 
+        # TODO: Clean this up
         expense_id = 'txCCVGvNpDMM'
 
         expense_query_params = {
@@ -374,6 +375,7 @@ class BlockActionHandler:
 
         slack_client = get_slack_client(team_id)
 
+        # TODO: Clean this up
         expense_id = 'txCCVGvNpDMM'
 
         fyle_expense = FyleExpense(user)
@@ -430,6 +432,7 @@ class BlockActionHandler:
 
         report_id = slack_payload['actions'][0]['value']
 
+        # TODO: Clean this up
         report_id = 'rpKJGi7nRzMF'
 
         response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
