@@ -77,7 +77,7 @@ def get_fyle_refresh_token(code: str) -> str:
 
 def get_fyle_profile(refresh_token: str) -> Dict:
     connection = get_fyle_sdk_connection(refresh_token)
-    fyle_profile_response = connection.v1.fyler.my_profile.get()
+    fyle_profile_response = connection.v1beta.spender.my_profile.get()
     return fyle_profile_response['data']
 
 
