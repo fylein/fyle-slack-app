@@ -60,10 +60,13 @@ def get_hashed_args(*factors) -> str:
 
 
 # Default timeout for cache is 60 seconds
-def cache_this(timeout: int  = 60) -> Callable:
+def cache_this(timeout: int = None) -> Callable:
     def decorator(function: Callable) -> Callable:
         @wraps(function)
         def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
+
+            if timeout is None:
+                raise Exception('Timeout not specified for caching')
 
             # Creating hash of the function arguments passed
             hashed_args = get_hashed_args(args, kwargs)

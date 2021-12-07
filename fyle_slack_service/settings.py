@@ -101,6 +101,9 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
         'LOCATION': 'slack_cache',
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000
+        }
     }
 }
 
