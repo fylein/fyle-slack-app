@@ -1,11 +1,14 @@
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, Callable
 
 import base64
 import datetime
 import json
+import hashlib
 
+from functools import wraps
 from urllib.parse import quote_plus, urlencode
 
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 from django.db.models.base import Model
@@ -48,3 +51,38 @@ def decode_state(state: str) -> Dict:
     decoded_state = base64.urlsafe_b64decode(state.encode())
     state_params = json.loads(decoded_state.decode())
     return state_params
+
+
+def get_hashed_args(*factors) -> str:
+    args = json.dumps(factors, sort_keys=True)
+    hashed_args= hashlib.md5(args.encode('utf-8'))
+    return hashed_args.hexdigest()
+
+
+# Default timeout for cache is 60 seconds
+def cache_this(timeout: int = None) -> Callable:
+    def decorator(function: Callable) -> Callable:
+        @wraps(function)
+        def function_wrapper(*args: Any, **kwargs: Any) -> Callable:
+
+            if timeout is None:
+                raise Exception('Timeout not specified for caching')
+
+            # Creating hash of the function arguments passed
+            hashed_args = get_hashed_args(args, kwargs)
+
+            # Creating a cache key with prefix as function name
+            # and suffix as hashed function arguments
+            cache_key = '{}.{}'.format(function.__name__, hashed_args)
+
+            response = cache.get(cache_key)
+
+            # If cache doesn't return anything call the original function
+            # and cache the function response
+            if response is None:
+                response = function(*args, **kwargs)
+                cache.set(cache_key, response, timeout)
+
+            return response
+        return function_wrapper
+    return decorator

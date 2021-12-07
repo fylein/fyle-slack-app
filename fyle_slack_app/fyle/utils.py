@@ -2,6 +2,7 @@ from typing import Dict
 
 import requests
 
+
 from fyle.platform import Platform
 
 from django.conf import settings
@@ -14,8 +15,7 @@ FYLE_TOKEN_URL = '{}/oauth/token'.format(settings.FYLE_ACCOUNTS_URL)
 
 
 def get_fyle_sdk_connection(refresh_token: str) -> Platform:
-    access_token = get_fyle_access_token(refresh_token)
-    cluster_domain = get_cluster_domain(access_token)
+    cluster_domain = get_cluster_domain(refresh_token)
 
     FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
 
@@ -27,8 +27,10 @@ def get_fyle_sdk_connection(refresh_token: str) -> Platform:
         refresh_token=refresh_token
     )
 
-
-def get_cluster_domain(access_token: str) -> str:
+# Caching for 1 day
+@utils.cache_this(timeout=86400)
+def get_cluster_domain(fyle_refresh_token: str) -> str:
+    access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain_url = '{}/oauth/cluster'.format(settings.FYLE_ACCOUNTS_URL)
     headers = {
         'content-type': 'application/json',
@@ -75,6 +77,8 @@ def get_fyle_refresh_token(code: str) -> str:
     return oauth_response.json()['refresh_token']
 
 
+# Caching for 1 day
+@utils.cache_this(timeout=86400)
 def get_fyle_profile(refresh_token: str) -> Dict:
     connection = get_fyle_sdk_connection(refresh_token)
     fyle_profile_response = connection.v1beta.spender.my_profile.get()
@@ -82,8 +86,7 @@ def get_fyle_profile(refresh_token: str) -> Dict:
 
 
 def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type: str) -> str:
-    access_token = get_fyle_access_token(fyle_refresh_token)
-    cluster_domain = get_cluster_domain(access_token)
+    cluster_domain = get_cluster_domain(fyle_refresh_token)
 
     RESOURCE_URL_MAPPING = {
         'REPORT': '{}/app/main/#/enterprise/reports'.format(cluster_domain),

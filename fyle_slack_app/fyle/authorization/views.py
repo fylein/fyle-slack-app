@@ -137,7 +137,7 @@ class FyleAuthorization(View):
 
     def create_notification_subscription(self, user: User, fyle_profile: Dict) -> None:
         access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
-        cluster_domain = fyle_utils.get_cluster_domain(access_token)
+        cluster_domain = fyle_utils.get_cluster_domain(user.fyle_refresh_token)
 
         SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
             SubscriptionType.FYLER_SUBSCRIPTION: {

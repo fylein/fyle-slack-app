@@ -63,7 +63,7 @@ def uninstall_app(team_id: str) -> None:
         # Disabling subscription for users in the team
         for user in users:
             access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
-            cluster_domain = fyle_utils.get_cluster_domain(access_token)
+            cluster_domain = fyle_utils.get_cluster_domain(user.fyle_refresh_token)
 
             fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
 
