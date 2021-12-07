@@ -1,9 +1,10 @@
 from typing import Dict, List
 
+from django.core.cache import cache
+
 from fyle.platform.platform import Platform
 
 from fyle_slack_app.fyle.utils import get_fyle_sdk_connection
-from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
 
@@ -119,7 +120,7 @@ class FyleExpense:
 
 
     @staticmethod
-    def get_expense_form_details(user: User) -> Dict:
+    def get_expense_form_details(user: User, view_id: str) -> Dict:
 
         fyle_expense = FyleExpense(user)
 
@@ -155,19 +156,14 @@ class FyleExpense:
 
         add_to_report = 'existing_report'
 
-        # Caching details in slack private metadata so that they can be reused again in the form without computing them again
-        private_metadata = {
+        expense_form_details = {
             'fields_render_property': fields_render_property,
             'additional_currency_details': additional_currency_details,
             'add_to_report': add_to_report
         }
 
-        expense_form_details = {
-            'fields_render_property': fields_render_property,
-            'private_metadata': encode_state(private_metadata),
-            'additional_currency_details': additional_currency_details,
-            'add_to_report': add_to_report
-        }
+        cache_key = '{}.form_metadata'.format(view_id)
+        cache.set(cache_key, expense_form_details, 3600)
 
         return expense_form_details
 
@@ -175,19 +171,18 @@ class FyleExpense:
     @staticmethod
     def get_current_expense_form_details(slack_payload: Dict) -> Dict:
 
-        private_metadata = slack_payload['view']['private_metadata']
+        cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+        form_metadata =  cache.get(cache_key)
 
-        decoded_private_metadata = decode_state(private_metadata)
+        fields_render_property = form_metadata['fields_render_property']
 
-        fields_render_property = decoded_private_metadata['fields_render_property']
+        additional_currency_details = form_metadata.get('additional_currency_details')
 
-        additional_currency_details = decoded_private_metadata.get('additional_currency_details')
-
-        add_to_report = decoded_private_metadata.get('add_to_report')
+        add_to_report = form_metadata.get('add_to_report')
 
         current_ui_blocks = slack_payload['view']['blocks']
 
-        project = decoded_private_metadata.get('project')
+        project = form_metadata.get('project')
 
         custom_field_blocks = []
 
@@ -203,7 +198,6 @@ class FyleExpense:
             'selected_project': project,
             'additional_currency_details': additional_currency_details,
             'add_to_report': add_to_report,
-            'private_metadata': private_metadata,
             'custom_fields': custom_field_blocks
         }
         return current_form_details

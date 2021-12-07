@@ -1,5 +1,6 @@
 from typing import Callable, Dict
 
+from django.core.cache import cache
 from django.http import JsonResponse
 
 from django_q.tasks import async_task
@@ -311,17 +312,14 @@ class BlockActionHandler:
 
         current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
 
-        private_metadata = current_expense_form_details['private_metadata']
-
-        decoded_private_metadata = utils.decode_state(private_metadata)
+        cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+        form_metadata = cache.get(cache_key)
 
         current_expense_form_details['add_to_report'] = add_to_report
 
-        decoded_private_metadata['add_to_report'] = add_to_report
+        form_metadata['add_to_report'] = add_to_report
 
-        encoded_private_metadata = utils.encode_state(decoded_private_metadata)
-
-        current_expense_form_details['private_metadata'] = encoded_private_metadata
+        cache.set(cache_key, form_metadata)
 
         expense_form = expense_messages.expense_dialog_form(
             **current_expense_form_details

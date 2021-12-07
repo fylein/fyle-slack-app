@@ -591,17 +591,15 @@ def expense_dialog_form(
         custom_fields: Dict = None,
         additional_currency_details: Dict = None,
         add_to_report: str = None,
-        private_metadata: str = None,
         expense : Dict = None
     ) -> Dict:
 
     view = {
         'type': 'modal',
         'callback_id': 'upsert_expense',
-        'private_metadata': private_metadata,
-        'title': {'type': 'plain_text', 'text': 'Create Expense'},
-        'submit': {'type': 'plain_text', 'text': 'Add Expense'},
-        'close': {'type': 'plain_text', 'text': 'Cancel'}
+        'title': {'type': 'plain_text', 'text': 'Create Expense', 'emoji': True},
+        'submit': {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True},
+        'close': {'type': 'plain_text', 'text': 'Cancel', 'emoji': True}
     }
 
     view['blocks'] = []

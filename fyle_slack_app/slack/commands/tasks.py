@@ -97,7 +97,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     slack_client = slack_utils.get_slack_client(team_id)
 
-    expense_form_details = FyleExpense.get_expense_form_details(user)
+    expense_form_details = FyleExpense.get_expense_form_details(user, view_id)
 
     expense_form = expense_messages.expense_dialog_form(
         **expense_form_details

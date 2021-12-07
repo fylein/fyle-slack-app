@@ -1,5 +1,6 @@
 from typing import Dict, List
 
+from django.core.cache import cache
 from django.http import JsonResponse
 
 from fyle_slack_service.sentry import Sentry
@@ -79,11 +80,15 @@ class BlockSuggestionHandler:
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        private_metadata = slack_payload['view']['private_metadata']
+        # expense_processing_details = ExpenseProcessingDetails.objects.get(
+        #     slack_view_id=slack_payload['view']['id']
+        # )
 
-        decoded_private_metadata = utils.decode_state(private_metadata)
+        # form_metadata = expense_processing_details.form_metadata
+        cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+        form_metadata = cache.get(cache_key)
 
-        project = decoded_private_metadata.get('project')
+        project = form_metadata.get('project')
 
         if project is not None:
             category_query_params['id'] = 'in.{}'.format(tuple(project['category_ids']))
