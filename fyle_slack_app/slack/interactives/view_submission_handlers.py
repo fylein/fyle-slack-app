@@ -165,7 +165,9 @@ class ViewSubmissionHandler:
                         if inner_value['selected_option'] is not None:
                             value = inner_value['selected_option']['value']
 
-                    if inner_value['type'] == 'multi_static_select':
+                    if inner_value['type'] in ['multi_static_select', 'multi_external_select']:
+
+                        _ , inner_key = key.split('__')
 
                         values_list = []
                         for val in inner_value['selected_options']:

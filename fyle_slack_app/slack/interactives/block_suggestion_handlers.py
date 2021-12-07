@@ -25,7 +25,8 @@ class BlockSuggestionHandler:
             'project_id': self.handle_project_suggestion,
             'cost_center_id': self.handle_cost_center_suggestion,
             'currency': self.handle_currency_suggestion,
-            'existing_report': self.handle_existing_report_suggestion
+            'existing_report': self.handle_existing_report_suggestion,
+            'user_list': self.handle_user_list_suggestion
         }
 
 
@@ -229,3 +230,35 @@ class BlockSuggestionHandler:
                 report_options.append(option)
 
         return report_options
+
+
+    def handle_user_list_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        user_value_entered = slack_payload['value']
+
+        fyle_expense = FyleExpense(user)
+
+        query_params = {
+            'offset': 0,
+            'limit': '10',
+            'order': 'email.asc',
+            'email': 'ilike.{}%'.format(user_value_entered),
+        }
+
+        suggested_users = fyle_expense.get_employees(query_params)
+
+        user_options = []
+        if suggested_users['count'] > 0:
+            for user in suggested_users['data']:
+
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': '{} ({})'.format(user['full_name'], user['email'])
+                    },
+                    'value': user['email'],
+                }
+                user_options.append(option)
+
+        return user_options

@@ -67,6 +67,10 @@ class FyleExpense:
         return self.connection.v1beta.spender.reports.list(query_params=query_params)
 
 
+    def get_employees(self, query_params: Dict) -> Dict:
+        return self.connection.v1beta.spender.employees.list(query_params=query_params)
+
+
     def check_project_availability(self) -> bool:
         projects_query_params = {
             'offset': 0,
