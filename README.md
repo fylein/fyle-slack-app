@@ -2,6 +2,21 @@
 
 * Download and install Docker desktop for Mac from [here.](https://www.docker.com/products/docker-desktop)
 
+* Download and install ngrok for Mac from [here](https://ngrok.com/download)
+
+* Once ngrok is installed, run the below command to start ngrok tunnel
+    ```
+    ngrok http 8000
+    ```
+
+* This will spin up a ngrok tunnel with a host name that will proxy slack's API calls to our local server.
+
+## Creating new slack app for local development ##
+
+* Create a new slack app from [here](https://api.slack.com/apps)
+* Choose `Create from an app manifest` and ask someone from Slack Team to share an existing manifest file.
+* After a new app is created you'll need to replace the existing ngrok urls to the ngrok server url that you started in the manifest of the new app that you created.
+
 
 ## Local Development ##
 

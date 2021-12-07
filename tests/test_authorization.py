@@ -126,7 +126,7 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     mock_fyle_refresh_token = 'fyle-refresh-token'
     fyle_utils.get_fyle_refresh_token.return_value = mock_fyle_refresh_token
 
-    mock_fyle_profile = mock_fyle.fyler.my_profile.get()['data']
+    mock_fyle_profile = mock_fyle.spender.my_profile.get()['data']
     fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
 
     mock_user = mock.Mock(spec=User)

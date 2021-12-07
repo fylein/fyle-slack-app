@@ -17,17 +17,17 @@ class FyleReportApproval:
 
 
     def get_approver_reports(self, query_params: Dict) -> Dict:
-        approver_reports = self.connection.v1.approver.reports.list(query_params=query_params)
+        approver_reports = self.connection.v1beta.approver.reports.list(query_params=query_params)
         return approver_reports
 
 
     def get_report_by_id(self, report_id: str) -> Dict:
-        approver_report = self.connection.v1.approver.reports.get_by_id(report_id)
+        approver_report = self.connection.v1beta.approver.reports.get_by_id(report_id)
         return approver_report
 
 
     def approve_report(self, report_id: str) -> Dict:
-        approved_report = self.connection.v1.approver.reports.approve(report_id)
+        approved_report = self.connection.v1beta.approver.reports.approve(report_id)
         return approved_report
 
 

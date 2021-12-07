@@ -50,9 +50,9 @@ def mock_fyle() -> Platform:
     fyle.approver.reports.approve.return_value = approver_reports_get_response
 
     # Fyler API mocks
-    fyle.fyler.my_profile.get.return_value = http_request(
+    fyle.spender.my_profile.get.return_value = http_request(
         method='GET',
-        url='{}/4617658/fyler/my_profile'.format(FYLE_STOPLIGHT_URL)
+        url='{}/28670828/spender/my_profile'.format(FYLE_STOPLIGHT_URL)
     )
 
     return fyle

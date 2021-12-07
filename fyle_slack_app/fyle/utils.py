@@ -79,7 +79,7 @@ def get_fyle_refresh_token(code: str) -> str:
 @utils.cache_this()
 def get_fyle_profile(refresh_token: str) -> Dict:
     connection = get_fyle_sdk_connection(refresh_token)
-    fyle_profile_response = connection.v1.fyler.my_profile.get()
+    fyle_profile_response = connection.v1beta.spender.my_profile.get()
     return fyle_profile_response['data']
 
 
@@ -127,7 +127,7 @@ def upsert_fyle_subscription(cluster_domain: str, access_token: str, subscriptio
     FYLE_PLATFORM_URL = '{}/platform/v1'.format(cluster_domain)
 
     SUBSCRIPTION_TYPE_URL_MAPPINGS = {
-        SubscriptionType.FYLER_SUBSCRIPTION: '{}/fyler/subscriptions'.format(FYLE_PLATFORM_URL),
+        SubscriptionType.FYLER_SUBSCRIPTION: '{}/spender/subscriptions'.format(FYLE_PLATFORM_URL),
         SubscriptionType.APPROVER_SUBSCRIPTION: '{}/approver/subscriptions'.format(FYLE_PLATFORM_URL)
     }
 
