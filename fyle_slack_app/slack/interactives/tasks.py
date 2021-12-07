@@ -1,9 +1,10 @@
 from typing import Dict, List
 
+from django.core.cache import cache
+
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
-from fyle_slack_app.libs.utils import decode_state, encode_state
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 
@@ -55,10 +56,11 @@ def handle_project_selection(user: User, team_id: str, project_id: str, view_id:
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
+
     # Removing custom fields when project is selected
     current_expense_form_details['custom_fields'] = None
-
-    private_metadata = current_expense_form_details['private_metadata']
 
     current_expense_form_details['selected_project'] = project
 
@@ -68,13 +70,9 @@ def handle_project_selection(user: User, team_id: str, project_id: str, view_id:
     project_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'project_loading_block'), None)
     current_ui_blocks.pop(project_loading_block_index)
 
-    decoded_private_metadata = decode_state(private_metadata)
+    form_metadata['project'] = project
 
-    decoded_private_metadata['project'] = project
-
-    encoded_private_metadata = encode_state(decoded_private_metadata)
-
-    current_expense_form_details['private_metadata'] = encoded_private_metadata
+    cache.set(cache_key, form_metadata)
 
     new_expense_dialog_form = expense_dialog_form(
         **current_expense_form_details
@@ -116,9 +114,8 @@ def handle_currency_selection(user: User, selected_currency: str, view_id: str, 
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
-    private_metadata = current_expense_form_details['private_metadata']
-
-    decoded_private_metadata = decode_state(private_metadata)
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
 
     additional_currency_details = current_expense_form_details['additional_currency_details']
 
@@ -136,11 +133,9 @@ def handle_currency_selection(user: User, selected_currency: str, view_id: str, 
 
     current_expense_form_details['additional_currency_details'] = additional_currency_details
 
-    decoded_private_metadata['additional_currency_details'] = additional_currency_details
+    form_metadata['additional_currency_details'] = additional_currency_details
 
-    encoded_private_metadata = encode_state(decoded_private_metadata)
-
-    current_expense_form_details['private_metadata'] = encoded_private_metadata
+    cache.set(cache_key, form_metadata)
 
     expense_form = expense_dialog_form(
         **current_expense_form_details
@@ -161,9 +156,8 @@ def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
-    private_metadata = current_expense_form_details['private_metadata']
-
-    decoded_private_metadata = decode_state(private_metadata)
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
 
     home_currency = current_expense_form_details['additional_currency_details']['home_currency']
 
@@ -173,11 +167,9 @@ def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_
 
     current_expense_form_details['additional_currency_details'] = additional_currency_details
 
-    decoded_private_metadata['additional_currency_details'] = additional_currency_details
+    form_metadata['additional_currency_details'] = additional_currency_details
 
-    encoded_private_metadata = encode_state(decoded_private_metadata)
-
-    current_expense_form_details['private_metadata'] = encoded_private_metadata
+    cache.set(cache_key, form_metadata)
 
     expense_form = expense_dialog_form(
         **current_expense_form_details
@@ -207,18 +199,17 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
 
-    expense_form_details = FyleExpense.get_expense_form_details(user)
+    expense_form_details = FyleExpense.get_expense_form_details(user, view_id)
 
-    private_metadata = decode_state(expense_form_details['private_metadata'])
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
 
     # Add additional metadata to differentiate create and edit expense
     # message_ts to update message in edit case
-    private_metadata['expense_id'] = expense_id
-    private_metadata['message_ts'] = slack_payload['container']['message_ts']
+    form_metadata['expense_id'] = expense_id
+    form_metadata['message_ts'] = slack_payload['container']['message_ts']
 
-    encoded_metadata = encode_state(private_metadata)
-
-    expense_form_details['private_metadata'] = encoded_metadata
+    cache.set(cache_key, form_metadata)
 
     expense_form = expense_dialog_form(
         expense=expense,

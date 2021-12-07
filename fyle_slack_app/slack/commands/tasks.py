@@ -39,7 +39,7 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
 
         # Disabling user subscription
         access_token = fyle_utils.get_fyle_access_token(user.fyle_refresh_token)
-        cluster_domain = fyle_utils.get_cluster_domain(access_token)
+        cluster_domain = fyle_utils.get_cluster_domain(user.fyle_refresh_token)
 
         fyle_profile = fyle_utils.get_fyle_profile(user.fyle_refresh_token)
 
@@ -97,7 +97,7 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
 
     slack_client = slack_utils.get_slack_client(team_id)
 
-    expense_form_details = FyleExpense.get_expense_form_details(user)
+    expense_form_details = FyleExpense.get_expense_form_details(user, view_id)
 
     expense_form = expense_messages.expense_dialog_form(
         **expense_form_details
