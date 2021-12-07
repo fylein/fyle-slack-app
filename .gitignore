@@ -126,6 +126,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Cache
+cache.db.sqlite3
+cache.db.sqlite3-journal
+
 
 setup.sh
 Thumbs.db
