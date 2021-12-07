@@ -129,6 +129,8 @@ def test_approver_notifications(track_notification, fyle_utils, slack_utils, use
     resource = notification_type_split[0]
     action = '_'.join(notification_type_split[1:])
 
+    mock_report['data']['state'] = 'APPROVER_PENDING'
+
     mock_webhook_data = {
         'resource': resource,
         'action': action,

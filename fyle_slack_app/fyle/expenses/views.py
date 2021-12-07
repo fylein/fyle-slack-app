@@ -17,7 +17,7 @@ class FyleExpense:
 
 
     def get_expense_fields(self, query_params: Dict) -> Dict:
-        return self.connection.v1.fyler.expense_fields.list(query_params=query_params)
+        return self.connection.v1beta.spender.expense_fields.list(query_params=query_params)
 
 
     def get_default_expense_fields(self) -> Dict:
@@ -47,23 +47,23 @@ class FyleExpense:
 
 
     def get_categories(self, query_params: Dict) -> Dict:
-        return self.connection.v1.fyler.categories.list(query_params=query_params)
+        return self.connection.v1beta.spender.categories.list(query_params=query_params)
 
 
     def get_projects(self, query_params: Dict) -> Dict:
-        return self.connection.v1.fyler.projects.list(query_params=query_params)
+        return self.connection.v1beta.spender.projects.list(query_params=query_params)
 
 
     def get_cost_centers(self, query_params: Dict) -> Dict:
-        return self.connection.v1.fyler.cost_centers.list(query_params=query_params)
+        return self.connection.v1beta.spender.cost_centers.list(query_params=query_params)
 
 
     def get_expenses(self, query_params: Dict) -> Dict:
-        return self.connection.v1.fyler.expenses.list(query_params=query_params)
+        return self.connection.v1beta.spender.expenses.list(query_params=query_params)
 
 
     def get_reports(self, query_params: Dict) -> Dict:
-        return self.connection.v1.fyler.reports.list(query_params=query_params)
+        return self.connection.v1beta.spender.reports.list(query_params=query_params)
 
 
     def check_project_availability(self) -> bool:
