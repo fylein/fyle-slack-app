@@ -11,12 +11,33 @@
 
 * This will spin up a ngrok tunnel with a host name that will proxy slack's API calls to our local server.
 
+* Best to always keep the ngrok tunnel open - can keep a [screen](https://www.geeksforgeeks.org/screen-command-in-linux-with-examples/) session running for this.
+
+
 ## Creating new slack app for local development ##
 
-* Create a new slack app from [here](https://api.slack.com/apps)
-* Choose `Create from an app manifest` and ask someone from Slack Team to share an existing manifest file.
-* After a new app is created you'll need to replace the existing ngrok urls to the ngrok server url that you started in the manifest of the new app that you created.
+* Ask someone from Slack Team to invite you to the `demo` slack workspace, where the team test their changes.
 
+* Create a new slack app from [here](https://api.slack.com/apps)
+
+* Choose `Create from an app manifest` and ask someone from Slack Team to share an existing manifest file. After copy-pasting the manifest file json data, - 
+    
+    * You'll need to replace the existing ngrok urls with the ngrok server url (which you started in your machine) in the manifest of the new app that you created.
+    
+    * You'll also need to change the slack app name to "Fyle-Dev-<YOUR_NAME>", just so that you can easily identify the app (assuming multiple devs working on this service).
+
+* After your slack app has been successfully created, you'll need to add these few creds in your `.env` file (which you will create [here](https://github.com/fylein/fyle-slack-app/blob/master/README.md#prerequisites)) -
+
+    * Creds under `App Credentials` present on this slack app's settings page
+    
+    * Your fyle test org TPA creds (`FYLE_CLIENT_ID`, `FYLE_CLIENT_SECRET`)
+
+* Now, all that is left for you, is to install your newly created slack app inside `demo` slack workspace. You can do this by opening this url in your browser.
+    ```
+    https://<YOUR_NGROK_URL>/slack/direct_install
+    ```
+
+* Just FYI - Each developer will be working on their own separate slack app, and not on a common one.
 
 ## Local Development ##
 
@@ -76,7 +97,12 @@
 
 ### Connecting to PostgreSQL DB container ###
 
-* Ensure that you have services up and running. Then run the following command to connect to the PostgreSQL DB.
+* Ensure that you have services up and running. Then, run the following command to go into interactive-shell of the `database` service container.
+    ```
+    docker-compose exec database bash
+    ```
+
+* And then run the following command to connect to the PostgreSQL DB.
     ```
     PGPASSWORD=slack12345 psql -h localhost -U slack_user slack_db
     ```
