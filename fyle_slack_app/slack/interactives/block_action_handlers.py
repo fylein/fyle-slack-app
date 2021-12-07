@@ -273,6 +273,7 @@ class BlockActionHandler:
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_currency_selection',
+            user,
             selected_currency,
             view_id,
             team_id,
@@ -292,6 +293,7 @@ class BlockActionHandler:
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_amount_entered',
+            user,
             amount_entered,
             view_id,
             team_id,

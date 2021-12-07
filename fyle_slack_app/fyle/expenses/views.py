@@ -1,5 +1,7 @@
 from typing import Dict, List
 
+import datetime
+
 from fyle.platform.platform import Platform
 
 from fyle_slack_app.fyle.utils import get_fyle_sdk_connection
@@ -64,6 +66,14 @@ class FyleExpense:
 
     def get_reports(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.reports.list(query_params=query_params)
+
+
+    def get_exchange_rate(self, from_currency: str, to_currency: str) -> Dict:
+        current_date = datetime.datetime.today().strftime('%Y-%m-%d')
+        exchange_rate = self.connection.v1beta.common.currencies_exchange_rate.get(
+            from_currency, to_currency, current_date
+        )
+        return exchange_rate['data']['exchange_rate']
 
 
     def check_project_availability(self) -> bool:
