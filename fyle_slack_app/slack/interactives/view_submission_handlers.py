@@ -63,7 +63,7 @@ class ViewSubmissionHandler:
 
         private_metadata = utils.decode_state(slack_payload['view']['private_metadata'])
 
-        expense_details, validation_errors = self.extract_form_values_and_validate(form_values)
+        expense_details, validation_errors = self.extract_form_values_and_validate(user, form_values)
 
         expense_id = private_metadata.get('expense_id')
 
@@ -151,10 +151,12 @@ class ViewSubmissionHandler:
         return JsonResponse({})
 
 
-    def extract_form_values_and_validate(self, form_values: Dict) -> Union[Dict, Dict]:
+    def extract_form_values_and_validate(self, user, form_values: Dict) -> Union[Dict, Dict]:
         expense_details = {}
         validation_errors = {}
         custom_fields = []
+
+        fyle_expense = FyleExpense(user)
 
         for key, value in form_values.items():
             custom_field_mappings = {}
@@ -165,9 +167,13 @@ class ViewSubmissionHandler:
                         if inner_value['selected_option'] is not None:
                             value = inner_value['selected_option']['value']
 
+                        if 'LOCATION' in key:
+                            value = fyle_expense.get_place_by_place_id(value)
+
                     if inner_value['type'] in ['multi_static_select', 'multi_external_select']:
 
-                        _ , inner_key = key.split('__')
+                        if 'USER_LIST' in key:
+                            _ , inner_key = key.split('__')
 
                         values_list = []
                         for val in inner_value['selected_options']:

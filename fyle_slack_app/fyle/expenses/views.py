@@ -71,6 +71,13 @@ class FyleExpense:
         return self.connection.v1beta.spender.employees.list(query_params=query_params)
 
 
+    def get_places_autocomplete(self, query: str) -> Dict:
+        return self.connection.v1beta.common.places_autocomplete.list(q=query)
+
+    def get_place_by_place_id(self, place_id: str) -> Dict:
+        return self.connection.v1beta.common.places.get_by_id(place_id)
+
+
     def check_project_availability(self) -> bool:
         projects_query_params = {
             'offset': 0,

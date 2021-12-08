@@ -26,7 +26,8 @@ class BlockSuggestionHandler:
             'cost_center_id': self.handle_cost_center_suggestion,
             'currency': self.handle_currency_suggestion,
             'existing_report': self.handle_existing_report_suggestion,
-            'user_list': self.handle_user_list_suggestion
+            'user_list': self.handle_user_list_suggestion,
+            'places_autocomplete': self.handle_places_autocomplete_suggestion
         }
 
 
@@ -251,7 +252,6 @@ class BlockSuggestionHandler:
         user_options = []
         if suggested_users['count'] > 0:
             for user in suggested_users['data']:
-
                 option = {
                     'text': {
                         'type': 'plain_text',
@@ -262,3 +262,28 @@ class BlockSuggestionHandler:
                 user_options.append(option)
 
         return user_options
+
+
+    def handle_places_autocomplete_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        place_value_entered = slack_payload['value']
+
+        fyle_expense = FyleExpense(user)
+
+        suggested_places = fyle_expense.get_places_autocomplete(query=place_value_entered)
+
+        place_options = []
+
+        if suggested_places['count'] > 0:
+            for place in suggested_places['data']:
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': '{}'.format(place['formatted_address'])
+                    },
+                    'value': place['id'],
+                }
+                place_options.append(option)
+
+        return place_options

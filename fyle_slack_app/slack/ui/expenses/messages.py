@@ -198,6 +198,30 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                 'action_id': 'user_list',
             }
         }
+
+
+    elif field_details['type'] == 'LOCATION':
+        block_id = '{}__{}'.format(block_id, field_details['field_name'])
+        custom_field = {
+            'type': 'input',
+            'label': {
+                'type': 'plain_text',
+                'text': '{}'.format(field_details['field_name']),
+            },
+            'block_id': block_id,
+            'optional': not field_details['is_mandatory'],
+            'element': {
+                'min_query_length': 1,
+                'type': 'external_select',
+                'placeholder': {
+                    'type': 'plain_text',
+                    'text': '{}'.format(field_details['placeholder']),
+                },
+                'action_id': 'places_autocomplete',
+            }
+        }
+
+
     return custom_field
 
 
