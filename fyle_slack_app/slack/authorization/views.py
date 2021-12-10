@@ -20,7 +20,7 @@ class SlackAuthorization(View):
 
         error = request.GET.get('error')
 
-        # If any error occured redirecting to FyleHQ website
+        # If any error occurs, redirect to FyleHQ website
         if error:
 
             logger.error('Slack bot installation failed %s', error)
