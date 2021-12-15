@@ -106,11 +106,13 @@ def handle_category_selection(user: User, team_id: str, category_id: str, view_i
     slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
 
 
-def handle_currency_selection(selected_currency: str, view_id: str, team_id: str, slack_payload: str) -> None:
+def handle_currency_selection(user: User, selected_currency: str, view_id: str, team_id: str, slack_payload: str) -> None:
 
     slack_client = get_slack_client(team_id)
 
-    current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
+    fyle_expense = FyleExpense(user)
+
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
@@ -125,7 +127,7 @@ def handle_currency_selection(selected_currency: str, view_id: str, team_id: str
 
     if home_currency != selected_currency:
         form_current_state = slack_payload['view']['state']['values']
-        exchange_rate = 70.12
+        exchange_rate = fyle_expense.get_exchange_rate(selected_currency, home_currency)
         amount = form_current_state['NUMBER_default_field_amount_block']['amount']['value']
         additional_currency_details = get_additional_currency_details(amount, home_currency, selected_currency, exchange_rate)
 
@@ -142,22 +144,24 @@ def handle_currency_selection(selected_currency: str, view_id: str, team_id: str
     slack_client.views_update(view_id=view_id, view=expense_form)
 
 
-def handle_amount_entered(amount_entered: float, view_id: str, team_id: str, slack_payload: str) -> None:
+def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_id: str, slack_payload: str) -> None:
 
     slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
 
     form_current_state = slack_payload['view']['state']['values']
 
     selected_currency = form_current_state['SELECT_default_field_currency_block']['currency']['selected_option']['value']
 
-    current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
 
-    exchange_rate = 70.12
-
     home_currency = current_expense_form_details['additional_currency_details']['home_currency']
+
+    exchange_rate = fyle_expense.get_exchange_rate(selected_currency, home_currency)
 
     additional_currency_details = get_additional_currency_details(amount_entered, home_currency, selected_currency, exchange_rate)
 

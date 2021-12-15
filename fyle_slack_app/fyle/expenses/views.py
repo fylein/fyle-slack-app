@@ -1,5 +1,7 @@
 from typing import Dict, List
 
+import datetime
+
 from django.core.cache import cache
 
 from fyle.platform.platform import Platform
@@ -74,8 +76,17 @@ class FyleExpense:
     def get_places_autocomplete(self, query: str) -> Dict:
         return self.connection.v1beta.common.places_autocomplete.list(q=query)
 
+
     def get_place_by_place_id(self, place_id: str) -> Dict:
         return self.connection.v1beta.common.places.get_by_id(place_id)
+
+
+    def get_exchange_rate(self, from_currency: str, to_currency: str) -> Dict:
+        current_date = datetime.datetime.today().strftime('%Y-%m-%d')
+        exchange_rate = self.connection.v1beta.common.currencies_exchange_rate.get(
+            from_currency, to_currency, current_date
+        )
+        return exchange_rate['data']['exchange_rate']
 
 
     def check_project_availability(self) -> bool:
