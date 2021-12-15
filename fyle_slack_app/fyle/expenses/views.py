@@ -69,6 +69,18 @@ class FyleExpense:
         return self.connection.v1beta.spender.reports.list(query_params=query_params)
 
 
+    def get_employees(self, query_params: Dict) -> Dict:
+        return self.connection.v1beta.spender.employees.list(query_params=query_params)
+
+
+    def get_places_autocomplete(self, query: str) -> Dict:
+        return self.connection.v1beta.common.places_autocomplete.list(q=query)
+
+
+    def get_place_by_place_id(self, place_id: str) -> Dict:
+        return self.connection.v1beta.common.places.get_by_id(place_id)
+
+
     def get_exchange_rate(self, from_currency: str, to_currency: str) -> Dict:
         current_date = datetime.datetime.today().strftime('%Y-%m-%d')
         exchange_rate = self.connection.v1beta.common.currencies_exchange_rate.get(
