@@ -17,7 +17,7 @@ class CustomExceptionMiddleware(MiddlewareMixin):
             status = exception.status_code
         if isinstance(exception, IntegrityError):
             resp = {
-                'message': 'Seems like an error occured on our side'
+                'message': 'Seems like an error occured from our side. Please contact support@fylehq.com'
             }
             status = 400
         else:
