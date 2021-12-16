@@ -333,7 +333,7 @@ def get_report_approver_sendback_notification(report: Dict, report_url: str, rep
 
 def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dict]:
 
-    title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted approval'.format(
+    title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted for approval'.format(
                     report_url,
                     report['seq_num']
                 )

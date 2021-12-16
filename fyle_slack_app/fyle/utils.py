@@ -86,11 +86,11 @@ def get_fyle_profile(refresh_token: str) -> Dict:
 
 
 def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type: str) -> str:
-    cluster_domain = get_cluster_domain(fyle_refresh_token)
-
+    fyle_app_url = settings.FYLE_APP_URL
+    
     RESOURCE_URL_MAPPING = {
-        'REPORT': '{}/app/main/#/enterprise/reports'.format(cluster_domain),
-        'EXPENSE': '{}/app/main/#/enterprise/view_expense'.format(cluster_domain)
+        'REPORT': '{}/app/main/#/enterprise/reports'.format(fyle_app_url),
+        'EXPENSE': '{}/app/main/#/enterprise/view_expense'.format(fyle_app_url)
     }
 
     resource_base_url = RESOURCE_URL_MAPPING[resource_type]
