@@ -27,8 +27,8 @@ def get_fyle_sdk_connection(refresh_token: str) -> Platform:
         refresh_token=refresh_token
     )
 
-# Caching for 1 day
-@utils.cache_this(timeout=86400)
+# Caching for 1 hour
+@utils.cache_this(timeout=3600)
 def get_cluster_domain(fyle_refresh_token: str) -> str:
     access_token = get_fyle_access_token(fyle_refresh_token)
     cluster_domain_url = '{}/oauth/cluster'.format(settings.FYLE_ACCOUNTS_URL)
@@ -77,8 +77,8 @@ def get_fyle_refresh_token(code: str) -> str:
     return oauth_response.json()['refresh_token']
 
 
-# Caching for 1 day
-@utils.cache_this(timeout=86400)
+# Caching for 1 hour
+@utils.cache_this(timeout=3600)
 def get_fyle_profile(refresh_token: str) -> Dict:
     connection = get_fyle_sdk_connection(refresh_token)
     fyle_profile_response = connection.v1beta.spender.my_profile.get()
@@ -87,7 +87,7 @@ def get_fyle_profile(refresh_token: str) -> Dict:
 
 def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type: str) -> str:
     fyle_app_url = settings.FYLE_APP_URL
-    
+
     RESOURCE_URL_MAPPING = {
         'REPORT': '{}/app/main/#/enterprise/reports'.format(fyle_app_url),
         'EXPENSE': '{}/app/main/#/enterprise/view_expense'.format(fyle_app_url)
