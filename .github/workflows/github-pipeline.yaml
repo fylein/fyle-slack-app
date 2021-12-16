@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SECRET_KEY: thisisafakedjangosecretkey
+      FYLE_APP_URL: fakefyleappurl
       FYLE_CLIENT_ID: fakefyleclientid
       FYLE_CLIENT_SECRET: fakefyleclientsecret
       FYLE_ACCOUNTS_URL: fakefyleaccounturl
