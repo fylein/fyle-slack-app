@@ -30,7 +30,7 @@ from fyle_slack_service import ready
 urlpatterns = [
     path('admin/', admin.site.urls),
 
-    #Kubernetes ready call
+    # Kubernetes ready call
     path('ready', ready),
 
     # Slack routes

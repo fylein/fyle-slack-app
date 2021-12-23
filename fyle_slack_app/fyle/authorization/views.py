@@ -62,7 +62,7 @@ class FyleAuthorization(View):
             user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
 
             if user is not None:
-                # If the user already exists send a message to user indicating they've already linked Fyle account
+                # If the user already exists, send a message to user indicating they've already linked Fyle account
                 self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
 
             else:
@@ -74,6 +74,13 @@ class FyleAuthorization(View):
                     fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
 
                     fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
+
+                    fyle_user = utils.get_or_none(User, fyle_user_id=fyle_profile['user_id'])
+
+                    if fyle_user is not None:
+                        # If the fyle user already exists, send a message to user indicating they've already 
+                        # linked their Fyle account in one of their slack workspace
+                        self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
 
                     # Create user
                     user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
