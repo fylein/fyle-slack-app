@@ -1,3 +1,4 @@
+from logging import log
 from typing import Dict
 
 import uuid
@@ -66,36 +67,35 @@ class FyleAuthorization(View):
                 self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
 
             else:
+                fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
 
-                # Putting below logic inside a transaction block to prevent bad data
-                # If any error occurs in any of the below step, Fyle account link to Slack should not happen
-                with transaction.atomic():
+                fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
-                    fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
+                fyle_user = utils.get_or_none(User, fyle_user_id=fyle_profile['user_id'])
 
-                    fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
+                if fyle_user is not None:
+                    # If the fyle user already exists, send a message to user indicating they've already 
+                    # linked their Fyle account in one of their slack workspace
+                    self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+                
+                else:
+                    # Putting below logic inside a transaction block to prevent bad data
+                    # If any error occurs in any of the below step, Fyle account link to Slack should not happen
+                    with transaction.atomic():
+                        # Create user
+                        user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
 
-                    fyle_user = utils.get_or_none(User, fyle_user_id=fyle_profile['user_id'])
+                        # Creating subscriptions for user
+                        self.create_notification_subscription(user, fyle_profile)
 
-                    if fyle_user is not None:
-                        # If the fyle user already exists, send a message to user indicating they've already 
-                        # linked their Fyle account in one of their slack workspace
-                        self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+                    # Send post authorization message to user
+                    self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
 
-                    # Create user
-                    user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+                    # Update user home tab with post auth message
+                    self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
 
-                    # Creating subscriptions for user
-                    self.create_notification_subscription(user, fyle_profile)
-
-                # Send post authorization message to user
-                self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
-
-                # Update user home tab with post auth message
-                self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
-
-                # Track fyle account link to slack
-                self.track_fyle_authorization(user, fyle_profile)
+                    # Track fyle account link to slack
+                    self.track_fyle_authorization(user, fyle_profile)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
