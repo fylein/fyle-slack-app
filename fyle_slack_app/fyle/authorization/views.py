@@ -1,4 +1,3 @@
-from logging import log
 from typing import Dict
 
 import uuid
@@ -76,7 +75,8 @@ class FyleAuthorization(View):
                 if fyle_user is not None:
                     # If the fyle user already exists, send a message to user indicating they've already 
                     # linked their Fyle account in one of their slack workspace
-                    self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+                    team_name = fyle_user.slack_team.name
+                    self.send_linked_account_message(slack_client, slack_user_dm_channel_id, team_name)
                 
                 else:
                     # Putting below logic inside a transaction block to prevent bad data
@@ -130,10 +130,15 @@ class FyleAuthorization(View):
         )
 
 
-    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
+    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str, workspace_name: str = None) -> None:
+        if workspace_name is not None:
+            message = f'Hey buddy you\'ve already linked your *Fyle* account in this workspace `{workspace_name}` :rainbow:'
+        else:
+            message = 'Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
+        
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
-            text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
+            text=message
         )
 
 
