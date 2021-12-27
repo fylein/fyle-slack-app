@@ -129,9 +129,6 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     mock_fyle_profile = mock_fyle.spender.my_profile.get()['data']
     fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
 
-    mock_fyle_user = mock.Mock(spec=User)
-    utils.get_or_none.side_effect = [mock_fyle_user, None]
-
     mock_user = mock.Mock(spec=User)
     create_user.return_value = mock_user
     send_post_authorization_message.return_value = True
