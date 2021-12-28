@@ -76,8 +76,15 @@ class FyleAuthorization(View):
                 if fyle_user is not None:
                     # If the fyle user already exists, send a message to user indicating they've already 
                     # linked their Fyle account in one of their slack workspace
-                    team_name = fyle_user.slack_team.name
-                    message = f'Hey buddy you\'ve already linked your *Fyle* account in this workspace `{team_name}` :rainbow:'
+                    already_linked_team_name = fyle_user.slack_team.name
+                    current_team_name = slack_team.name
+                    fyle_user_email = fyle_user.email
+                    message = ':x: Unable to link your Fyle account! :confused: \n\n' \
+                                f'It looks like your Fyle account with `{fyle_user_email}` is already linked with _*{already_linked_team_name}*_ workspace. ' \
+                                'One Fyle account can be linked to only 1 workspace in Slack. :upside_down_face: \n\n' \
+                                f'If you wish to link your account with _*{current_team_name}*_ workspace, you would need to unlink your' \
+                                f'Fyle account from _*{already_linked_team_name}*_ workspace. :hammer_and_wrench: \n\n' \
+                                f'Once the account is unlinked from _*{already_linked_team_name}*_ workspace, you could try linking your account again in _*{current_team_name}*_ workspace. :rainbow:'
                     self.send_linked_account_message(slack_client, slack_user_dm_channel_id, message)
                 
                 else:
