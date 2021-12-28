@@ -154,7 +154,7 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     send_post_authorization_message.assert_called_once()
     send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)
 
-    # Check is get_or_none function has been called twice
+    # Check is get_or_none function has been called thrice
     assert utils.get_or_none.call_count == 3
 
     # We call get_or_none thrice in view to be tested
