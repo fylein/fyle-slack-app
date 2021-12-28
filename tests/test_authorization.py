@@ -112,7 +112,7 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     # Returns next value each time get_or_none is called
     # in function which is to be tested
     mock_team = mock.Mock(spec=Team)
-    utils.get_or_none.side_effect = [mock_team, None]
+    utils.get_or_none.side_effect = [mock_team, None, None]
 
     utils.decode_state = decode_state
 
