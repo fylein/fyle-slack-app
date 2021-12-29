@@ -62,33 +62,49 @@ class FyleAuthorization(View):
             user = utils.get_or_none(User, slack_user_id=state_params['user_id'])
 
             if user is not None:
-                # If the user already exists send a message to user indicating they've already linked Fyle account
-                self.send_linked_account_message(slack_client, slack_user_dm_channel_id)
+                # If the user already exists, send a message to user indicating they've already linked Fyle account
+                message = 'Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
+                self.send_linked_account_message(slack_client, slack_user_dm_channel_id, message)
 
             else:
+                fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
 
-                # Putting below logic inside a transaction block to prevent bad data
-                # If any error occurs in any of the below step, Fyle account link to Slack should not happen
-                with transaction.atomic():
+                fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
 
-                    fyle_refresh_token = fyle_utils.get_fyle_refresh_token(code)
+                fyle_user = utils.get_or_none(User, fyle_user_id=fyle_profile['user_id'])
 
-                    fyle_profile = fyle_utils.get_fyle_profile(fyle_refresh_token)
+                if fyle_user is not None:
+                    # If the fyle user already exists, send a message to user indicating they've already 
+                    # linked their Fyle account in one of their slack workspace
+                    already_linked_team_name = fyle_user.slack_team.name
+                    current_team_name = slack_team.name
+                    fyle_user_email = fyle_user.email
+                    message = ':x: Unable to link your Fyle account! :confused: \n\n' \
+                                f'It looks like your Fyle account with `{fyle_user_email}` is already linked with _*{already_linked_team_name}*_ workspace. ' \
+                                'One Fyle account can be linked to only 1 workspace in Slack. :upside_down_face: \n\n' \
+                                f'If you wish to link your account with _*{current_team_name}*_ workspace, you would need to unlink your ' \
+                                f'Fyle account from _*{already_linked_team_name}*_ workspace. :hammer_and_wrench: \n\n' \
+                                f'Once the account is unlinked from _*{already_linked_team_name}*_ workspace, you could try linking your account again in _*{current_team_name}*_ workspace. :rainbow:'
+                    self.send_linked_account_message(slack_client, slack_user_dm_channel_id, message)
+                
+                else:
+                    # Putting below logic inside a transaction block to prevent bad data
+                    # If any error occurs in any of the below step, Fyle account link to Slack should not happen
+                    with transaction.atomic():
+                        # Create user
+                        user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
 
-                    # Create user
-                    user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+                        # Creating subscriptions for user
+                        self.create_notification_subscription(user, fyle_profile)
 
-                    # Creating subscriptions for user
-                    self.create_notification_subscription(user, fyle_profile)
+                    # Send post authorization message to user
+                    self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
 
-                # Send post authorization message to user
-                self.send_post_authorization_message(slack_client, slack_user_dm_channel_id)
+                    # Update user home tab with post auth message
+                    self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
 
-                # Update user home tab with post auth message
-                self.update_user_home_tab_with_post_auth_message(slack_client, state_params['user_id'])
-
-                # Track fyle account link to slack
-                self.track_fyle_authorization(user, fyle_profile)
+                    # Track fyle account link to slack
+                    self.track_fyle_authorization(user, fyle_profile)
 
         # Redirecting the user to slack bot when auth is complete
         return HttpResponseRedirect('https://slack.com/app_redirect?app={}'.format(settings.SLACK_APP_ID))
@@ -123,10 +139,10 @@ class FyleAuthorization(View):
         )
 
 
-    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str) -> None:
+    def send_linked_account_message(self, slack_client: WebClient, slack_user_dm_channel_id: str, message: str = None) -> None:
         slack_client.chat_postMessage(
             channel=slack_user_dm_channel_id,
-            text='Hey buddy you\'ve already linked your *Fyle* account :rainbow:'
+            text=message
         )
 
 
