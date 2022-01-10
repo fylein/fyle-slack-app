@@ -13,6 +13,7 @@ class User(models.Model):
     email = models.EmailField()
     fyle_refresh_token = models.TextField()
     fyle_user_id = models.CharField(max_length=120, unique=True)
+    fyle_org_id = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
