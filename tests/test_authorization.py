@@ -149,7 +149,7 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     fyle_utils.get_fyle_profile.assert_called_once_with(mock_fyle_refresh_token)
 
     create_user.assert_called()
-    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile['user_id'], mock_fyle_profile['org_id'])
+    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile)
 
     send_post_authorization_message.assert_called_once()
     send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)
