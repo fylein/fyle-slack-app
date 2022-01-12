@@ -92,7 +92,7 @@ class FyleAuthorization(View):
                     # If any error occurs in any of the below step, Fyle account link to Slack should not happen
                     with transaction.atomic():
                         # Create user
-                        user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile['user_id'])
+                        user = self.create_user(slack_client, slack_team, state_params['user_id'], slack_user_dm_channel_id, fyle_refresh_token, fyle_profile)
 
                         # Creating subscriptions for user
                         self.create_notification_subscription(user, fyle_profile)
@@ -112,7 +112,7 @@ class FyleAuthorization(View):
 
     # pylint: disable=fixme
     # TODO: Refactor `create_user` this takes in `slack_client` which doesn't define the purpose of this function
-    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str, fyle_user_id: str) -> User:
+    def create_user(self, slack_client: WebClient, slack_team: Team, user_id: str, slack_user_dm_channel_id: str, fyle_refresh_token: str, fyle_profile: dict) -> User:
 
         # Fetch slack user details
         slack_user_info = slack_client.users_info(user=user_id)
@@ -125,7 +125,8 @@ class FyleAuthorization(View):
             email=slack_user_info['user']['profile']['email'],
             slack_dm_channel_id=slack_user_dm_channel_id,
             fyle_refresh_token=fyle_refresh_token,
-            fyle_user_id=fyle_user_id
+            fyle_user_id=fyle_profile['user_id'],
+            fyle_org_id=fyle_profile['org_id']
         )
 
         return user
@@ -217,7 +218,8 @@ class FyleAuthorization(View):
             'email': user.email,
             'slack_team_id': user.slack_team.id,
             'slack_team_name': user.slack_team.name,
-            'fyle_roles': fyle_profile['roles']
+            'fyle_roles': fyle_profile['roles'],
+            'fyle_org_id': fyle_profile['org_id']
         }
 
         tracking.identify_user(user.email)
