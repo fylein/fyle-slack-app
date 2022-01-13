@@ -56,7 +56,7 @@ class ViewSubmissionHandler:
 
         form_values = slack_payload['state']['values']
 
-        rating = form_values['rating_block']['rating']['selected_option']['value']
+        rating = int(form_values['rating_block']['rating']['selected_option']['value'])
         comment = form_values['comment_block']['comment']['value']
 
         return JsonResponse({})

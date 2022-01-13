@@ -3,6 +3,7 @@ import enum
 from django.db import models
 
 from slack_sdk.web import WebClient
+from fyle_slack_app.libs import utils
 
 from fyle_slack_app.models.users import User
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
@@ -57,3 +58,16 @@ class UserFeedbackResponse(models.Model):
 
     def __str__(self) -> str:
         return '{} - {}'.format(self.user_feedback.__str__, self.rating)
+
+
+    @staticmethod
+    def create_user_feedback_response(user_feedback_id: int, rating: int, comment: str):
+        user_feedback = utils.get_or_none(UserFeedback, id=user_feedback_id)
+
+        user_feedback_response = UserFeedbackResponse.objects.create(
+            user_feedback=user_feedback,
+            rating=rating,
+            comment=comment
+        )
+
+        return user_feedback_response
