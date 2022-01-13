@@ -8,6 +8,7 @@ from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app import tracking
 
 
@@ -33,7 +34,8 @@ class BlockActionHandler:
             'report_approver_sendback_notification_preference': self.handle_notification_preference_selection,
             'report_paid_notification_preference': self.handle_notification_preference_selection,
             'report_commented_notification_preference': self.handle_notification_preference_selection,
-            'expense_commented_notification_preference': self.handle_notification_preference_selection
+            'expense_commented_notification_preference': self.handle_notification_preference_selection,
+            'open_feedback_dialog': self.handle_feedback_dialog
         }
 
 
@@ -139,6 +141,19 @@ class BlockActionHandler:
         notification_preference.save()
 
         return JsonResponse({}, status=200)
+
+
+    def handle_feedback_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
+
+        slack_client = get_slack_client(team_id)
+
+        trigger_id = slack_payload['trigger_id']
+
+        feedback_dialog = feedback_messages.get_feedback_dialog()
+
+        slack_client.views_open(user=user_id, view=feedback_dialog, trigger_id=trigger_id)
+
+        return JsonResponse({})
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:
