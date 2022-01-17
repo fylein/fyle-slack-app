@@ -6,6 +6,8 @@ from fyle_slack_app.models import UserFeedbackResponse
 from fyle_slack_app.models.users import User
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.libs import utils
+from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
+
 
 
 class ViewSubmissionHandler:
@@ -74,9 +76,12 @@ class ViewSubmissionHandler:
             comment=comment
         )
 
+        post_feedback_submission_message = feedback_messages.get_post_feedback_submission_message()
+
         # Upadate original feedback message
         slack_client.chat_update(
             text='Thanks for submitting the feedback',
+            blocks=post_feedback_submission_message,
             channel=user.slack_dm_channel_id,
             ts=feedback_message_ts
         )

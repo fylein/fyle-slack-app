@@ -29,7 +29,33 @@ def get_user_feedback_message(feedback_trigger: str) -> List[Dict]:
     return feedback_message_blocks
 
 
+def get_post_feedback_submission_message() -> List[Dict]:
+    feedback_message_blocks = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': 'Thanks for submitting the feedback :rainbow:'
+            }
+        }
+    ]
+    return feedback_message_blocks
+
+
 def get_feedback_dialog(private_metadata: str) -> Dict:
+    feedback_rating_options = []
+
+    for rating in range(10):
+        feedback_rating_options.append(
+            {
+                'text': {
+                    'type': 'plain_text',
+                    'text': '{} :star:'.format(rating+1),
+                },
+                'value': str(rating+1)
+            }
+        )
+
     feedback_dialog = {
         'type': 'modal',
         'callback_id': 'feedback_submission',
@@ -61,35 +87,27 @@ def get_feedback_dialog(private_metadata: str) -> Dict:
                 'type': 'divider'
             },
             {
-                'type': 'section',
+                'type': 'input',
                 'block_id': 'rating_block',
-                'text': {
-                    'type': 'mrkdwn',
+                'label': {
+                    'type': 'plain_text',
                     'text': 'How likely are you to recommend Fyle slack app to a friend or colleague?'
                 },
-                'accessory': {
+                'element': {
                     'type': 'static_select',
                     'placeholder': {
                         'type': 'plain_text',
-                        'text': 'Rating',
+                        'text': 'Select a rating',
                     },
                     'initial_option': {
                         'text': {
                             'type': 'plain_text',
-                            'text': '1 :star: ',
+                            'text': '10 :star:',
 
                         },
-                        'value': 'value-0'
+                        'value': str(10)
                     },
-                    'options': [
-                        {
-                            'text': {
-                                'type': 'plain_text',
-                                'text': '1 :star: ',
-                            },
-                            'value': 'value-0'
-                        },
-                    ],
+                    'options': feedback_rating_options,
                     'action_id': 'rating'
                 }
             },

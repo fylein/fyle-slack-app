@@ -1,6 +1,6 @@
 import enum
-import datetime
 
+from django.utils import timezone
 from django.db import models
 
 from slack_sdk.web import WebClient
@@ -49,7 +49,7 @@ class UserFeedback(models.Model):
 
     @staticmethod
     def update_feedback_active_and_feedback_shown_time(user_feedback):
-        user_feedback.last_feedback_shown_at = datetime.datetime.utcnow()
+        user_feedback.last_feedback_shown_at = timezone.now()
         user_feedback.is_active = False
         user_feedback.save()
 
