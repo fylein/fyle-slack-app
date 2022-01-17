@@ -85,7 +85,7 @@ def generate_list(slack_users):
 
 
 def get_slack_users_data():
-    query = 'select fyle_user_id, fyle_refresh_token from users limit 1;'
+    query = 'select fyle_user_id, fyle_refresh_token from users;'
 
     # connect to prod-US db
     con_prod_us = psycopg2.connect(database=os.environ['DB_NAME'], user=os.environ['PROD_USER'], password=os.environ['PROD_US_PASS'], host=os.environ['PROD_US_HOST'], port="5432")
