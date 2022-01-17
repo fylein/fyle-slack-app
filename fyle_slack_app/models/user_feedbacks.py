@@ -1,4 +1,5 @@
 import enum
+import datetime
 
 from django.db import models
 
@@ -19,9 +20,9 @@ class UserFeedback(models.Model):
         db_table = 'user_feedbacks'
 
     feedback_trigger = models.CharField(max_length=255)
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, to_field='slack_user_id', null=True)
     is_active = models.BooleanField(default=True)
-    last_feedback_shown_at = models.DateTimeField(blank=True)
+    last_feedback_shown_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -32,18 +33,25 @@ class UserFeedback(models.Model):
     @staticmethod
     def trigger_feedback(user: User, feedback_trigger: FeedbackTrigger, slack_client: WebClient):
 
-        user_feedback, _ = UserFeedback.objects.get_or_create(
-            feedback_trigger=feedback_trigger,
+        user_feedback, is_created = UserFeedback.objects.get_or_create(
+            feedback_trigger=feedback_trigger.value,
             user=user
         )
 
-        if user_feedback.is_active:
-            feedback_message = feedback_messages.get_user_feedback_message(user_feedback.id)
+        if user_feedback.is_active or is_created is True:
+            feedback_message = feedback_messages.get_user_feedback_message(feedback_trigger.value)
 
             slack_client.chat_postMessage(
                 channel=user.slack_dm_channel_id,
                 blocks=feedback_message
             )
+
+
+    @staticmethod
+    def update_feedback_active_and_feedback_shown_time(user_feedback):
+        user_feedback.last_feedback_shown_at = datetime.datetime.utcnow()
+        user_feedback.is_active = False
+        user_feedback.save()
 
 
 class UserFeedbackResponse(models.Model):

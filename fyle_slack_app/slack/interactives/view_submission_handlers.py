@@ -52,11 +52,33 @@ class ViewSubmissionHandler:
     def handle_feedback_submission(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
+
+        encoded_private_metadata = slack_payload['view']['private_metadata']
+
+        private_metadata = utils.decode_state(encoded_private_metadata)
+
+        user_feedback_id = private_metadata['user_feedback_id']
+        feedback_message_ts = private_metadata['feedback_message_ts']
+
         slack_client = slack_utils.get_slack_client(team_id)
 
-        form_values = slack_payload['state']['values']
+        form_values = slack_payload['view']['state']['values']
 
         rating = int(form_values['rating_block']['rating']['selected_option']['value'])
         comment = form_values['comment_block']['comment']['value']
+
+        # Register user feedback response
+        UserFeedbackResponse.create_user_feedback_response(
+            user_feedback_id=user_feedback_id,
+            rating=rating,
+            comment=comment
+        )
+
+        # Upadate original feedback message
+        slack_client.chat_update(
+            text='Thanks for submitting the feedback',
+            channel=user.slack_dm_channel_id,
+            ts=feedback_message_ts
+        )
 
         return JsonResponse({})

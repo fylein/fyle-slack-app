@@ -4,7 +4,7 @@ from django.http import JsonResponse
 
 from django_q.tasks import async_task
 
-from fyle_slack_app.models import User, NotificationPreference
+from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
@@ -147,9 +147,27 @@ class BlockActionHandler:
 
         slack_client = get_slack_client(team_id)
 
+        message_ts = slack_payload['message']['ts']
+
         trigger_id = slack_payload['trigger_id']
 
-        feedback_dialog = feedback_messages.get_feedback_dialog()
+        feedback_trigger = slack_payload['actions'][0]['value']
+
+        user_feedback = utils.get_or_none(UserFeedback, user_id=user_id, feedback_trigger=feedback_trigger)
+
+        private_metadata = {
+            'user_feedback_id': user_feedback.id,
+            'feedback_message_ts': message_ts
+        }
+
+        encoded_private_metadata = utils.encode_state(private_metadata)
+
+        feedback_dialog = feedback_messages.get_feedback_dialog(private_metadata=encoded_private_metadata)
+
+        # Since they've opened up the model we'll set is_active to False so that the feedback message won't be shown again
+        UserFeedback.update_feedback_active_and_feedback_shown_time(
+           user_feedback=user_feedback
+        )
 
         slack_client.views_open(user=user_id, view=feedback_dialog, trigger_id=trigger_id)
 

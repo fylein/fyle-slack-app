@@ -1,13 +1,13 @@
 from typing import Dict, List
 
 
-def get_user_feedback_message(user_feedback_id: str) -> List[Dict]:
+def get_user_feedback_message(feedback_trigger: str) -> List[Dict]:
     feedback_message_blocks = [
         {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': 'Hey there :wave: please give us some thoughts on how do you feed about this slack app'
+                'text': 'Hey there :wave: please give us some thoughts on how do you feel about this slack app'
             }
         },
         {
@@ -20,7 +20,7 @@ def get_user_feedback_message(user_feedback_id: str) -> List[Dict]:
                         'type': 'plain_text',
                         'text': 'Give Feedback',
                     },
-                    'value': user_feedback_id,
+                    'value': feedback_trigger,
                     'action_id': 'open_feedback_dialog'
                 }
             ]
@@ -29,10 +29,11 @@ def get_user_feedback_message(user_feedback_id: str) -> List[Dict]:
     return feedback_message_blocks
 
 
-def get_feedback_dialog() -> Dict:
+def get_feedback_dialog(private_metadata: str) -> Dict:
     feedback_dialog = {
         'type': 'modal',
         'callback_id': 'feedback_submission',
+        'private_metadata': private_metadata,
         'title': {
             'type': 'plain_text',
             'text': 'Feedback',
@@ -98,9 +99,9 @@ def get_feedback_dialog() -> Dict:
             {
                 'type': 'input',
                 'block_id': 'comment_block',
+                'optional': True,
                 'element': {
                     'type': 'plain_text_input',
-                    'optional': True,
                     'multiline': True,
                     'action_id': 'comment'
                 },
