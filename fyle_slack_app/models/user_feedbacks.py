@@ -8,6 +8,7 @@ from fyle_slack_app.libs import utils
 
 from fyle_slack_app.models.users import User
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
+from fyle_slack_app import tracking
 
 
 class FeedbackTrigger(enum.Enum):
@@ -45,6 +46,15 @@ class UserFeedback(models.Model):
                 channel=user.slack_dm_channel_id,
                 blocks=feedback_message
             )
+            user_email = user.email
+            event_data = {
+                'feedback_trigger': feedback_trigger,
+                'email': user_email,
+                'slack_user_id': user.slack_user_id
+            }
+
+            tracking.identify_user(user_email)
+            tracking.track_event(user_email, 'Feedback Message Received', event_data)
 
 
     @staticmethod

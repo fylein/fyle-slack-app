@@ -2,12 +2,11 @@ from typing import Callable, Dict
 
 from django.http.response import JsonResponse
 
-from fyle_slack_app.models import UserFeedbackResponse
+from django_q.tasks import async_task
+
 from fyle_slack_app.models.users import User
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.libs import utils
-from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
-
 
 
 class ViewSubmissionHandler:
@@ -59,31 +58,14 @@ class ViewSubmissionHandler:
 
         private_metadata = utils.decode_state(encoded_private_metadata)
 
-        user_feedback_id = private_metadata['user_feedback_id']
-        feedback_message_ts = private_metadata['feedback_message_ts']
-
-        slack_client = slack_utils.get_slack_client(team_id)
-
         form_values = slack_payload['view']['state']['values']
 
-        rating = int(form_values['rating_block']['rating']['selected_option']['value'])
-        comment = form_values['comment_block']['comment']['value']
-
-        # Register user feedback response
-        UserFeedbackResponse.create_user_feedback_response(
-            user_feedback_id=user_feedback_id,
-            rating=rating,
-            comment=comment
-        )
-
-        post_feedback_submission_message = feedback_messages.get_post_feedback_submission_message()
-
-        # Upadate original feedback message
-        slack_client.chat_update(
-            text='Thanks for submitting the feedback',
-            blocks=post_feedback_submission_message,
-            channel=user.slack_dm_channel_id,
-            ts=feedback_message_ts
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_feedback_submission',
+            user,
+            team_id,
+            form_values,
+            private_metadata
         )
 
         return JsonResponse({})

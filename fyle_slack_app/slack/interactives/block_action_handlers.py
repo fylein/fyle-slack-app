@@ -148,18 +148,16 @@ class BlockActionHandler:
         slack_client = get_slack_client(team_id)
 
         message_ts = slack_payload['message']['ts']
-
         trigger_id = slack_payload['trigger_id']
-
         feedback_trigger = slack_payload['actions'][0]['value']
 
         user_feedback = utils.get_or_none(UserFeedback, user_id=user_id, feedback_trigger=feedback_trigger)
 
         private_metadata = {
             'user_feedback_id': user_feedback.id,
-            'feedback_message_ts': message_ts
+            'feedback_message_ts': message_ts,
+            'feedback_trigger': feedback_trigger
         }
-
         encoded_private_metadata = utils.encode_state(private_metadata)
 
         feedback_dialog = feedback_messages.get_feedback_dialog(private_metadata=encoded_private_metadata)
@@ -170,6 +168,16 @@ class BlockActionHandler:
         )
 
         slack_client.views_open(user=user_id, view=feedback_dialog, trigger_id=trigger_id)
+
+        user_email = user_feedback.user.email
+        event_data = {
+            'feedback_trigger': feedback_trigger,
+            'email': user_email,
+            'slack_user_id': user_id
+        }
+
+        tracking.identify_user(user_email)
+        tracking.track_event(user_email, 'Feedback Modal Opened', event_data)
 
         return JsonResponse({})
 
