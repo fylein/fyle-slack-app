@@ -7,7 +7,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('fyle_slack_app', '0003_usersubscriptiondetail'),
+        ('fyle_slack_app', '0004_user_fyle_org_id'),
     ]
 
     operations = [
