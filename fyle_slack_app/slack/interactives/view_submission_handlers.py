@@ -54,11 +54,9 @@ class ViewSubmissionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
 
-        encoded_private_metadata = slack_payload['view']['private_metadata']
-
-        private_metadata = utils.decode_state(encoded_private_metadata)
-
         form_values = slack_payload['view']['state']['values']
+        encoded_private_metadata = slack_payload['view']['private_metadata']
+        private_metadata = utils.decode_state(encoded_private_metadata)
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_feedback_submission',
