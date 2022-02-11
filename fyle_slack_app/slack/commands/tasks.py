@@ -87,7 +87,12 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str, sla
 
     slack_client.chat_update(
         channel=user_dm_channel_id,
-        text=text,
-        blocks=[],
+        blocks=[{
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': text
+            }
+        }],
         ts=slack_payload['message_ts']
     )

@@ -37,7 +37,13 @@ def show_in_progress_confirmation_message(user_id: str, team_id: str, action: st
     if action == 'unlink_account':
         slack_payload = slack_client.chat_postMessage(
             channel=user_dm_channel_id,
-            text='Your request of `Unlink Fyle Account` is being processed :hourglass_flowing_sand:'
+            blocks=[{
+                'type': 'section',
+                'text': {
+                    'type': 'mrkdwn',
+                    'text': 'Your request of `Unlink Fyle Account` is being processed :hourglass_flowing_sand:'
+                }
+            }]
         )
 
         return {
