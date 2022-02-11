@@ -12,7 +12,7 @@ from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 from fyle_slack_app.slack.ui.notifications import preference_messages as notification_preference_messages
-from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app.slack.utils import get_slack_client, show_in_progress_confirmation_message
 
 
 logger = logger.get_logger(__name__)
@@ -29,7 +29,7 @@ class SlackCommandHandler:
         }
 
     def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
-        slack_client = slack_utils.get_slack_client(team_id)
+        slack_client = get_slack_client(team_id)
 
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
@@ -49,17 +49,20 @@ class SlackCommandHandler:
 
 
     def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+        slack_payload = show_in_progress_confirmation_message(user_id=user_id, team_id=team_id, action='unlink_account')
+
         async_task(
             'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
             user_id,
             team_id,
-            user_dm_channel_id
+            user_dm_channel_id,
+            slack_payload
         )
         return JsonResponse({}, status=200)
 
 
     def update_home_tab_with_pre_auth_message(self, user_id: str, team_id: str) -> None:
-        slack_client = slack_utils.get_slack_client(team_id)
+        slack_client = get_slack_client(team_id)
 
         user_info = slack_client.users_info(user=user_id)
         assertions.assert_good(user_info['ok'] is True)
@@ -85,7 +88,7 @@ class SlackCommandHandler:
 
             notification_preference_blocks = notification_preference_messages.get_notification_preferences_blocks(user_notification_preferences, fyle_profile['roles'])
 
-            slack_client = slack_utils.get_slack_client(team_id)
+            slack_client = get_slack_client(team_id)
 
             slack_client.chat_postMessage(
                 blocks=notification_preference_blocks,
