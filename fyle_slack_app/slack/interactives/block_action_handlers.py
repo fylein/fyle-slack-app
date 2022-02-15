@@ -8,8 +8,9 @@ from django_q.tasks import async_task
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import async_operation_message, get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
+from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
 
 
 logger = logger.get_logger(__name__)
@@ -40,9 +41,9 @@ class BlockActionHandler:
 
     # Gets called when function with an action is not found
     def _handle_invalid_block_actions(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        slack_client = get_slack_client(team_id)
+        slack_client = slack_utils.get_slack_client(team_id)
 
-        user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+        user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
             text='Looks like something went wrong :zipper_mouth_face: \n Please try again'
@@ -103,11 +104,11 @@ class BlockActionHandler:
         message_blocks = slack_payload['message']['blocks']
         
         # Overriding the 'approve' cta text to 'approving'
-        in_progress_message_block = async_operation_message.approve_report.value
+        in_progress_message_block = IN_PROGRESS_MESSAGE.get(slack_utils.AsyncOperation.APPROVING_REPORT.value)
         message_blocks[3]['elements'][0] = in_progress_message_block
         
-        slack_client = get_slack_client(team_id)
-        user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+        slack_client = slack_utils.get_slack_client(team_id)
+        user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_update(
             channel=user_dm_channel_id,
             blocks=message_blocks,
