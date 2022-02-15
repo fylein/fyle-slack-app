@@ -103,7 +103,7 @@ class BlockActionHandler:
         message_blocks = slack_payload['message']['blocks']
         
         # Overriding the 'approve' cta text to 'approving'
-        in_progress_message_block = async_operation_message.approve_report
+        in_progress_message_block = async_operation_message.approve_report.value
         message_blocks[3]['elements'][0] = in_progress_message_block
         
         slack_client = get_slack_client(team_id)

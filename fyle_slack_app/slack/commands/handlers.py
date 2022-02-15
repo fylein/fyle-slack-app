@@ -49,14 +49,15 @@ class SlackCommandHandler:
 
 
     def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
-        message_block = [async_operation_message.unlink_account]
+        message_block = [async_operation_message.unlink_account.value]
         slack_client = get_slack_client(team_id)
 
         # Posting in-progress message, and get the timestamp of the posted message
-        message_ts = slack_client.chat_postMessage(
+        message = slack_client.chat_postMessage(
             channel=user_dm_channel_id,
             blocks=message_block
         )
+        message_ts = message['message']['ts']
 
         async_task(
             'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
