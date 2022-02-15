@@ -23,7 +23,7 @@ SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
 }
 
 
-def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str, slack_payload: dict) -> None:
+def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str, message_ts: str) -> None:
     user = utils.get_or_none(User, slack_user_id=user_id)
 
     slack_client = slack_utils.get_slack_client(team_id)
@@ -85,14 +85,16 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str, sla
         # Track Fyle account unlinked
         SlackCommandHandler().track_fyle_account_unlinked(user)
 
+    message_block = [{
+        'type': 'section',
+        'text': {
+            'type': 'mrkdwn',
+            'text': text
+        }
+    }]
+    
     slack_client.chat_update(
         channel=user_dm_channel_id,
-        blocks=[{
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': text
-            }
-        }],
-        ts=slack_payload['message_ts']
+        blocks=message_block,
+        ts=message_ts
     )

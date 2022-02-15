@@ -1,3 +1,4 @@
+from email import message
 from typing import Callable, Dict
 
 from django.http import JsonResponse
@@ -7,7 +8,7 @@ from django_q.tasks import async_task
 from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client, show_in_progress_confirmation_message
+from fyle_slack_app.slack.utils import async_operation_message, get_slack_user_dm_channel_id, get_slack_client
 from fyle_slack_app import tracking
 
 
@@ -101,11 +102,17 @@ class BlockActionHandler:
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
         
-        report_data = {
-            "message_blocks": message_blocks,
-            "message_ts": message_ts
-        }
-        slack_payload = show_in_progress_confirmation_message(user_id=user_id, team_id=team_id, action='report_approval', report_data=report_data)
+        # Overriding the report approval approve cta text to show as approving
+        in_progress_message_block = async_operation_message.approve_report
+        message_blocks[3]['elements'][0] = in_progress_message_block
+        
+        slack_client = get_slack_client(team_id)
+        user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+        slack_client.chat_update(
+            channel=user_dm_channel_id,
+            blocks=message_blocks,
+            ts=message_ts
+        )
 
         async_task(
             'fyle_slack_app.fyle.report_approvals.tasks.process_report_approval',
