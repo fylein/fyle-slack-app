@@ -33,4 +33,3 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
         user_display_name = user_details['full_name']
 
     return user_display_name
-

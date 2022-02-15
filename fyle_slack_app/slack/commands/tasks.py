@@ -92,7 +92,7 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str, mes
             'text': text
         }
     }]
-    
+
     slack_client.chat_update(
         channel=user_dm_channel_id,
         blocks=message_block,

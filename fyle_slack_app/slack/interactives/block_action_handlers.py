@@ -1,4 +1,3 @@
-from email import message
 from typing import Callable, Dict
 
 from django.http import JsonResponse
@@ -102,11 +101,11 @@ class BlockActionHandler:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
-        
+
         # Overriding the 'approve' cta text to 'approving'
         in_progress_message_block = IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.APPROVING_REPORT.value]
         message_blocks[3]['elements'][0] = in_progress_message_block
-        
+
         slack_client = slack_utils.get_slack_client(team_id)
         user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_update(
