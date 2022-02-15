@@ -52,7 +52,7 @@ class SlackCommandHandler:
         message_block = [async_operation_message.unlink_account]
         slack_client = get_slack_client(team_id)
 
-        # Posting in progress message, and get the timestamp of the posted message
+        # Posting in-progress message, and get the timestamp of the posted message
         message_ts = slack_client.chat_postMessage(
             channel=user_dm_channel_id,
             blocks=message_block
