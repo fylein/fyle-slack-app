@@ -19,6 +19,7 @@ def handle_feedback_submission(user: User, team_id: str, form_values: Dict, priv
     # Register user feedback response
     UserFeedbackResponse.create_user_feedback_response(
         user_feedback_id=user_feedback_id,
+        user=user,
         rating=rating,
         comment=comment
     )

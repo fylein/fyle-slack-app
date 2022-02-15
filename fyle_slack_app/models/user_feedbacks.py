@@ -20,9 +20,10 @@ class UserFeedback(models.Model):
     class Meta:
         db_table = 'user_feedbacks'
 
+    id = models.CharField(max_length=120, unique=True, primary_key=True)
     feedback_trigger = models.CharField(max_length=255)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, to_field='slack_user_id', null=True)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     last_feedback_shown_at = models.DateTimeField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -32,10 +33,26 @@ class UserFeedback(models.Model):
 
 
     @staticmethod
+    def get_or_create(user: User, feedback_trigger: FeedbackTrigger):
+        is_created = False
+        user_feedback = utils.get_or_none(UserFeedback, feedback_trigger=feedback_trigger.value, user=user)
+
+        if user_feedback is None:
+            user_feedback = UserFeedback.objects.create(
+                id='uf{}'.format(utils.generate_random_string()),
+                feedback_trigger=feedback_trigger.value,
+                user=user
+            )
+            is_created = True
+
+        return user_feedback, is_created
+
+
+    @staticmethod
     def trigger_feedback(user: User, feedback_trigger: FeedbackTrigger, slack_client: WebClient):
 
-        user_feedback, is_created = UserFeedback.objects.get_or_create(
-            feedback_trigger=feedback_trigger.value,
+        user_feedback, is_created = UserFeedback.get_or_create(
+            feedback_trigger=feedback_trigger,
             user=user
         )
 
@@ -70,6 +87,7 @@ class UserFeedbackResponse(models.Model):
         db_table = 'user_feedback_responses'
 
     user_feedback = models.ForeignKey(UserFeedback, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, to_field='slack_user_id', null=True, unique=False)
     rating = models.IntegerField()
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -80,11 +98,12 @@ class UserFeedbackResponse(models.Model):
 
 
     @staticmethod
-    def create_user_feedback_response(user_feedback_id: int, rating: int, comment: str):
+    def create_user_feedback_response(user_feedback_id: int, rating: int, comment: str, user: User):
         user_feedback = utils.get_or_none(UserFeedback, id=user_feedback_id)
 
         user_feedback_response = UserFeedbackResponse.objects.create(
             user_feedback=user_feedback,
+            user=user,
             rating=rating,
             comment=comment
         )

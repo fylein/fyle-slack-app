@@ -74,7 +74,7 @@ class FyleAuthorization(View):
                 fyle_user = utils.get_or_none(User, fyle_user_id=fyle_profile['user_id'])
 
                 if fyle_user is not None:
-                    # If the fyle user already exists, send a message to user indicating they've already 
+                    # If the fyle user already exists, send a message to user indicating they've already
                     # linked their Fyle account in one of their slack workspace
                     already_linked_team_name = fyle_user.slack_team.name
                     current_team_name = slack_team.name
@@ -86,7 +86,7 @@ class FyleAuthorization(View):
                                 f'Fyle account from _*{already_linked_team_name}*_ workspace. :hammer_and_wrench: \n\n' \
                                 f'Once the account is unlinked from _*{already_linked_team_name}*_ workspace, you could try linking your account again in _*{current_team_name}*_ workspace. :rainbow:'
                     self.send_linked_account_message(slack_client, slack_user_dm_channel_id, message)
-                
+
                 else:
                     # Putting below logic inside a transaction block to prevent bad data
                     # If any error occurs in any of the below step, Fyle account link to Slack should not happen

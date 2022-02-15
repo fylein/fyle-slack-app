@@ -4,6 +4,8 @@ import base64
 import datetime
 import json
 import hashlib
+import string
+import random
 
 from functools import wraps
 from urllib.parse import quote_plus, urlencode
@@ -57,6 +59,12 @@ def get_hashed_args(*factors) -> str:
     args = json.dumps(factors, sort_keys=True)
     hashed_args= hashlib.md5(args.encode('utf-8'))
     return hashed_args.hexdigest()
+
+
+def generate_random_string(string_length=10):
+    """Generate a random string of fixed length """
+    letters = string.ascii_letters + string.digits
+    return ''.join(random.choice(letters) for _ in range(string_length))
 
 
 # Default timeout for cache is 60 seconds
