@@ -58,14 +58,14 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
         category = '{} / {}'.format(category, sub_category)
 
     currency = expense['currency']
-    amount =  expense['amount']
+    amount = expense['amount']
 
     amount_details = '*Amount:*\n {} {}'.format(currency, amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
         foreign_currency = expense['foreign_currency']
-        foreign_amount =  expense['foreign_amount']
+        foreign_amount = expense['foreign_amount']
 
         amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency, foreign_amount)
 
@@ -267,9 +267,9 @@ def get_report_approval_state_section(report: Dict) -> Dict:
 def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':white_check_mark: Your expense report <{}|[{}]> has been approved'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
     report_section_block = get_report_notification(report, report_url, title_text)
 
     report_approval_state_section = get_report_approval_state_section(report)
@@ -282,9 +282,9 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
 def get_report_payment_processing_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':moneybag: Payment is being processed for your expense report <{}|[{}]>'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -294,9 +294,9 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
 def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':dollar: Reimbursement for your expense report <{}|[{}]> is here!'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -306,11 +306,11 @@ def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
 def get_report_approver_sendback_notification(report: Dict, report_url: str, report_sendback_reason: str) -> List[Dict]:
 
     title_text = ':bangbang: *{}* ({}) sent back your expense report <{}|[{}]> '.format(
-                    report['updated_by_user']['full_name'],
-                    report['updated_by_user']['email'],
-                    report_url,
-                    report['seq_num']
-                )
+        report['updated_by_user']['full_name'],
+        report['updated_by_user']['email'],
+        report_url,
+        report['seq_num']
+    )
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -334,9 +334,9 @@ def get_report_approver_sendback_notification(report: Dict, report_url: str, rep
 def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted for approval'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
     report_section_block = get_report_notification(report, report_url, title_text)
 
     report_approval_state_section = get_report_approval_state_section(report)
@@ -353,11 +353,11 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     report_seq_num = report['seq_num']
 
     title_text = ':envelope_with_arrow: *{}* ({}) submitted an expense report <{}|[{}]> for your approval'.format(
-                    user_display_name,
-                    user_email,
-                    report_url,
-                    report_seq_num
-                )
+        user_display_name,
+        user_email,
+        report_url,
+        report_seq_num
+    )
 
     report_section_block = get_report_section_blocks(title_text, report)
 
