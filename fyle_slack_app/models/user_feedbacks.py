@@ -57,6 +57,10 @@ class UserFeedback(models.Model):
         )
 
         if user_feedback.is_active or is_created is True:
+
+            user_feedback.is_active = False
+            user_feedback.save()
+
             feedback_message = feedback_messages.get_user_feedback_message(feedback_trigger.value)
 
             slack_client.chat_postMessage(
