@@ -1,10 +1,16 @@
 from typing import Dict
+import enum
 
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
 
 from fyle_slack_app.libs import assertions, utils
 from fyle_slack_app.models import Team
+
+
+class AsyncOperation(enum.Enum):
+    UNLINKING_ACCOUNT = 'UNLINKING_ACCOUNT'
+    APPROVING_REPORT = 'APPROVING_REPORT'
 
 
 def get_slack_user_dm_channel_id(slack_client: WebClient, user_id: str) -> str:
@@ -27,3 +33,4 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
         user_display_name = user_details['full_name']
 
     return user_display_name
+

@@ -75,6 +75,17 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
             except exceptions.PlatformError as error:
                 logger.error('Error while processing report approve -> %s', error)
 
+                # Update the notification message to show back the approve cta
+                notification_message[3]['elements'][0]['text']['text'] = 'Approve'
+                notification_message[3]['elements'][0]['value'] = report_id
+                notification_message[3]['elements'][0]['action_id'] = 'approve_report'
+
+                slack_client.chat_update(
+                    channel=user.slack_dm_channel_id,
+                    blocks=notification_message,
+                    ts=message_timestamp
+                )
+
                 message = 'Seems like an error occured while approving this report :face_with_head_bandage: \n' \
                     'Please try approving again or `Review in Fyle` to approve directly from Fyle :zap:'
 

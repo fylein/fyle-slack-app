@@ -23,14 +23,14 @@ SUBSCRIPTON_WEBHOOK_DETAILS_MAPPING = {
 }
 
 
-def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> None:
+def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str, message_ts: str) -> None:
     user = utils.get_or_none(User, slack_user_id=user_id)
 
     slack_client = slack_utils.get_slack_client(team_id)
 
     # Text message if user hasn't linked Fyle account
     text = 'Hey buddy, you haven\'t linked your Fyle account yet :face_with_head_bandage: \n' \
-        'Checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
+        'Checkout <slack://app?team={}&id={}&tab=home|home tab> for `Link Your Fyle Account` to link your Slack with Fyle :zap:'.format(team_id, settings.SLACK_APP_ID)
 
     if user is not None:
         is_error_occured = False
@@ -77,7 +77,7 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
         if is_error_occured is False:
             user.delete()
             text = 'Hey, you\'ve successfully unlinked your Fyle account with slack :white_check_mark:\n ' \
-            'If you change your mind about us checkout home tab for `Link Your Fyle Account` to link your Slack with Fyle :zap:'
+            'If you change your mind about us, checkout <slack://app?team={}&id={}&tab=home|home tab> for `Link Your Fyle Account` to link your Slack with Fyle :zap:'.format(team_id, settings.SLACK_APP_ID)
 
         # Update home tab with pre auth message
         SlackCommandHandler().update_home_tab_with_pre_auth_message(user_id, team_id)
@@ -85,7 +85,16 @@ def fyle_unlink_account(user_id: str, team_id: str, user_dm_channel_id: str) -> 
         # Track Fyle account unlinked
         SlackCommandHandler().track_fyle_account_unlinked(user)
 
-    slack_client.chat_postMessage(
+    message_block = [{
+        'type': 'section',
+        'text': {
+            'type': 'mrkdwn',
+            'text': text
+        }
+    }]
+    
+    slack_client.chat_update(
         channel=user_dm_channel_id,
-        text=text
+        blocks=message_block,
+        ts=message_ts
     )
