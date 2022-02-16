@@ -57,7 +57,7 @@ def decode_state(state: str) -> Dict:
 
 def get_hashed_args(*factors) -> str:
     args = json.dumps(factors, sort_keys=True)
-    hashed_args= hashlib.md5(args.encode('utf-8'))
+    hashed_args = hashlib.md5(args.encode('utf-8'))
     return hashed_args.hexdigest()
 
 

@@ -171,7 +171,7 @@ def get_notification_preferences_blocks(notification_preferences: List[Dict], fy
 
                 notification_preferences_blocks.append(
                     {
-                    'type': 'divider'
+                        'type': 'divider'
                     }
                 )
     return notification_preferences_blocks

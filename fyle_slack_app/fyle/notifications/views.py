@@ -38,7 +38,7 @@ class FyleNotificationView(View):
         # This is equivalent to the notification types defined
         event_type = '{}_{}'.format(resource, action)
 
-        logger.info('Notification type received -> %s',  event_type)
+        logger.info('Notification type received -> %s', event_type)
 
         self._initialize_event_handlers()
 

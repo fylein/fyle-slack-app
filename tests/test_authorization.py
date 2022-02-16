@@ -85,7 +85,7 @@ def test_slack_authorization(track_installation, slack_client, async_task, team,
 
 @mock.patch('fyle_slack_app.fyle.authorization.views.utils')
 @mock.patch('fyle_slack_app.fyle.authorization.views.fyle_utils')
-@mock.patch('fyle_slack_app.fyle.authorization.views.get_slack_user_dm_channel_id')
+@mock.patch('fyle_slack_app.slack.utils.get_slack_user_dm_channel_id')
 @mock.patch('fyle_slack_app.fyle.authorization.views.WebClient')
 @mock.patch('fyle_slack_app.fyle.authorization.views.transaction')
 @mock.patch.object(FyleAuthorization, 'create_user')

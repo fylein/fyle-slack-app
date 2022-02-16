@@ -9,7 +9,9 @@ from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
+from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
+from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
 
 
 logger = logger.get_logger(__name__)
@@ -41,9 +43,9 @@ class BlockActionHandler:
 
     # Gets called when function with an action is not found
     def _handle_invalid_block_actions(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        slack_client = get_slack_client(team_id)
+        slack_client = slack_utils.get_slack_client(team_id)
 
-        user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+        user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
         slack_client.chat_postMessage(
             channel=user_dm_channel_id,
             text='Looks like something went wrong :zipper_mouth_face: \n Please try again'
@@ -102,6 +104,18 @@ class BlockActionHandler:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
+
+        # Overriding the 'approve' cta text to 'approving'
+        in_progress_message_block = IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.APPROVING_REPORT.value]
+        message_blocks[3]['elements'][0] = in_progress_message_block
+
+        slack_client = slack_utils.get_slack_client(team_id)
+        user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
+        slack_client.chat_update(
+            channel=user_dm_channel_id,
+            blocks=message_blocks,
+            ts=message_ts
+        )
 
         async_task(
             'fyle_slack_app.fyle.report_approvals.tasks.process_report_approval',

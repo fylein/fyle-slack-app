@@ -7,7 +7,7 @@ from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
+from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.authorization import messages
 
 
@@ -41,7 +41,7 @@ def new_user_joined_pre_auth_message(user_id: str, team_id: str) -> None:
 
         if user_info['user']['deleted'] is False and user_info['user']['is_bot'] is False:
 
-            user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+            user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
 
             fyle_oauth_url = get_fyle_oauth_url(user_id, team_id)
 

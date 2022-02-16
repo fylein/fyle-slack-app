@@ -14,7 +14,7 @@ from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id
+from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.authorization.messages import get_post_authorization_message
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 
@@ -39,7 +39,7 @@ class FyleAuthorization(View):
         slack_client = WebClient(token=slack_team.bot_access_token)
 
         # Fetch slack dm channel
-        slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
+        slack_user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, state_params['user_id'])
 
         if error:
 
@@ -53,9 +53,9 @@ class FyleAuthorization(View):
                 error_message = 'Well.. if you do change your mind, visit the home tab and link your Fyle account to Slack to stay up to date on all your expense reports.'
 
             slack_client.chat_postMessage(
-                    channel=slack_user_dm_channel_id,
-                    text=error_message
-                )
+                channel=slack_user_dm_channel_id,
+                text=error_message
+            )
         else:
             code = request.GET.get('code')
 
