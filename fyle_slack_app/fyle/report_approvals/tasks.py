@@ -4,7 +4,8 @@ from slack_sdk.web import WebClient
 from fyle.platform import exceptions
 
 from fyle_slack_app.slack import utils as slack_utils
-from fyle_slack_app.models import Team, User
+from fyle_slack_app.models import Team, User, UserFeedback
+from fyle_slack_app.models.user_feedbacks import FeedbackTrigger
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 from fyle_slack_app.libs import logger
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -71,6 +72,9 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
                 # Track report approved
                 fyle_report_approval.track_report_approved(user, report)
+
+                # Trigger feedback
+                UserFeedback.trigger_feedback(user, FeedbackTrigger.REPORT_APPROVED_FROM_SLACK, slack_client)
 
             except exceptions.PlatformError as error:
                 logger.error('Error while processing report approve -> %s', error)
