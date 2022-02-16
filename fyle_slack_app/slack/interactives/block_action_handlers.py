@@ -7,7 +7,7 @@ from django_q.tasks import async_task
 from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
