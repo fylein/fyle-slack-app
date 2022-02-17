@@ -69,7 +69,7 @@ class UserFeedback(models.Model):
             )
             user_email = user.email
             event_data = {
-                'feedback_trigger': feedback_trigger,
+                'feedback_trigger': feedback_trigger.value,
                 'email': user_email,
                 'slack_user_id': user.slack_user_id
             }
