@@ -37,6 +37,8 @@ def handle_feedback_submission(user: User, team_id: str, form_values: Dict, priv
     user_email = user.email
     event_data = {
         'feedback_trigger': feedback_trigger,
+        'comment': comment,
+        'rating': rating,
         'email': user_email,
         'slack_user_id': user.slack_user_id
     }
