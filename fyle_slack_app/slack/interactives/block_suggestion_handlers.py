@@ -27,7 +27,8 @@ class BlockSuggestionHandler:
             'currency': self.handle_currency_suggestion,
             'existing_report': self.handle_existing_report_suggestion,
             'user_list': self.handle_user_list_suggestion,
-            'places_autocomplete': self.handle_places_autocomplete_suggestion
+            'places_autocomplete': self.handle_places_autocomplete_suggestion,
+            'merchant': self.handle_merchant_suggestion
         }
 
 
@@ -82,11 +83,6 @@ class BlockSuggestionHandler:
             'is_enabled': 'eq.{}'.format(True)
         }
 
-        # expense_processing_details = ExpenseProcessingDetails.objects.get(
-        #     slack_view_id=slack_payload['view']['id']
-        # )
-
-        # form_metadata = expense_processing_details.form_metadata
         cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
         form_metadata = cache.get(cache_key)
 
@@ -287,3 +283,37 @@ class BlockSuggestionHandler:
                 place_options.append(option)
 
         return place_options
+
+
+    def handle_merchant_suggestion(self, slack_payload: Dict, user_id: str, team_id: str) -> List:
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        merchant_value_entered = slack_payload['value']
+
+        fyle_expense = FyleExpense(user)
+
+        query_params = {
+            'offset': 0,
+            'limit': '10',
+            'order': 'display_name.asc',
+            'q': merchant_value_entered
+        }
+
+        suggested_merchants = fyle_expense.get_merchants(query_params)
+
+        print('suggested_merchants: {}'.format(suggested_merchants))
+
+        merchant_options = []
+
+        if suggested_merchants['count'] > 0:
+            for merchant in suggested_merchants['data']:
+                option = {
+                    'text': {
+                        'type': 'plain_text',
+                        'text': '{}'.format(merchant['display_name'])
+                    },
+                    'value': merchant['display_name'],
+                }
+                merchant_options.append(option)
+
+        return merchant_options

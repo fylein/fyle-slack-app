@@ -56,6 +56,8 @@ class FyleExpense:
     def get_projects(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.projects.list(query_params=query_params)
 
+    def get_merchants(self, query_params: Dict) -> Dict:
+        return self.connection.v1beta.spender.merchants.list(query_params=query_params)
 
     def get_cost_centers(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.cost_centers.list(query_params=query_params)

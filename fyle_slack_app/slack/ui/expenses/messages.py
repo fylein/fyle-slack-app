@@ -376,9 +376,10 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
 
     merchant_block = {
         'type': 'input',
-        'block_id': 'TEXT_default_field_merchant_block',
+        'block_id': 'SELECT_default_field_merchant_block',
         'element': {
-            'type': 'plain_text_input',
+            'type': 'external_select',
+            'min_query_length': 1,
             'placeholder': {
                 'type': 'plain_text',
                 'text': 'Eg. Uber',

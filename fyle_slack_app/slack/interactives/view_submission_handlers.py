@@ -65,6 +65,8 @@ class ViewSubmissionHandler:
 
         expense_details, validation_errors = self.extract_form_values_and_validate(user, form_values)
 
+        print('EXPENSE -> ', json.dumps(expense_details, indent=2))
+
         expense_id = private_metadata.get('expense_id')
 
         message_ts = private_metadata.get('message_ts')
@@ -80,8 +82,6 @@ class ViewSubmissionHandler:
                 'response_action': 'errors',
                 'errors': validation_errors
             })
-
-        print('EXPENSE -> ', json.dumps(expense_details, indent=2))
 
         slack_client = slack_utils.get_slack_client(team_id)
 
