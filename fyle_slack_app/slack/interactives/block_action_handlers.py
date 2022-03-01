@@ -29,6 +29,7 @@ class BlockActionHandler:
             'expense_view_in_fyle': self.expense_view_in_fyle,
             'approve_report': self.approve_report,
             'pre_auth_message_approve': self.handle_pre_auth_mock_button,
+            'pre_auth_message_review_in_slack': self.handle_pre_auth_mock_button,
             'pre_auth_message_view_in_fyle': self.handle_pre_auth_mock_button,
             'report_submitted_notification_preference': self.handle_notification_preference_selection,
             'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
@@ -195,6 +196,10 @@ class BlockActionHandler:
         tracking.track_event(user_email, 'Feedback Modal Opened', event_data)
 
         return JsonResponse({})
+
+
+    def handle_report_expense_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
+        pass
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:

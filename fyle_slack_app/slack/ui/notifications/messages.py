@@ -133,13 +133,30 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     return expense_section_block
 
 
+def get_report_review_in_slack_action(report_url: str, button_text: str, report_id: str) -> Dict:
+    report_review_in_slack_action = {
+        'type': 'button',
+        'style': 'primary',
+        'text': {
+            'type': 'plain_text',
+            'text': ':slack: {}'.format(button_text),
+            'emoji': True
+        },
+        'action_id': 'review_report_in_slack',
+        'url': report_url,
+        'value': report_id,
+    }
+
+    return report_review_in_slack_action
+
+
 def get_report_review_in_fyle_action(report_url: str, button_text: str, report_id: str) -> Dict:
 
     report_review_in_fyle_action = {
         'type': 'button',
         'text': {
             'type': 'plain_text',
-            'text': button_text,
+            'text': ':eyes: {}'.format(button_text),
             'emoji': True
         },
         'action_id': 'review_report_in_fyle',
@@ -367,7 +384,7 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     }
 
     if message is not None:
-        report_view_action_text = 'View in Fyle'
+        report_view_in_fyle_action_text = 'View in Fyle'
         message_section = {
             'type': 'section',
             'text': {
@@ -377,13 +394,15 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         report_section_block.append(message_section)
     else:
-        report_view_action_text = 'Review in Fyle'
+        report_view_in_slack_action_text = 'Review in Slack'
+        report_view_in_fyle_action_text = 'Review in Fyle'
+
         report_approve_action = {
             'type': 'button',
             'style': 'primary',
             'text': {
                 'type': 'plain_text',
-                'text': 'Approve',
+                'text': ':rocket: Approve',
                 'emoji': True
             },
             'action_id': 'approve_report',
@@ -391,9 +410,12 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         actions_block['elements'].append(report_approve_action)
 
-    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_action_text, report['id'])
+    report_view_in_slack_section = get_report_review_in_slack_action(report_url, report_view_in_slack_action_text, report['id'])
+    actions_block['elements'].append(report_view_in_slack_section)
 
+    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_in_fyle_action_text, report['id'])
     actions_block['elements'].append(report_view_in_fyle_section)
+
     report_section_block.append(actions_block)
 
     # Adding Notification Preference message as footer
