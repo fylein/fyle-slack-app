@@ -37,7 +37,8 @@ class BlockActionHandler:
             'report_paid_notification_preference': self.handle_notification_preference_selection,
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
-            'open_feedback_dialog': self.handle_feedback_dialog
+            'open_feedback_dialog': self.handle_feedback_dialog,
+            'open_report_expense_dialog': self.handle_report_expense_dialog
         }
 
 
