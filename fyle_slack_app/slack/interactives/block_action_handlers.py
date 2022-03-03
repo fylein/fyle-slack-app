@@ -199,7 +199,7 @@ class BlockActionHandler:
 
 
     def handle_report_expense_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
-        pass
+        return JsonResponse({}, status=200)
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:
