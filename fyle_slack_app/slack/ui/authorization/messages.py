@@ -125,8 +125,8 @@ def get_post_authorization_message() -> List[Dict]:
                         "type": "plain_text",
                         "text": ":slack: Review in Slack",
                     },
-                    "value": "pre_auth_message_approve",
-                    "action_id": "pre_auth_message_approve"
+                    "value": "pre_auth_message_review_in_slack",
+                    "action_id": "pre_auth_message_review_in_slack"
                 },
                 {
                     "type": "button",
