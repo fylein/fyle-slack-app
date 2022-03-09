@@ -1,4 +1,5 @@
 from typing import Dict, List
+import json
 
 from fyle_slack_app.libs import utils
 
@@ -133,7 +134,7 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     return expense_section_block
 
 
-def get_report_review_in_slack_action(report_url: str, button_text: str, report_id: str) -> Dict:
+def get_report_review_in_slack_action(button_text: str, report: str) -> Dict:
     report_review_in_slack_action = {
         'type': 'button',
         'style': 'primary',
@@ -142,9 +143,8 @@ def get_report_review_in_slack_action(report_url: str, button_text: str, report_
             'text': ':slack: {}'.format(button_text),
             'emoji': True
         },
-        'action_id': 'review_report_in_slack',
-        'url': report_url,
-        'value': report_id,
+        'value': report,
+        'action_id': 'open_report_expenses_dialog'
     }
 
     return report_review_in_slack_action
@@ -394,7 +394,6 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         report_section_block.append(message_section)
     else:
-        report_view_in_slack_action_text = 'Review in Slack'
         report_view_in_fyle_action_text = 'Review in Fyle'
 
         report_approve_action = {
@@ -410,8 +409,20 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         actions_block['elements'].append(report_approve_action)
 
-    report_view_in_slack_section = get_report_review_in_slack_action(report_url, report_view_in_slack_action_text, report['id'])
-    actions_block['elements'].append(report_view_in_slack_section)
+        # Adding "Review in Slack" button to the message block
+        report_view_in_slack_action_text = 'Review in Slack'
+        report_data = {
+            'id': report['id'],
+            'name': report['purpose'],
+            'url': report_url,
+            'currency': report['currency'],
+            'amount': report['amount'],
+            'num_expenses': report['num_expenses'],
+            'spender_email': user_email
+        }
+
+        report_view_in_slack_section = get_report_review_in_slack_action(report_view_in_slack_action_text, json.dumps(report_data))
+        actions_block['elements'].append(report_view_in_slack_section)
 
     report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_in_fyle_action_text, report['id'])
     actions_block['elements'].append(report_view_in_fyle_section)

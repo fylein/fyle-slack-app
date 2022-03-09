@@ -26,6 +26,11 @@ class FyleReportApproval:
         return approver_report
 
 
+    def get_approver_report_expenses(self, query_params: dict) -> Dict:
+        approver_report_expenses = self.connection.v1beta.approver.expenses.list(query_params=query_params)
+        return approver_report_expenses
+
+
     def approve_report(self, report_id: str) -> Dict:
         approved_report = self.connection.v1beta.approver.reports.approve(report_id)
         return approved_report
