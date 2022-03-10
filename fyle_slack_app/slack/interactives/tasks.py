@@ -52,7 +52,7 @@ def handle_feedback_submission(user: User, team_id: str, form_values: Dict, priv
     tracking.track_event(user_email, 'Feedback Submitted', event_data)
 
 
-def handle_fetch_report_expenses(user: User, slack_user_id: str, team_id: str, report: dict, modal_view_id: str):
+def handle_fetch_report_expenses(user: User, slack_user_id: str, team_id: str, report: dict, modal_view_id: str, private_metadata: str):
     slack_client = slack_utils.get_slack_client(team_id)
 
     fyle_report_approval = FyleReportApproval(user)
@@ -72,6 +72,6 @@ def handle_fetch_report_expenses(user: User, slack_user_id: str, team_id: str, r
         # None here means report is deleted/doesn't exist
         report_expenses = None
 
-    report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, report_expenses=report_expenses)
+    report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, report_expenses=report_expenses, private_metadata=private_metadata)
 
     slack_client.views_update(user=slack_user_id, view=report_expenses_dialog, view_id=modal_view_id)

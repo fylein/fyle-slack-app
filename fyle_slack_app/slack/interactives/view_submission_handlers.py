@@ -6,6 +6,7 @@ from django_q.tasks import async_task
 
 from fyle_slack_app.models.users import User
 from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 from fyle_slack_app.libs import utils
 
 
@@ -16,7 +17,8 @@ class ViewSubmissionHandler:
     # Maps action_id with it's respective function
     def _initialize_view_submission_handlers(self):
         self._view_submission_handlers = {
-            'feedback_submission': self.handle_feedback_submission
+            'feedback_submission': self.handle_feedback_submission,
+            'report_approval_from_modal': self.handle_report_approval_from_modal
         }
 
 
@@ -65,5 +67,25 @@ class ViewSubmissionHandler:
             form_values,
             private_metadata
         )
+
+        return JsonResponse({})
+
+
+    def handle_report_approval_from_modal(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        encoded_private_metadata = slack_payload['view']['private_metadata']
+        private_metadata = utils.decode_state(encoded_private_metadata)
+
+        # Modifying the slack payload in order to mimic the payload structure sent to "approve_report" function
+        slack_payload['actions'] = [
+            {
+                'value': private_metadata['report_id']
+            }
+        ]
+
+        slack_payload['message'] = {}
+        slack_payload['message']['ts'] = private_metadata['notification_message_ts']
+        slack_payload['message']['blocks'] = private_metadata['notification_message_blocks']
+        
+        BlockActionHandler.approve_report(self=None, slack_payload=slack_payload, user_id=user_id, team_id=team_id)
 
         return JsonResponse({})

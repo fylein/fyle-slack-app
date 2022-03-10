@@ -210,14 +210,22 @@ class BlockActionHandler:
 
         # Fetch useful data from slack interaction payload
         message_ts = slack_payload['message']['ts']
+        message_blocks = slack_payload['message']['blocks']
         trigger_id = slack_payload['trigger_id']
 
         # Fetch the report data from the slack payload
         # This report dictionary will have these keys - id, name, url, currency, amount, spender_email
         report = json.loads(slack_payload['actions'][0]['value'])
 
+        private_metadata = {
+            'notification_message_ts': message_ts,
+            'notification_message_blocks': message_blocks,
+            'report_id': report['id']
+        }
+        encoded_private_metadata = utils.encode_state(private_metadata)
+
         # Fetch report expenses modal dialog
-        report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, report_expenses=None)
+        report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, private_metadata=encoded_private_metadata, report_expenses=None)
 
         # Open modal
         modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
@@ -230,7 +238,8 @@ class BlockActionHandler:
             slack_user_id=user_id,
             team_id=team_id,
             report=report,
-            modal_view_id=modal_view_id
+            modal_view_id=modal_view_id,
+            private_metadata=encoded_private_metadata
         )
 
         event_data = {

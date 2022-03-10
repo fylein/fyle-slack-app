@@ -6,7 +6,7 @@ from fyle_slack_app.libs import utils
 from fyle_slack_app.fyle import utils as fyle_utils
 
 
-def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) -> Dict:
+def get_report_expenses_dialog(user: User, report: dict, private_metadata: str, report_expenses: dict) -> Dict:
 
     '''
     NOTE: Before increasing the block elements of this modal, please make sure that the total count does not exceed 100, 
@@ -16,6 +16,7 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
     report_expenses_dialog = {
         'type': 'modal',
         'callback_id': 'report_approval_from_modal',
+        'private_metadata': private_metadata,
         'title': {
             'type': 'plain_text',
             'text': 'Report Details',
@@ -136,7 +137,7 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
                     'fields': [
                         {
                             'type': 'mrkdwn',
-                            'text': 'Expense Purpose:\n *{}*'.format(expense['purpose'])
+                            'text': 'Purpose:\n *{}*'.format(expense['purpose'])
                         }
                     ]
                 })
