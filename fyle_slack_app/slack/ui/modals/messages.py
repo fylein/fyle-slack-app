@@ -6,12 +6,14 @@ from fyle_slack_app.libs import utils
 from fyle_slack_app.fyle import utils as fyle_utils
 
 
-def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) -> Dict:
+def get_report_expenses_dialog(user: User, report: Dict, report_expenses: Dict) -> Dict:
 
     '''
     NOTE: Before increasing the block elements of this modal, please make sure that the total count does not exceed 100, 
     since slack has set a limit of 100.
     '''
+
+    report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
     report_expenses_dialog = {
         'type': 'modal',
@@ -40,11 +42,11 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
                 'fields': [
                     {
                         'type': 'mrkdwn',
-                        'text': 'Report Name:\n *<{}|{}>*'.format(report['url'], report['name'])
+                        'text': 'Report Name:\n *<{}|{}>*'.format(report_url, report['purpose'])
                     },
                     {
                         'type': 'mrkdwn',
-                        'text': 'Spender:\n *{}*'.format(report['spender_email'])
+                        'text': 'Spender:\n *{}*'.format(report['user']['email'])
                     }
                 ]
             },
@@ -77,7 +79,7 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
 
         expenses_count = 0
 
-        # Iterate and add all report expenses to append report_expenses_dialog message
+        # Iterate and append all report expenses to report_expenses_dialog message
         for expense in report_expenses:
 
             # Restrict modal to show at-most 15 expenses
@@ -90,7 +92,7 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
                 }
             ]
             
-            # Compose and append the expense title message
+            # Compose and append expense title message
             if expense['category'] and expense['category']['name'] and expense['category']['name'] != 'Unspecified':
                 if expense['merchant']:
                     expense_initial_text = '*{} ({})*'.format(expense['category']['name'], expense['merchant'])
@@ -136,12 +138,12 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
                     'fields': [
                         {
                             'type': 'mrkdwn',
-                            'text': 'Expense Purpose:\n *{}*'.format(expense['purpose'])
+                            'text': 'Purpose:\n *{}*'.format(expense['purpose'])
                         }
                     ]
                 })
             
-            # Add a bit of space after each expense
+            # Add extra section space after each expense
             expense_block.append({
                 'type': 'section',
                 'fields': [
@@ -163,11 +165,20 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
                     'type': 'divider'
                 },
                 {
+                    'type': 'section',
+                    'fields': [
+                        {
+                            'type': 'mrkdwn',
+                            'text': ' '
+                        }
+                    ]
+                },
+                {
                     'type': 'context',
                     'elements': [
                         {
                             'type': 'mrkdwn',
-                            'text': '<{}|*View rest of the expenses in Fyle*> :arrow_upper_right:'.format(report['url'])
+                            'text': '<{}|*View rest of the expenses in Fyle*> :arrow_upper_right:'.format(report_url)
                         }
                     ]
                 }
@@ -175,7 +186,17 @@ def get_report_expenses_dialog(user: User, report: dict, report_expenses: dict) 
             report_expenses_dialog['blocks'] += view_more_expenses_message
         
     else:
+        # Show loading message, until API call to fetch report expenses have been completed successfully
         loading_message = [
+            {
+                'type': 'section',
+                'fields': [
+                    {
+                        'type': 'mrkdwn',
+                        'text': ' '
+                    }
+                ]
+            },
             {
                 'type': 'context',
                 'elements': [

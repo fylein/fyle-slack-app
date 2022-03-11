@@ -10,8 +10,11 @@ from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 
+from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
+
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
+from fyle_slack_app.slack.ui import common_messages as common_messages
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
 from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
@@ -208,38 +211,58 @@ class BlockActionHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Approver not found')
 
-        # Fetch useful data from slack interaction payload
+        # Fetch useful data from slack interaction payload (on clicking on "Review in Slack" button)
         message_ts = slack_payload['message']['ts']
+        message_blocks = slack_payload['message']['blocks']
         trigger_id = slack_payload['trigger_id']
+        report_id = slack_payload['actions'][0]['value']
 
-        # Fetch the report data from the slack payload
-        # This report dictionary will have these keys - id, name, url, currency, amount, spender_email
-        report = json.loads(slack_payload['actions'][0]['value'])
+        # Fetch the report
+        fyle_report_approval = FyleReportApproval(user)
 
-        # Fetch report expenses modal dialog
-        report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, report_expenses=None)
+        try:
+            report = fyle_report_approval.get_report_by_id(report_id)
+            report = report['data']
+        except exceptions.NotFoundItemError as error:
+            logger.error('Report not found with id -> %s', report_id)
+            logger.error('Error -> %s', error)
+            # None here means report is deleted/doesn't exist
+            report = None
 
-        # Open modal
-        modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
-        modal_view_id = modal['view']['id']
+        if report is None:
+            # Show no report-access message
+            report_notification_message = common_messages.get_no_report_access_message(notification_message=message_blocks)
+            slack_client.chat_update(
+                channel=user.slack_dm_channel_id,
+                blocks=report_notification_message,
+                ts=message_ts
+            )
 
-        # Fetch report expenses asynchronously
-        async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_fetch_report_expenses',
-            user=user,
-            slack_user_id=user_id,
-            team_id=team_id,
-            report=report,
-            modal_view_id=modal_view_id
-        )
+        else:
+            # Fetch report expenses modal dialog
+            report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, report_expenses=None)
 
-        event_data = {
-            'email': user.email,
-            'slack_user_id': user_id
-        }
+            # Open modal
+            modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
+            modal_view_id = modal['view']['id']
 
-        tracking.identify_user(user.email)
-        tracking.track_event(user.email, 'Report Expense Modal Opened', event_data)
+            # Fetch report expenses asynchronously
+            async_task(
+                'fyle_slack_app.slack.interactives.tasks.handle_fetch_report_expenses',
+                user=user,
+                slack_user_id=user_id,
+                team_id=team_id,
+                report=report,
+                modal_view_id=modal_view_id
+            )
+
+            event_data = {
+                'email': user.email,
+                'slack_user_id': user_id
+            }
+
+            tracking.identify_user(user.email)
+            tracking.track_event(user.email, 'Report Expense Modal Opened', event_data)
 
         return JsonResponse({})
 
