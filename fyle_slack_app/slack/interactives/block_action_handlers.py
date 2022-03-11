@@ -210,7 +210,7 @@ class BlockActionHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Approver not found')
 
-        # Fetch useful data from slack interaction payload (on clicking on "Review in Slack" button)
+        # Fetch useful data from slack interaction payload (on clicking "Review in Slack" button)
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
         trigger_id = slack_payload['trigger_id']

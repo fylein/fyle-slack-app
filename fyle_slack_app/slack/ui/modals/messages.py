@@ -77,14 +77,8 @@ def get_report_expenses_dialog(user: User, report: Dict, report_expenses: Dict) 
         }
         report_expenses_dialog['blocks'].append(expenses_section_title)
 
-        expenses_count = 0
-
         # Iterate and append all report expenses to report_expenses_dialog message
         for expense in report_expenses:
-
-            # Restrict modal to show at-most 15 expenses
-            if expenses_count > 15:
-                break
 
             expense_block = [
                 {
@@ -156,7 +150,6 @@ def get_report_expenses_dialog(user: User, report: Dict, report_expenses: Dict) 
 
             # Add expense block to the modal message
             report_expenses_dialog['blocks'] += expense_block
-            expenses_count += 1
 
         # Show a hyperlink to redirect the user to fyle web-app, if a report has more than 15 expenses
         if report['num_expenses'] > 15:
