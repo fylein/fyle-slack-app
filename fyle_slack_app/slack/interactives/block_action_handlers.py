@@ -1,5 +1,4 @@
 from typing import Callable, Dict
-import json
 
 from django.http import JsonResponse
 from django_q.tasks import async_task
