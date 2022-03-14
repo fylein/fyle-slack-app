@@ -14,7 +14,7 @@ IN_PROGRESS_MESSAGE = {
         'style': 'primary',
         'text': {
             'type': 'plain_text',
-            'text': 'Approving :hourglass_flowing_sand:',
+            'text': ':hourglass_flowing_sand: Approving',
             'emoji': True
         },
         'action_id': 'pre_auth_message_approve',
