@@ -38,21 +38,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
     # Check if report is deleted
     if report is None:
-        # Removing CTAs from notification message for deleted report
-        report_notification_message = []
-        for message_block in notification_message:
-            if message_block['type'] != 'actions':
-                report_notification_message.append(message_block)
-
-        report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-        report_deleted_section = {
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': report_message
-            }
-        }
-        report_notification_message.insert(3, report_deleted_section)
+        report_notification_message = common_messages.get_no_report_access_message(notification_message=notification_message)
     else:
         report = report['data']
         can_approve_report, report_message = fyle_report_approval.can_approve_report(

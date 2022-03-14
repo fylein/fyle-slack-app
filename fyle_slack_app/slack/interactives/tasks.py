@@ -59,7 +59,7 @@ def handle_fetch_report_expenses(user: User, slack_user_id: str, team_id: str, r
     query_params = {
         'report_id': 'eq.{}'.format(report['id']),
         'order': 'created_at.desc',
-        'limit': '30',
+        'limit': '15',
         'offset': '0'
     }
 

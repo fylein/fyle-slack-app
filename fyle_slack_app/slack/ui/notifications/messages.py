@@ -134,7 +134,7 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     return expense_section_block
 
 
-def get_report_review_in_slack_action(button_text: str, report: str) -> Dict:
+def get_report_review_in_slack_action(button_text: str, report_id: str) -> Dict:
     report_review_in_slack_action = {
         'type': 'button',
         'style': 'primary',
@@ -143,7 +143,7 @@ def get_report_review_in_slack_action(button_text: str, report: str) -> Dict:
             'text': ':slack: {}'.format(button_text),
             'emoji': True
         },
-        'value': report,
+        'value': report_id,
         'action_id': 'open_report_expenses_dialog'
     }
 
@@ -411,17 +411,7 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
 
         # Adding "Review in Slack" button to the message block
         report_view_in_slack_action_text = 'Review in Slack'
-        report_data = {
-            'id': report['id'],
-            'name': report['purpose'],
-            'url': report_url,
-            'currency': report['currency'],
-            'amount': report['amount'],
-            'num_expenses': report['num_expenses'],
-            'spender_email': user_email
-        }
-
-        report_view_in_slack_section = get_report_review_in_slack_action(report_view_in_slack_action_text, json.dumps(report_data))
+        report_view_in_slack_section = get_report_review_in_slack_action(report_view_in_slack_action_text, report['id'])
         actions_block['elements'].append(report_view_in_slack_section)
 
     report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_in_fyle_action_text, report['id'])

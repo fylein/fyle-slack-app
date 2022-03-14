@@ -1,5 +1,4 @@
-from typing import Callable, Dict
-import json
+from typing import Callable, Dict, List
 
 from django.http import JsonResponse
 from django_q.tasks import async_task
@@ -10,8 +9,12 @@ from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 
+from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
+
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
+from fyle_slack_app.slack.ui import common_messages as common_messages
+from fyle_slack_app.slack.interactives import tasks as tasks
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
 from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
@@ -208,49 +211,34 @@ class BlockActionHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Approver not found')
 
-        # Fetch useful data from slack interaction payload
+        # Fetch useful data from slack interaction payload (on clicking "Review in Slack" button)
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
         trigger_id = slack_payload['trigger_id']
-
-        # Fetch the report data from the slack payload
-        # This report dictionary will have these keys - id, name, url, currency, amount, spender_email
-        report = json.loads(slack_payload['actions'][0]['value'])
+        report_id = slack_payload['actions'][0]['value']
 
         private_metadata = {
             'notification_message_ts': message_ts,
             'notification_message_blocks': message_blocks,
-            'report_id': report['id']
+            'report_id': report_id
         }
-        encoded_private_metadata = utils.encode_state(private_metadata)
 
         # Fetch report expenses modal dialog
-        report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, private_metadata=encoded_private_metadata, report_expenses=None)
+        report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=None, private_metadata=None, report_expenses=None)
 
         # Open modal
         modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
         modal_view_id = modal['view']['id']
 
-        # Fetch report expenses asynchronously
         async_task(
-            'fyle_slack_app.slack.interactives.tasks.handle_fetch_report_expenses',
+            'fyle_slack_app.slack.interactives.block_action_handlers.fetch_report_and_expenses',
             user=user,
-            slack_user_id=user_id,
             team_id=team_id,
-            report=report,
-            modal_view_id=modal_view_id,
-            private_metadata=encoded_private_metadata
+            private_metadata=private_metadata,
+            modal_view_id=modal_view_id
         )
 
-        event_data = {
-            'email': user.email,
-            'slack_user_id': user_id
-        }
-
-        tracking.identify_user(user.email)
-        tracking.track_event(user.email, 'Report Expense Modal Opened', event_data)
-
-        return JsonResponse({})
+        return JsonResponse({"response_action": "clear"}, status=200)
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:
@@ -263,3 +251,63 @@ class BlockActionHandler:
 
         tracking.identify_user(user.email)
         tracking.track_event(user.email, event_name, event_data)
+
+
+
+def fetch_report_and_expenses(user: User, team_id: str, private_metadata: Dict, modal_view_id: str) -> JsonResponse:
+    slack_client = slack_utils.get_slack_client(team_id)
+
+    # Fetch the report
+    fyle_report_approval = FyleReportApproval(user)
+
+    try:
+        report = fyle_report_approval.get_report_by_id(private_metadata['report_id'])
+        report = report['data']
+    except exceptions.NotFoundItemError as error:
+        logger.error('Report not found with id -> %s', private_metadata['report_id'])
+        logger.error('Error -> %s', error)
+        # None here means report is deleted/doesn't exist
+        report = None
+
+    if report is None:
+        # Show no report-access message
+        report_notification_message = common_messages.get_no_report_access_message(notification_message=private_metadata['notification_message_blocks'])
+
+        slack_client.views_update(user=user.slack_user_id, view=report_expenses_dialog, view_id=modal_view_id)
+
+        slack_client.chat_update(
+            channel=user.slack_dm_channel_id,
+            blocks=report_notification_message,
+            ts=private_metadata['notification_message_ts']
+        )
+
+        return JsonResponse({"response_action": "clear"}, status=200)
+
+    else:
+        encoded_private_metadata = utils.encode_state(private_metadata)
+
+        # # Fetch report expenses modal dialog
+        # report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, private_metadata=encoded_private_metadata, report_expenses=None)
+
+        # # Update modal message
+        # slack_client.views_update(user=user.slack_user_id, view=report_expenses_dialog, view_id=modal_view_id)
+
+        tasks.handle_fetch_report_expenses(user=user, team_id=team_id, report=report, modal_view_id=modal_view_id, private_metadata=encoded_private_metadata)
+
+        # Fetch report expenses asynchronously
+        # async_task(
+        #     'fyle_slack_app.slack.interactives.tasks.handle_fetch_report_expenses',
+        #     user=user,
+        #     team_id=team_id,
+        #     report=report,
+        #     modal_view_id=modal_view_id,
+        #     private_metadata=encoded_private_metadata
+        # )
+
+        event_data = {
+            'email': user.email,
+            'slack_user_id': user.slack_user_id
+        }
+
+        tracking.identify_user(user.email)
+        tracking.track_event(user.email, 'Report Expense Modal Opened', event_data)
