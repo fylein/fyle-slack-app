@@ -285,25 +285,7 @@ def fetch_report_and_expenses(user: User, team_id: str, private_metadata: Dict, 
 
     else:
         encoded_private_metadata = utils.encode_state(private_metadata)
-
-        # # Fetch report expenses modal dialog
-        # report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=report, private_metadata=encoded_private_metadata, report_expenses=None)
-
-        # # Update modal message
-        # slack_client.views_update(user=user.slack_user_id, view=report_expenses_dialog, view_id=modal_view_id)
-
         tasks.handle_fetch_report_expenses(user=user, team_id=team_id, report=report, modal_view_id=modal_view_id, private_metadata=encoded_private_metadata)
-
-        # Fetch report expenses asynchronously
-        # async_task(
-        #     'fyle_slack_app.slack.interactives.tasks.handle_fetch_report_expenses',
-        #     user=user,
-        #     team_id=team_id,
-        #     report=report,
-        #     modal_view_id=modal_view_id,
-        #     private_metadata=encoded_private_metadata
-        # )
-
         event_data = {
             'email': user.email,
             'slack_user_id': user.slack_user_id

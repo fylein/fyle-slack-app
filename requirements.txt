@@ -43,3 +43,4 @@ urllib3==1.26.5
 wcwidth==0.2.5
 wrapt==1.12.1
 yarl==1.6.3
+forex-python==1.8

@@ -2,11 +2,13 @@ from typing import Dict, List
 import json
 
 from fyle_slack_app.libs import utils
+from fyle_slack_app.slack import utils as slack_utils
 
 
 def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
+    report_currency_symbol = slack_utils.get_currency_symbol(report['currency'])
 
     report_section_block = [
         {
@@ -35,7 +37,7 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
                 {
                     'type': 'mrkdwn',
                     'text': '*Amount:*\n {} {}'.format(
-                        report['currency'],
+                        report_currency_symbol,
                         report['amount']
                     )
                 },
@@ -58,17 +60,17 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     if sub_category is not None and category != sub_category:
         category = '{} / {}'.format(category, sub_category)
 
-    currency = expense['currency']
+    currency_symbol = slack_utils.get_currency_sysmbol(expense['currency'])
     amount = expense['amount']
 
-    amount_details = '*Amount:*\n {} {}'.format(currency, amount)
+    amount_details = '*Amount:*\n {} {}'.format(currency_symbol, amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
-        foreign_currency = expense['foreign_currency']
+        foreign_currency_symbol = slack_utils.get_currency_sysmbol(expense['foreign_currency'])
         foreign_amount = expense['foreign_amount']
 
-        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency, foreign_amount)
+        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency_symbol, foreign_amount)
 
     expense_section_block = [
         {
