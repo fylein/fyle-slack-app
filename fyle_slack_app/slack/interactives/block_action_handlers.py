@@ -224,7 +224,8 @@ class BlockActionHandler:
         }
 
         # Fetch report expenses modal dialog
-        report_expenses_dialog = modal_messages.get_report_expenses_dialog(user=user, report=None, private_metadata=None, report_expenses=None)
+        loading_message = 'Loading report\'s expenses :hourglass_flowing_sand:'
+        report_expenses_dialog = modal_messages.get_report_expenses_dialog(custom_message=loading_message)
 
         # Open modal
         modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
@@ -272,9 +273,13 @@ def fetch_report_and_expenses(user: User, team_id: str, private_metadata: Dict, 
     if report is None:
         # Show no report-access message
         report_notification_message = common_messages.get_no_report_access_message(notification_message=private_metadata['notification_message_blocks'])
+        no_report_access_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
+        modal_message = modal_messages.get_report_expenses_dialog(custom_message=no_report_access_message)
 
-        slack_client.views_update(user=user.slack_user_id, view=report_expenses_dialog, view_id=modal_view_id)
+        # Update message in modal
+        slack_client.views_update(user=user.slack_user_id, view=modal_message, view_id=modal_view_id)
 
+        # Update notification message
         slack_client.chat_update(
             channel=user.slack_dm_channel_id,
             blocks=report_notification_message,
