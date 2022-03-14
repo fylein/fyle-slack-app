@@ -8,7 +8,7 @@ from django_q.tasks import schedule, async_task
 from django_q.models import Schedule
 
 from fyle_slack_app.models import User
-from fyle_slack_app.fyle.utils import get_fyle_oauth_url
+from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_sdk_connection
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack.ui.dashboard import messages
 from fyle_slack_app.slack import utils as slack_utils
@@ -83,7 +83,66 @@ class SlackEventHandler:
 
         # User is not present i.e. user hasn't done Fyle authorization
         if user is not None:
-            dashboard_view = messages.get_post_authorization_message()
+            platform = get_fyle_sdk_connection(user.fyle_refresh_token)
+
+            sent_back_and_draft_reports = platform.v1beta.spender.reports.list(query_params={
+                'limit': 100,
+                'offset': 0,
+                'order': 'created_at.desc',
+                'state': 'in.(APPROVER_INQUIRY,DRAFT)'
+            })
+
+            incomplete_and_unreported_expenses = platform.v1beta.spender.reports.list(query_params={
+                'limit': 100,
+                'offset': 0,
+                'order': 'created_at.desc',
+                'state': 'in.(COMPLETE,DRAFT)'
+            })
+
+            sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
+            if len(sent_back_reports) > 0:
+                sent_back_reports = {
+                    'total_amount': sum(report['amount'] for report in sent_back_reports),
+                    'count': len(sent_back_reports)
+                }
+            else:
+                sent_back_reports = None
+
+            draft_reports = list(filter(lambda report: report['state'] == 'DRAFT', sent_back_and_draft_reports['data']))
+            if len(draft_reports) > 0:
+                draft_reports = {
+                    'total_amount': sum(report['amount'] for report in draft_reports),
+                    'count': len(draft_reports)
+                }
+            else:
+                draft_reports = None
+
+            incomplete_expenses = list(filter(lambda expense: expense['state'] == 'DRAFT', incomplete_and_unreported_expenses['data']))
+
+            if len(incomplete_expenses) > 0:
+                incomplete_expenses = {
+                    'total_amount': sum(expense['amount'] for expense in incomplete_expenses),
+                    'count': len(incomplete_expenses)
+                }
+            else:
+                incomplete_expenses = None
+
+            unreported_expenses = list(filter(lambda expense: expense['state'] == 'COMPLETE', incomplete_and_unreported_expenses['data']))
+            print('UNREPORTED -> ', unreported_expenses)
+            if len(unreported_expenses) > 0:
+                unreported_expenses = {
+                    'total_amount': sum(expense['amount'] for expense in unreported_expenses),
+                    'count': len(unreported_expenses)
+                }
+            else:
+                unreported_expenses = None
+
+            dashboard_view = messages.get_dashboard_view(
+                sent_back_reports=sent_back_reports,
+                incomplete_expenses=incomplete_expenses,
+                unreported_expenses=unreported_expenses,
+                draft_reports=draft_reports
+            )
         else:
             user_info = slack_client.users_info(user=user_id)
             assertions.assert_good(user_info['ok'] is True)

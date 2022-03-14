@@ -19,13 +19,13 @@ def get_post_authorization_message() -> Dict:
 	}
 
 
-def get_sent_back_reports_dashboard_view(reports: List[Dict]) -> List[Dict]:
+def get_sent_back_reports_dashboard_view(reports: Dict) -> List[Dict]:
 	sent_back_reports_view = [
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":back: *Sent Back Reports - $ 231.45 (3)*"
+				"text": ":back: *Sent Back Reports - {} ({})*".format(reports['total_amount'], reports['count'])
 			}
 		},
 		{
@@ -56,13 +56,13 @@ def get_sent_back_reports_dashboard_view(reports: List[Dict]) -> List[Dict]:
 	return sent_back_reports_view
 
 
-def get_incomplete_expenses_dashboard_view(reports: List[Dict]):
+def get_incomplete_expenses_dashboard_view(expenses: Dict):
 	incomplete_expenses_view = [
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":x: *Incompleted Expenses - $ 111.45 (7)*"
+				"text": ":x: *Incomplete Expenses - {} ({})*".format(expenses['total_amount'], expenses['count'])
 			}
 		},
 		{
@@ -93,13 +93,13 @@ def get_incomplete_expenses_dashboard_view(reports: List[Dict]):
 	return incomplete_expenses_view
 
 
-def get_unreported_expenses_dashboard_view(reports: List[Dict]):
+def get_unreported_expenses_dashboard_view(reports: Dict):
 	unreported_expenses_view = [
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":interrobang: *Unreported Expenses - $ 123.45 (12)*"
+				"text": ":interrobang: *Unreported Expenses - {} ({})*".format(reports['total_amount'], reports['count'])
 			}
 		},
 		{
@@ -130,13 +130,13 @@ def get_unreported_expenses_dashboard_view(reports: List[Dict]):
 	return unreported_expenses_view
 
 
-def get_draft_reports_dashboard_view(reports: List[Dict]):
+def get_draft_reports_dashboard_view(reports: Dict):
 	draft_reports_view = [
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":open_file_folder: *Draft Reports - $ 2341.45 (7)*"
+				"text": ":open_file_folder: *Draft Reports - {} ({})*".format(reports['total_amount'], reports['count'])
 			}
 		},
 		{
@@ -195,19 +195,19 @@ def get_dashboard_view(
 			},
 		]
 	}
-	if sent_back_reports['count'] > 0:
+	if sent_back_reports is not None:
 		sent_back_reports_view = get_sent_back_reports_dashboard_view(sent_back_reports)
 		dashboard_view['blocks'].extend(sent_back_reports_view)
 	
-	if incomplete_expenses['count'] > 0:
+	if incomplete_expenses is not None:
 		incomplete_expenses_view = get_incomplete_expenses_dashboard_view(incomplete_expenses)
 		dashboard_view['blocks'].extend(incomplete_expenses_view)
 
-	if unreported_expenses['count'] > 0:
+	if unreported_expenses is not None:
 		unreported_expenses_view = get_unreported_expenses_dashboard_view(unreported_expenses)
 		dashboard_view['blocks'].extend(unreported_expenses_view)
 	
-	if draft_reports['count'] > 0:
+	if draft_reports is not None:
 		draft_reports_view = get_draft_reports_dashboard_view(draft_reports)
 		dashboard_view['blocks'].extend(draft_reports_view)
 
