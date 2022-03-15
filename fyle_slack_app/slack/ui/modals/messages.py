@@ -10,7 +10,7 @@ from fyle_slack_app.slack import utils as slack_utils
 def get_report_expenses_dialog(user: User = None, report: Dict = None, private_metadata: str = None, report_expenses: List[Dict] = None, custom_message: str = None) -> Dict:
 
     '''
-    NOTE: Before increasing the block elements of this modal, please make sure that the total count does not exceed 100, 
+    NOTE: Before increasing the block elements of this modal, please make sure that the total count does not exceed 100,
     since slack has set a limit of 100.
     '''
 
