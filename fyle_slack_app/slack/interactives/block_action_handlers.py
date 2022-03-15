@@ -9,8 +9,7 @@ from fyle_slack_app.libs import assertions, utils, logger
 
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
-from fyle_slack_app.slack.ui import common_messages as common_messages
-from fyle_slack_app.slack.interactives import tasks as tasks
+from fyle_slack_app.slack.ui import common_messages
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
 

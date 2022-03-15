@@ -33,9 +33,9 @@ def get_report_expenses_dialog(user: User = None, report: Dict = None, private_m
                 }
             ]
         }
-    
+
     else:
-    
+
         report_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, report, 'REPORT')
 
         report_expenses_dialog = get_report_section(report=report, report_url=report_url, private_metadata=private_metadata)
@@ -112,7 +112,7 @@ def get_report_section(report: Dict, report_url: str, private_metadata: str) -> 
             }
         ]
     }
-    
+
     return report_expenses_dialog
 
 
@@ -127,7 +127,7 @@ def get_report_expenses_section(user: User, report_expenses: List[Dict]) -> List
                 'type': 'divider'
             }
         ]
-        
+
         # Compose and append expense title message
         if expense['category'] and expense['category']['name'] and expense['category']['name'] != 'Unspecified':
             if expense['merchant']:
@@ -136,7 +136,7 @@ def get_report_expenses_section(user: User, report_expenses: List[Dict]) -> List
                 expense_initial_text = '*{}*'.format(expense['category']['name'])
         else:
             expense_initial_text = 'An'
-        
+
         expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
         expense_currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
         expense_block_title = {
@@ -179,7 +179,7 @@ def get_report_expenses_section(user: User, report_expenses: List[Dict]) -> List
                     }
                 ]
             })
-        
+
         # Add extra section space after each expense
         expense_block.append({
             'type': 'section',
@@ -192,7 +192,7 @@ def get_report_expenses_section(user: User, report_expenses: List[Dict]) -> List
         })
 
         expense_section_blocks.extend(expense_block)
-    
+
     return expense_section_blocks
 
 

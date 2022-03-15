@@ -11,7 +11,7 @@ from fyle_slack_app.libs import logger
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
-from fyle_slack_app.slack.ui import common_messages as common_messages
+from fyle_slack_app.slack.ui import common_messages
 
 
 logger = logger.get_logger(__name__)

@@ -43,8 +43,9 @@ def get_currency_symbol(currency: str) -> str:
 
     try:
         curr = c.get_symbol(currency)
-    except error as e:
+    except ValueError as error:
         logger.error('Error fetching currency symbol of currency = %s', currency)
+        logger.error('Error -> %s', error)
         curr = currency
 
     return curr
