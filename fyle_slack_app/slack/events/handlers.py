@@ -6,6 +6,7 @@ from django.http import JsonResponse
 from django.utils import timezone
 from django_q.tasks import schedule, async_task
 from django_q.models import Schedule
+from django.core.cache import cache
 
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_sdk_connection
@@ -85,19 +86,27 @@ class SlackEventHandler:
         if user is not None:
             platform = get_fyle_sdk_connection(user.fyle_refresh_token)
 
-            sent_back_and_draft_reports = platform.v1beta.spender.reports.list(query_params={
-                'limit': 100,
-                'offset': 0,
-                'order': 'created_at.desc',
-                'state': 'in.(APPROVER_INQUIRY,DRAFT)'
-            })
+            sent_back_and_draft_reports = cache.get(f'{user_id}.sent_back_and_draft_reports')
 
-            incomplete_and_unreported_expenses = platform.v1beta.spender.reports.list(query_params={
-                'limit': 100,
-                'offset': 0,
-                'order': 'created_at.desc',
-                'state': 'in.(COMPLETE,DRAFT)'
-            })
+            if sent_back_and_draft_reports is None:
+                sent_back_and_draft_reports = platform.v1beta.spender.reports.list(query_params={
+                    'limit': 100,
+                    'offset': 0,
+                    'order': 'created_at.desc',
+                    'or': '(state.eq.APPROVER_INQUIRY,state.eq.DRAFT)'
+                })
+                cache.set(f'{user_id}.sent_back_and_draft_reports', sent_back_and_draft_reports)
+
+            incomplete_and_unreported_expenses = cache.get(f'{user_id}.incomplete_and_unreported_expenses', 3600)
+
+            if incomplete_and_unreported_expenses is None:
+                incomplete_and_unreported_expenses = platform.v1beta.spender.expenses.list(query_params={
+                    'limit': 100,
+                    'offset': 0,
+                    'order': 'created_at.desc',
+                    'or': '(state.eq.COMPLETE,state.eq.DRAFT)'
+                })
+                cache.set(f'{user_id}.incomplete_and_unreported_expenses', incomplete_and_unreported_expenses, 3600)
 
             sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
             if len(sent_back_reports) > 0:
@@ -128,7 +137,7 @@ class SlackEventHandler:
                 incomplete_expenses = None
 
             unreported_expenses = list(filter(lambda expense: expense['state'] == 'COMPLETE', incomplete_and_unreported_expenses['data']))
-            print('UNREPORTED -> ', unreported_expenses)
+
             if len(unreported_expenses) > 0:
                 unreported_expenses = {
                     'total_amount': sum(expense['amount'] for expense in unreported_expenses),
