@@ -40,11 +40,11 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
 
 def get_currency_symbol(currency: str) -> str:
     c = CurrencyCodes()
-    
+
     try:
         curr = c.get_symbol(currency)
-    except:
-        logger.error('Error fetching currency symbol of currency = {}'.format(currency))
+    except error as e:
+        logger.error('Error fetching currency symbol of currency = %s', currency)
         curr = currency
-    
+
     return curr

@@ -1,5 +1,4 @@
 from typing import Dict, List
-import json
 
 from fyle_slack_app.libs import utils
 from fyle_slack_app.slack import utils as slack_utils

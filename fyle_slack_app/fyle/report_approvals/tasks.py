@@ -11,6 +11,7 @@ from fyle_slack_app.libs import logger
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import utils, assertions
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
+from fyle_slack_app.slack.ui import common_messages as common_messages
 
 
 logger = logger.get_logger(__name__)
@@ -38,6 +39,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
     # Check if report is deleted
     if report is None:
+        no_report_access_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
         report_notification_message = common_messages.get_updated_approval_notification_message(notification_message=notification_message, custom_message=no_report_access_message, cta=False)
     else:
         report = report['data']

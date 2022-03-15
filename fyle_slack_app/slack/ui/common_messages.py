@@ -30,7 +30,6 @@ def get_updated_approval_notification_message(notification_message: List[Dict], 
             continue
         report_notification_message.append(message_block)
 
-    # report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
     report_section = {
         'type': 'section',
         'text': {

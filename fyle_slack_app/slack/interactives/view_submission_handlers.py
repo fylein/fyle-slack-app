@@ -4,7 +4,6 @@ from django.http.response import JsonResponse
 
 from django_q.tasks import async_task
 
-from fyle_slack_app import tracking
 from fyle_slack_app.models.users import User
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
@@ -73,8 +72,6 @@ class ViewSubmissionHandler:
 
 
     def handle_report_approval_from_modal(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        user = utils.get_or_none(User, slack_user_id=user_id)
-
         encoded_private_metadata = slack_payload['view']['private_metadata']
         private_metadata = utils.decode_state(encoded_private_metadata)
 
