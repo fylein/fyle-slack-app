@@ -11,6 +11,7 @@ from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions, logger
 logger = logger.get_logger(__name__)
 
+
 def handle_feedback_submission(user: User, team_id: str, form_values: Dict, private_metadata: Dict):
     user_feedback_id = private_metadata['user_feedback_id']
     feedback_message_ts = private_metadata['feedback_message_ts']

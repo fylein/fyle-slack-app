@@ -108,7 +108,7 @@ class BlockActionHandler:
         return JsonResponse({}, status=200)
 
 
-    def approve_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+    def approve_report(self, slack_payload: Dict, user_id: str, team_id: str, is_approved_from_modal: bool) -> JsonResponse:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
@@ -131,7 +131,8 @@ class BlockActionHandler:
             user_id,
             team_id,
             message_ts,
-            message_blocks
+            message_blocks,
+            is_approved_from_modal
         )
 
         return JsonResponse({}, status=200)
@@ -207,7 +208,7 @@ class BlockActionHandler:
     def handle_report_expenses_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
         slack_client = slack_utils.get_slack_client(team_id)
 
-        # Find approver user
+        # Fetch approver user
         user = utils.get_or_none(User, slack_user_id=user_id)
         assertions.assert_found(user, 'Approver not found')
 
@@ -239,7 +240,7 @@ class BlockActionHandler:
             modal_view_id=modal_view_id
         )
 
-        return JsonResponse({"response_action": "clear"}, status=200)
+        return JsonResponse({})
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:

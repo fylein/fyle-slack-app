@@ -72,9 +72,12 @@ class FyleReportApproval:
 
 
     @staticmethod
-    def track_report_approved(user: User, report: Dict) -> None:
+    def track_report_approved(user: User, report: Dict, modal: bool = False) -> None:
         event_data = FyleNotificationView.get_report_tracking_data(user, report)
 
         tracking.identify_user(user.email)
 
-        tracking.track_event(user.email, 'Report Approved From Slack', event_data)
+        if modal is True:
+            tracking.track_event(user.email, 'Report Approved From Slack Modal', event_data)
+        else:
+            tracking.track_event(user.email, 'Report Approved From Slack', event_data)

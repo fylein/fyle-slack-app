@@ -89,14 +89,6 @@ class ViewSubmissionHandler:
         slack_payload['message']['ts'] = private_metadata['notification_message_ts']
         slack_payload['message']['blocks'] = private_metadata['notification_message_blocks']
         
-        BlockActionHandler().approve_report(slack_payload=slack_payload, user_id=user_id, team_id=team_id)
-
-        event_data = {
-            'email': user.email,
-            'slack_user_id': user.slack_user_id
-        }
-        
-        tracking.identify_user(user.email)
-        tracking.track_event(user.email, 'Report Approved from Slack Modal', event_data)
+        BlockActionHandler().approve_report(slack_payload=slack_payload, user_id=user_id, team_id=team_id, is_approved_from_modal=True)
 
         return JsonResponse({})
