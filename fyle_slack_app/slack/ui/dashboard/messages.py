@@ -44,8 +44,8 @@ def get_sent_back_reports_dashboard_view(reports: Dict) -> List[Dict]:
 						"type": "plain_text",
 						"text": ":eyes: View in Fyle",
 					},
-					"value": "click_me_123",
-					"action_id": "actionId-0"
+					"url": reports['url'],
+					"action_id": "sent_back_reports_viewed_in_fyle"
 				}
 			]
 		},
@@ -81,8 +81,8 @@ def get_incomplete_expenses_dashboard_view(expenses: Dict):
 						"type": "plain_text",
 						"text": ":eyes: View in Fyle",
 					},
-					"value": "click_me_123",
-					"action_id": "actionId-0"
+					"url": expenses['url'],
+					"action_id": "incomplete_expenses_viewed_in_fyle"
 				}
 			]
 		},
@@ -93,13 +93,13 @@ def get_incomplete_expenses_dashboard_view(expenses: Dict):
 	return incomplete_expenses_view
 
 
-def get_unreported_expenses_dashboard_view(reports: Dict):
+def get_unreported_expenses_dashboard_view(expenses: Dict):
 	unreported_expenses_view = [
 		{
 			"type": "section",
 			"text": {
 				"type": "mrkdwn",
-				"text": ":interrobang: *Unreported Expenses - {} ({})*".format(reports['total_amount'], reports['count'])
+				"text": ":interrobang: *Unreported Expenses - {} ({})*".format(expenses['total_amount'], expenses['count'])
 			}
 		},
 		{
@@ -118,8 +118,8 @@ def get_unreported_expenses_dashboard_view(reports: Dict):
 						"type": "plain_text",
 						"text": ":eyes: View in Fyle",
 					},
-					"value": "click_me_123",
-					"action_id": "actionId-0"
+					"url": expenses['url'],
+					"action_id": "unreported_expenses_viewed_in_fyle"
 				}
 			]
 		},
@@ -155,8 +155,8 @@ def get_draft_reports_dashboard_view(reports: Dict):
 						"type": "plain_text",
 						"text": ":eyes: View in Fyle",
 					},
-					"value": "click_me_123",
-					"action_id": "actionId-0"
+					"url": reports["url"],
+					"action_id": "draft_reports_viewed_in_fyle"
 				}
 			]
 		},

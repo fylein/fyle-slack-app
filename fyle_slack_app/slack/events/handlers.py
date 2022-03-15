@@ -7,6 +7,7 @@ from django.utils import timezone
 from django_q.tasks import schedule, async_task
 from django_q.models import Schedule
 from django.core.cache import cache
+from django.conf import settings
 
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_sdk_connection
@@ -95,9 +96,9 @@ class SlackEventHandler:
                     'order': 'created_at.desc',
                     'or': '(state.eq.APPROVER_INQUIRY,state.eq.DRAFT)'
                 })
-                cache.set(f'{user_id}.sent_back_and_draft_reports', sent_back_and_draft_reports)
+                cache.set(f'{user_id}.sent_back_and_draft_reports', sent_back_and_draft_reports, 3600)
 
-            incomplete_and_unreported_expenses = cache.get(f'{user_id}.incomplete_and_unreported_expenses', 3600)
+            incomplete_and_unreported_expenses = cache.get(f'{user_id}.incomplete_and_unreported_expenses')
 
             if incomplete_and_unreported_expenses is None:
                 incomplete_and_unreported_expenses = platform.v1beta.spender.expenses.list(query_params={
@@ -110,18 +111,22 @@ class SlackEventHandler:
 
             sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
             if len(sent_back_reports) > 0:
+                url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
                 sent_back_reports = {
                     'total_amount': sum(report['amount'] for report in sent_back_reports),
-                    'count': len(sent_back_reports)
+                    'count': len(sent_back_reports),
+                    'url': utils.convert_to_branchio_url(url, {'state': 'inquiry'})
                 }
             else:
                 sent_back_reports = None
 
             draft_reports = list(filter(lambda report: report['state'] == 'DRAFT', sent_back_and_draft_reports['data']))
             if len(draft_reports) > 0:
+                url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
                 draft_reports = {
                     'total_amount': sum(report['amount'] for report in draft_reports),
-                    'count': len(draft_reports)
+                    'count': len(draft_reports),
+                    'url': utils.convert_to_branchio_url(url, {'state': 'draft'})
                 }
             else:
                 draft_reports = None
@@ -129,9 +134,11 @@ class SlackEventHandler:
             incomplete_expenses = list(filter(lambda expense: expense['state'] == 'DRAFT', incomplete_and_unreported_expenses['data']))
 
             if len(incomplete_expenses) > 0:
+                url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
                 incomplete_expenses = {
                     'total_amount': sum(expense['amount'] for expense in incomplete_expenses),
-                    'count': len(incomplete_expenses)
+                    'count': len(incomplete_expenses),
+                    'url': utils.convert_to_branchio_url(url, {'state': 'draft'})
                 }
             else:
                 incomplete_expenses = None
@@ -139,9 +146,11 @@ class SlackEventHandler:
             unreported_expenses = list(filter(lambda expense: expense['state'] == 'COMPLETE', incomplete_and_unreported_expenses['data']))
 
             if len(unreported_expenses) > 0:
+                url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
                 unreported_expenses = {
                     'total_amount': sum(expense['amount'] for expense in unreported_expenses),
-                    'count': len(unreported_expenses)
+                    'count': len(unreported_expenses),
+                    'url': utils.convert_to_branchio_url(url)
                 }
             else:
                 unreported_expenses = None
