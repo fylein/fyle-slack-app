@@ -56,7 +56,7 @@ def test_report_approve(user_feedback, notification_messages, fyle_utils, slack_
     mock_is_approved_from_modal = 'mock-is-approved-from-modal'
     report_approved_message = 'Expense report approved :rocket:'
 
-    process_report_approval(mock_report_id, mock_fyle_user_id, mock_team_id, mock_message_timestamp, mock_notification_message, )
+    process_report_approval(mock_report_id, mock_fyle_user_id, mock_team_id, mock_message_timestamp, mock_notification_message, mock_is_approved_from_modal)
 
     # Assertion check for required methods that have been called
 
