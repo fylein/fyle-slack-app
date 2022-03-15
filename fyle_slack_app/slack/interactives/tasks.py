@@ -9,6 +9,7 @@ from fyle_slack_app.slack.ui.modals import messages as modal_messages
 from fyle_slack_app import tracking
 
 from fyle_slack_app.libs import utils, assertions, logger
+
 logger = logger.get_logger(__name__)
 
 

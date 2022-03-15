@@ -78,6 +78,8 @@ class FyleReportApproval:
         tracking.identify_user(user.email)
 
         if modal is True:
-            tracking.track_event(user.email, 'Report Approved From Slack Modal', event_data)
+            event_name = 'Report Approved From Slack Modal'
         else:
-            tracking.track_event(user.email, 'Report Approved From Slack', event_data)
+            event_name = 'Report Approved From Slack'
+
+        tracking.track_event(user.email, event_name, event_data)

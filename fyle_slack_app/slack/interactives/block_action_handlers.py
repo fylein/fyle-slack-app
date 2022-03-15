@@ -108,10 +108,11 @@ class BlockActionHandler:
         return JsonResponse({}, status=200)
 
 
-    def approve_report(self, slack_payload: Dict, user_id: str, team_id: str, is_approved_from_modal: bool) -> JsonResponse:
+    def approve_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
+        is_approved_from_modal = slack_payload['is_approved_from_modal'] if 'is_approved_from_modal' in slack_payload else False
 
         # Overriding the 'approve' cta text to 'approving'
         in_progress_message_block = IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.APPROVING_REPORT.value]

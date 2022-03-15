@@ -88,7 +88,8 @@ class ViewSubmissionHandler:
         slack_payload['message'] = {}
         slack_payload['message']['ts'] = private_metadata['notification_message_ts']
         slack_payload['message']['blocks'] = private_metadata['notification_message_blocks']
-        
-        BlockActionHandler().approve_report(slack_payload=slack_payload, user_id=user_id, team_id=team_id, is_approved_from_modal=True)
+        slack_payload['is_approved_from_modal'] = True
+
+        BlockActionHandler().approve_report(slack_payload=slack_payload, user_id=user_id, team_id=team_id)
 
         return JsonResponse({})
