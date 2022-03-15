@@ -45,7 +45,8 @@ def get_sent_back_reports_dashboard_view(reports: Dict) -> List[Dict]:
 						"text": ":eyes: View in Fyle",
 					},
 					"url": reports['url'],
-					"action_id": "sent_back_reports_viewed_in_fyle"
+					"action_id": "sent_back_reports_viewed_in_fyle",
+					"value": 'Sent Back Reports Viewed In Fyle'
 				}
 			]
 		},
@@ -82,7 +83,8 @@ def get_incomplete_expenses_dashboard_view(expenses: Dict):
 						"text": ":eyes: View in Fyle",
 					},
 					"url": expenses['url'],
-					"action_id": "incomplete_expenses_viewed_in_fyle"
+					"action_id": "incomplete_expenses_viewed_in_fyle",
+					"value": 'Incomplete Expenses Viewed In Fyle'
 				}
 			]
 		},
@@ -119,7 +121,8 @@ def get_unreported_expenses_dashboard_view(expenses: Dict):
 						"text": ":eyes: View in Fyle",
 					},
 					"url": expenses['url'],
-					"action_id": "unreported_expenses_viewed_in_fyle"
+					"action_id": "unreported_expenses_viewed_in_fyle",
+					"value": 'Unreported Expenses Viewed In Fyle'
 				}
 			]
 		},
@@ -156,7 +159,8 @@ def get_draft_reports_dashboard_view(reports: Dict):
 						"text": ":eyes: View in Fyle",
 					},
 					"url": reports["url"],
-					"action_id": "draft_reports_viewed_in_fyle"
+					"action_id": "draft_reports_viewed_in_fyle",
+					"value": 'Draft Reports Viewed In Fyle'
 				}
 			]
 		},
