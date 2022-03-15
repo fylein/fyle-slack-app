@@ -5,8 +5,10 @@ from forex_python.converter import CurrencyCodes
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
 
-from fyle_slack_app.libs import assertions, utils
+from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.models import Team
+
+logger = logger.get_logger(__name__)
 
 
 class AsyncOperation(enum.Enum):
@@ -42,6 +44,7 @@ def get_currency_symbol(currency: str) -> str:
     try:
         curr = c.get_symbol(currency)
     except:
+        logger.error('Error fetching currency symbol of currency = {}'.format(currency))
         curr = currency
     
     return curr

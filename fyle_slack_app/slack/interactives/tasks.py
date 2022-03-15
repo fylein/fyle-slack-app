@@ -52,7 +52,51 @@ def handle_feedback_submission(user: User, team_id: str, form_values: Dict, priv
     tracking.track_event(user_email, 'Feedback Submitted', event_data)
 
 
-def handle_fetch_report_expenses(user: User, team_id: str, report: Dict, modal_view_id: str, private_metadata: str):
+def handle_fetching_of_report_and_its_expenses(user: User, team_id: str, private_metadata: Dict, modal_view_id: str):
+    slack_client = slack_utils.get_slack_client(team_id)
+
+    # Fetch the report
+    fyle_report_approval = FyleReportApproval(user)
+
+    try:
+        report = fyle_report_approval.get_report_by_id(private_metadata['report_id'])
+        report = report['data']
+    except exceptions.NotFoundItemError as error:
+        logger.error('Report not found with id -> %s', private_metadata['report_id'])
+        logger.error('Error -> %s', error)
+        # None here means report is deleted/doesn't exist
+        report = None
+
+    if report is None:
+        # Show no report-access message
+        no_report_access_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
+        report_notification_message = common_messages.get_updated_approval_notification_message(notification_message=private_metadata['notification_message_blocks'], custom_message=no_report_access_message, cta=False)
+        modal_message = modal_messages.get_report_expenses_dialog(custom_message=no_report_access_message)
+
+        # Update message in modal
+        slack_client.views_update(user=user.slack_user_id, view=modal_message, view_id=modal_view_id)
+
+        # Update notification message
+        slack_client.chat_update(
+            channel=user.slack_dm_channel_id,
+            blocks=report_notification_message,
+            ts=private_metadata['notification_message_ts']
+        )
+
+    else:
+        encoded_private_metadata = utils.encode_state(private_metadata)
+        fetch_report_expenses(user=user, team_id=team_id, report=report, modal_view_id=modal_view_id, private_metadata=encoded_private_metadata)
+        event_data = {
+            'email': user.email,
+            'slack_user_id': user.slack_user_id
+        }
+
+        tracking.identify_user(user.email)
+        tracking.track_event(user.email, 'Report Expense Modal Opened', event_data)
+
+
+
+def fetch_report_expenses(user: User, team_id: str, report: Dict, modal_view_id: str, private_metadata: str):
     slack_client = slack_utils.get_slack_client(team_id)
 
     fyle_report_approval = FyleReportApproval(user)

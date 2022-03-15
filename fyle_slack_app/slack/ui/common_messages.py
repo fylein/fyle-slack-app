@@ -23,22 +23,21 @@ IN_PROGRESS_MESSAGE = {
 }
 
 
-def get_no_report_access_message(notification_message: List[Dict]) -> List[Dict]:
-    # Removing CTAs from notification message for deleted report
-    
+def get_updated_approval_notification_message(notification_message: List[Dict], custom_message: str, cta: bool) -> List[Dict]:
     report_notification_message = []
     for message_block in notification_message:
-        if message_block['type'] != 'actions':
-            report_notification_message.append(message_block)
+        if cta is False and message_block['type'] == 'actions':
+            continue
+        report_notification_message.append(message_block)
 
-    report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-    report_deleted_section = {
+    # report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
+    report_section = {
         'type': 'section',
         'text': {
             'type': 'mrkdwn',
-            'text': report_message
+            'text': custom_message
         }
     }
-    report_notification_message.insert(3, report_deleted_section)
+    report_notification_message.insert(3, report_section)
 
     return report_notification_message

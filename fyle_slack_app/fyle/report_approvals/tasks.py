@@ -38,7 +38,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
     # Check if report is deleted
     if report is None:
-        report_notification_message = common_messages.get_no_report_access_message(notification_message=notification_message)
+        report_notification_message = common_messages.get_updated_approval_notification_message(notification_message=notification_message, custom_message=no_report_access_message, cta=False)
     else:
         report = report['data']
         can_approve_report, report_message = fyle_report_approval.can_approve_report(
