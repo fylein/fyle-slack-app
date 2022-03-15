@@ -1,14 +1,20 @@
-from typing import Callable, Dict
+from typing import Callable, Dict, List
 
 from django.http import JsonResponse
-
 from django_q.tasks import async_task
+
+from fyle.platform import exceptions
 
 from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_client
+
+from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
+
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
+from fyle_slack_app.slack.ui.modals import messages as modal_messages
+from fyle_slack_app.slack.ui import common_messages as common_messages
+from fyle_slack_app.slack.interactives import tasks as tasks
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
 from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
@@ -106,6 +112,7 @@ class BlockActionHandler:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
+        is_approved_from_modal = slack_payload['is_approved_from_modal'] if 'is_approved_from_modal' in slack_payload else False
 
         # Overriding the 'approve' cta text to 'approving'
         in_progress_message_block = IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.APPROVING_REPORT.value]
@@ -125,7 +132,8 @@ class BlockActionHandler:
             user_id,
             team_id,
             message_ts,
-            message_blocks
+            message_blocks,
+            is_approved_from_modal
         )
 
         return JsonResponse({}, status=200)
@@ -161,7 +169,7 @@ class BlockActionHandler:
 
     def handle_feedback_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
 
-        slack_client = get_slack_client(team_id)
+        slack_client = slack_utils.get_slack_client(team_id)
 
         message_ts = slack_payload['message']['ts']
         trigger_id = slack_payload['trigger_id']
@@ -198,8 +206,42 @@ class BlockActionHandler:
         return JsonResponse({})
 
 
-    def handle_report_expense_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
-        return JsonResponse({}, status=200)
+    def handle_report_expenses_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        # Fetch approver user
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user, 'Approver not found')
+
+        # Fetch useful data from slack interaction payload (on clicking "Review in Slack" button)
+        message_ts = slack_payload['message']['ts']
+        message_blocks = slack_payload['message']['blocks']
+        trigger_id = slack_payload['trigger_id']
+        report_id = slack_payload['actions'][0]['value']
+
+        private_metadata = {
+            'notification_message_ts': message_ts,
+            'notification_message_blocks': message_blocks,
+            'report_id': report_id
+        }
+
+        # Fetch report expenses modal dialog
+        loading_message = 'Loading report\'s expenses :hourglass_flowing_sand:'
+        report_expenses_dialog = modal_messages.get_report_expenses_dialog(custom_message=loading_message)
+
+        # Open modal
+        modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
+        modal_view_id = modal['view']['id']
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_fetching_of_report_and_its_expenses',
+            user=user,
+            team_id=team_id,
+            private_metadata=private_metadata,
+            modal_view_id=modal_view_id
+        )
+
+        return JsonResponse({})
 
 
     def track_view_in_fyle_action(self, user_id: str, event_name: str, event_data: Dict) -> None:

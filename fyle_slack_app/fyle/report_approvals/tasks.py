@@ -16,7 +16,7 @@ from fyle_slack_app.slack.ui.notifications import messages as notification_messa
 logger = logger.get_logger(__name__)
 
 
-def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict]) -> Dict:
+def process_report_approval(report_id: str, user_id: str, team_id: str, message_timestamp: str, notification_message: List[Dict], is_approved_from_modal: bool) -> Dict:
 
     slack_team = utils.get_or_none(Team, id=team_id)
     assertions.assert_found(slack_team, 'Slack team not registered')
@@ -38,21 +38,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
 
     # Check if report is deleted
     if report is None:
-        # Removing CTAs from notification message for deleted report
-        report_notification_message = []
-        for message_block in notification_message:
-            if message_block['type'] != 'actions':
-                report_notification_message.append(message_block)
-
-        report_message = 'Looks like you no longer have access to this expense report :face_with_head_bandage:'
-        report_deleted_section = {
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': report_message
-            }
-        }
-        report_notification_message.insert(3, report_deleted_section)
+        report_notification_message = common_messages.get_updated_approval_notification_message(notification_message=notification_message, custom_message=no_report_access_message, cta=False)
     else:
         report = report['data']
         can_approve_report, report_message = fyle_report_approval.can_approve_report(
@@ -71,7 +57,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
                 report_message = 'Expense report approved :rocket:'
 
                 # Track report approved
-                fyle_report_approval.track_report_approved(user, report)
+                fyle_report_approval.track_report_approved(user, report, is_approved_from_modal)
 
                 # Trigger feedback
                 UserFeedback.trigger_feedback(user, FeedbackTrigger.REPORT_APPROVED_FROM_SLACK, slack_client)
