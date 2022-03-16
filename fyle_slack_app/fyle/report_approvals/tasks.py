@@ -28,7 +28,7 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
     assertions.assert_found(user, 'Approver not found')
 
     title_text = ''
-    
+
     fyle_report_approval = FyleReportApproval(user)
 
     try:
