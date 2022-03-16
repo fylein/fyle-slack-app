@@ -43,7 +43,7 @@ def get_currency_symbol(currency: str) -> str:
 
     try:
         curr = c.get_symbol(currency)
-    except ValueError as error:
+    except ValueError:
         logger.error('Error fetching currency symbol of currency = %s', currency)
 
     symbol = curr if curr is not None else currency
