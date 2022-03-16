@@ -38,10 +38,10 @@ class BlockActionHandler:
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
             'open_feedback_dialog': self.handle_feedback_dialog,
-            'sent_back_reports_viewed_in_fyle': self.handle_pre_auth_mock_button,
-            'incomplete_expenses_viewed_in_fyle': self.handle_pre_auth_mock_button,
-            'unreported_expenses_viewed_in_fyle': self.handle_pre_auth_mock_button,
-            'draft_reports_viewed_in_fyle': self.handle_pre_auth_mock_button
+            'sent_back_reports_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
+            'incomplete_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
+            'unreported_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
+            'draft_reports_viewed_in_fyle': self.handle_tasks_viewed_in_fyle
         }
 
 
