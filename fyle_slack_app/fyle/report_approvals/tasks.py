@@ -27,6 +27,8 @@ def process_report_approval(report_id: str, user_id: str, team_id: str, message_
     user = utils.get_or_none(User, slack_user_id=user_id)
     assertions.assert_found(user, 'Approver not found')
 
+    title_text = ''
+    
     fyle_report_approval = FyleReportApproval(user)
 
     try:
