@@ -89,4 +89,4 @@ class ViewSubmissionHandler:
 
         BlockActionHandler().approve_report(slack_payload=slack_payload, user_id=user_id, team_id=team_id)
 
-        return JsonResponse({})
+        return JsonResponse({}, status=200)
