@@ -1,17 +1,17 @@
 from typing import Callable, Dict
 
 from django.http import JsonResponse
-
 from django_q.tasks import async_task
 
 from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_client
+
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
+from fyle_slack_app.slack.ui.modals import messages as modal_messages
+from fyle_slack_app.slack.ui import common_messages
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
-from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
 
 
 logger = logger.get_logger(__name__)
@@ -29,6 +29,7 @@ class BlockActionHandler:
             'expense_view_in_fyle': self.expense_view_in_fyle,
             'approve_report': self.approve_report,
             'pre_auth_message_approve': self.handle_pre_auth_mock_button,
+            'pre_auth_message_review_in_slack': self.handle_pre_auth_mock_button,
             'pre_auth_message_view_in_fyle': self.handle_pre_auth_mock_button,
             'report_submitted_notification_preference': self.handle_notification_preference_selection,
             'report_partially_approved_notification_preference': self.handle_notification_preference_selection,
@@ -37,7 +38,8 @@ class BlockActionHandler:
             'report_paid_notification_preference': self.handle_notification_preference_selection,
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
-            'open_feedback_dialog': self.handle_feedback_dialog
+            'open_feedback_dialog': self.handle_feedback_dialog,
+            'open_report_expenses_dialog': self.handle_report_expenses_dialog
         }
 
 
@@ -104,9 +106,10 @@ class BlockActionHandler:
         report_id = slack_payload['actions'][0]['value']
         message_ts = slack_payload['message']['ts']
         message_blocks = slack_payload['message']['blocks']
+        is_approved_from_modal = slack_payload['is_approved_from_modal'] if 'is_approved_from_modal' in slack_payload else False
 
         # Overriding the 'approve' cta text to 'approving'
-        in_progress_message_block = IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.APPROVING_REPORT.value]
+        in_progress_message_block = common_messages.IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.APPROVING_REPORT.value]
         message_blocks[3]['elements'][0] = in_progress_message_block
 
         slack_client = slack_utils.get_slack_client(team_id)
@@ -123,7 +126,8 @@ class BlockActionHandler:
             user_id,
             team_id,
             message_ts,
-            message_blocks
+            message_blocks,
+            is_approved_from_modal
         )
 
         return JsonResponse({}, status=200)
@@ -159,7 +163,7 @@ class BlockActionHandler:
 
     def handle_feedback_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
 
-        slack_client = get_slack_client(team_id)
+        slack_client = slack_utils.get_slack_client(team_id)
 
         message_ts = slack_payload['message']['ts']
         trigger_id = slack_payload['trigger_id']
@@ -192,6 +196,44 @@ class BlockActionHandler:
 
         tracking.identify_user(user_email)
         tracking.track_event(user_email, 'Feedback Modal Opened', event_data)
+
+        return JsonResponse({})
+
+
+    def handle_report_expenses_dialog(self, slack_payload: Dict, user_id: str, team_id: str) -> None:
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        # Fetch approver user
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        assertions.assert_found(user, 'Approver not found')
+
+        # Fetch useful data from slack interaction payload (on clicking "Review in Slack" button)
+        message_ts = slack_payload['message']['ts']
+        message_blocks = slack_payload['message']['blocks']
+        trigger_id = slack_payload['trigger_id']
+        report_id = slack_payload['actions'][0]['value']
+
+        private_metadata = {
+            'notification_message_ts': message_ts,
+            'notification_message_blocks': message_blocks,
+            'report_id': report_id
+        }
+
+        # Fetch report expenses modal dialog
+        loading_message = 'Loading report\'s expenses :hourglass_flowing_sand:'
+        report_expenses_dialog = modal_messages.get_report_expenses_dialog(custom_message=loading_message)
+
+        # Open modal
+        modal = slack_client.views_open(user=user_id, view=report_expenses_dialog, trigger_id=trigger_id)
+        modal_view_id = modal['view']['id']
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_fetching_of_report_and_its_expenses',
+            user=user,
+            team_id=team_id,
+            private_metadata=private_metadata,
+            modal_view_id=modal_view_id
+        )
 
         return JsonResponse({})
 

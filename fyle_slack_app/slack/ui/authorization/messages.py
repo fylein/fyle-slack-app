@@ -113,16 +113,26 @@ def get_post_authorization_message() -> List[Dict]:
                     "style": "primary",
                     "text": {
                         "type": "plain_text",
-                        "text": "Approve",
+                        "text": ":rocket: Approve",
                     },
                     "value": "pre_auth_message_approve",
                     "action_id": "pre_auth_message_approve"
                 },
                 {
                     "type": "button",
+                    "style": "primary",
                     "text": {
                         "type": "plain_text",
-                        "text": "Review in Fyle",
+                        "text": ":slack: Review in Slack",
+                    },
+                    "value": "pre_auth_message_review_in_slack",
+                    "action_id": "pre_auth_message_review_in_slack"
+                },
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": ":eyes: Review in Fyle",
                     },
                     "value": "pre_auth_message_view_in_fyle",
                     "action_id": "pre_auth_message_view_in_fyle"

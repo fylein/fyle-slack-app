@@ -1,11 +1,14 @@
 from typing import Dict
 import enum
+from forex_python.converter import CurrencyCodes
 
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
 
-from fyle_slack_app.libs import assertions, utils
+from fyle_slack_app.libs import assertions, utils, logger
 from fyle_slack_app.models import Team
+
+logger = logger.get_logger(__name__)
 
 
 class AsyncOperation(enum.Enum):
@@ -33,3 +36,16 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
         user_display_name = user_details['full_name']
 
     return user_display_name
+
+
+def get_currency_symbol(currency: str) -> str:
+    c = CurrencyCodes()
+
+    try:
+        curr = c.get_symbol(currency)
+    except ValueError as error:
+        logger.error('Error fetching currency symbol of currency = %s', currency)
+        logger.error('Error -> %s', error)
+        curr = currency
+
+    return curr

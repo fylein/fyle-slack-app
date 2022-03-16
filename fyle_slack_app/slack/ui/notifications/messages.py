@@ -1,11 +1,13 @@
 from typing import Dict, List
 
 from fyle_slack_app.libs import utils
+from fyle_slack_app.slack import utils as slack_utils
 
 
 def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
+    report_currency_symbol = slack_utils.get_currency_symbol(report['currency'])
 
     report_section_block = [
         {
@@ -34,7 +36,7 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
                 {
                     'type': 'mrkdwn',
                     'text': '*Amount:*\n {} {}'.format(
-                        report['currency'],
+                        report_currency_symbol,
                         report['amount']
                     )
                 },
@@ -57,17 +59,17 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     if sub_category is not None and category != sub_category:
         category = '{} / {}'.format(category, sub_category)
 
-    currency = expense['currency']
+    currency_symbol = slack_utils.get_currency_sysmbol(expense['currency'])
     amount = expense['amount']
 
-    amount_details = '*Amount:*\n {} {}'.format(currency, amount)
+    amount_details = '*Amount:*\n {} {}'.format(currency_symbol, amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
-        foreign_currency = expense['foreign_currency']
+        foreign_currency_symbol = slack_utils.get_currency_sysmbol(expense['foreign_currency'])
         foreign_amount = expense['foreign_amount']
 
-        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency, foreign_amount)
+        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency_symbol, foreign_amount)
 
     expense_section_block = [
         {
@@ -133,13 +135,29 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     return expense_section_block
 
 
+def get_report_review_in_slack_action(button_text: str, report_id: str) -> Dict:
+    report_review_in_slack_action = {
+        'type': 'button',
+        'style': 'primary',
+        'text': {
+            'type': 'plain_text',
+            'text': ':slack: {}'.format(button_text),
+            'emoji': True
+        },
+        'value': report_id,
+        'action_id': 'open_report_expenses_dialog'
+    }
+
+    return report_review_in_slack_action
+
+
 def get_report_review_in_fyle_action(report_url: str, button_text: str, report_id: str) -> Dict:
 
     report_review_in_fyle_action = {
         'type': 'button',
         'text': {
             'type': 'plain_text',
-            'text': button_text,
+            'text': ':eyes: {}'.format(button_text),
             'emoji': True
         },
         'action_id': 'review_report_in_fyle',
@@ -367,7 +385,7 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     }
 
     if message is not None:
-        report_view_action_text = 'View in Fyle'
+        report_view_in_fyle_action_text = 'View in Fyle'
         message_section = {
             'type': 'section',
             'text': {
@@ -377,13 +395,14 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         report_section_block.append(message_section)
     else:
-        report_view_action_text = 'Review in Fyle'
+        report_view_in_fyle_action_text = 'Review in Fyle'
+
         report_approve_action = {
             'type': 'button',
             'style': 'primary',
             'text': {
                 'type': 'plain_text',
-                'text': 'Approve',
+                'text': ':rocket: Approve',
                 'emoji': True
             },
             'action_id': 'approve_report',
@@ -391,9 +410,14 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         actions_block['elements'].append(report_approve_action)
 
-    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_action_text, report['id'])
+        # Adding "Review in Slack" button to the message block
+        report_view_in_slack_action_text = 'Review in Slack'
+        report_view_in_slack_section = get_report_review_in_slack_action(report_view_in_slack_action_text, report['id'])
+        actions_block['elements'].append(report_view_in_slack_section)
 
+    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_in_fyle_action_text, report['id'])
     actions_block['elements'].append(report_view_in_fyle_section)
+
     report_section_block.append(actions_block)
 
     # Adding Notification Preference message as footer
