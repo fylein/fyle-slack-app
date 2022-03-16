@@ -100,7 +100,6 @@ def handle_fetching_of_report_and_its_expenses(user: User, team_id: str, private
         tracking.track_event(user.email, 'Report Expense Modal Opened', event_data)
 
 
-
 def fetch_report_expenses(user: User, team_id: str, report: Dict, modal_view_id: str, private_metadata: str):
     slack_client = slack_utils.get_slack_client(team_id)
 
