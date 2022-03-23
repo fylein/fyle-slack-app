@@ -59,14 +59,14 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     if sub_category is not None and category != sub_category:
         category = '{} / {}'.format(category, sub_category)
 
-    currency_symbol = slack_utils.get_currency_sysmbol(expense['currency'])
+    currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
     amount = expense['amount']
 
     amount_details = '*Amount:*\n {} {}'.format(currency_symbol, amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
-        foreign_currency_symbol = slack_utils.get_currency_sysmbol(expense['foreign_currency'])
+        foreign_currency_symbol = slack_utils.get_currency_symbol(expense['foreign_currency'])
         foreign_amount = expense['foreign_amount']
 
         amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency_symbol, foreign_amount)
