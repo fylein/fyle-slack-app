@@ -61,11 +61,11 @@ class ViewSubmissionHandler:
         form_values = slack_payload['view']['state']['values']
         print('REACHED CREATE EXPENSE -> ', form_values)
 
-        private_metadata = utils.decode_state(slack_payload['view']['private_metadata'])
-
         expense_details, validation_errors = self.extract_form_values_and_validate(user, form_values)
 
         print('EXPENSE -> ', json.dumps(expense_details, indent=2))
+        print('PV -> ', slack_payload['view']['private_metadata'])
+        private_metadata = utils.decode_state(slack_payload['view'].get('private_metadata', ''))
 
         expense_id = private_metadata.get('expense_id')
 

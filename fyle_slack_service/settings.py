@@ -152,7 +152,7 @@ Q_CLUSTER = {
     'name': 'fyle_slack_service',
     'compress': True,
     'save_limit': 0,
-    'workers': 4,
+    'workers': 1,
     'queue_limit': 50,
     'orm': 'default',
     'ack_failures': True,

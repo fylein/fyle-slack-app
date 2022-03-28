@@ -50,8 +50,7 @@ def handle_project_selection(user: User, team_id: str, project_id: str, view_id:
         'id': project['id'],
         'name': project['name'],
         'display_name': project['display_name'],
-        'sub_project': project['sub_project'],
-        'category_ids': project['category_ids']
+        'sub_project': project['sub_project']
     }
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
