@@ -65,11 +65,11 @@ class ViewSubmissionHandler:
 
         print('EXPENSE -> ', json.dumps(expense_details, indent=2))
         print('PV -> ', slack_payload['view']['private_metadata'])
-        private_metadata = utils.decode_state(slack_payload['view'].get('private_metadata', ''))
-
-        expense_id = private_metadata.get('expense_id')
-
-        message_ts = private_metadata.get('message_ts')
+        expense_id, message_ts = None, None
+        if len(slack_payload['view']['private_metadata']) > 0:
+            private_metadata = utils.decode_state(slack_payload['view']['private_metadata'])
+            expense_id = private_metadata.get('expense_id')
+            message_ts = private_metadata.get('message_ts')
 
         if expense_id is not None:
             expense_details['id'] = expense_id
@@ -190,17 +190,17 @@ class ViewSubmissionHandler:
                     elif inner_value['type'] == 'plain_text_input':
 
                         if 'TEXT' in key:
-                            value = inner_value['value'].strip()
+                            value = inner_value['value'].strip() if inner_value['value'] is not None else None
 
                         elif 'NUMBER' in key:
                             value = inner_value['value']
                             try:
-                                value = float(inner_value['value'])
+                                value = float(inner_value['value']) if inner_value['value'] is not None else None
 
-                                if value < 0:
+                                if value is not None and value < 0:
                                     validation_errors[key] = 'Negative numbers are not allowed'
 
-                                value = round(value, 2)
+                                value = round(value, 2) if value is not None else None
 
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'
@@ -244,12 +244,12 @@ class ViewSubmissionHandler:
                         elif 'NUMBER' in key:
                             value = inner_value['value']
                             try:
-                                value = float(inner_value['value'])
+                                value = float(inner_value['value']) if inner_value['value'] is not None else None
 
-                                if value < 0:
+                                if value is not None and value < 0:
                                     validation_errors[key] = 'Negative numbers are not allowed'
 
-                                value = round(value, 2)
+                                value = round(value, 2) if value is not None else None
 
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'

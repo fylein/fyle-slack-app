@@ -41,7 +41,7 @@ class FyleExpense:
             'offset': 0,
             'limit': '50',
             'order': 'created_at.desc',
-            'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
+            'column_name': 'not_in.(purpose, txn_dt, spent_at, merchant, vendor_id, cost_center_id)',
             'is_enabled': 'eq.{}'.format(True),
             'category_ids': 'cs.[{}]'.format(int(category_id))
         }

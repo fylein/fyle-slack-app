@@ -705,10 +705,11 @@ def expense_dialog_form(
     })
 
     # Add to report section
-    if add_to_report is not None:
-        add_to_report_blocks = get_add_to_report_blocks(add_to_report, action_id='add_to_report')
+    # TODO: Uncomment this after report APIs become available
+    # if add_to_report is not None:
+    #     add_to_report_blocks = get_add_to_report_blocks(add_to_report, action_id='add_to_report')
 
-        view['blocks'].extend(add_to_report_blocks)
+    #     view['blocks'].extend(add_to_report_blocks)
 
     return view
 
@@ -804,39 +805,40 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
 
         actions.append(attach_receipt_cta)
 
+    # TODO: Uncomment after report APIs become available
     report_message = ':x: Not Added'
     if expense['report_id'] is not None:
         report_message = ':white_check_mark: Added'
 
-        if expense['report']['state'] in ['DRAFT', 'APPROVER_INQUIRY']:
+        # if expense['report']['state'] in ['DRAFT', 'APPROVER_INQUIRY']:
 
-            submit_report_cta = {
-                'type': 'button',
-                'style': 'primary',
-                'text': {
-                    'type': 'plain_text',
-                    'text': 'Submit Report',
-                },
-                'value': expense['report_id'],
-                'action_id': 'open_submit_report_dialog'
-            }
+        #     submit_report_cta = {
+        #         'type': 'button',
+        #         'style': 'primary',
+        #         'text': {
+        #             'type': 'plain_text',
+        #             'text': 'Submit Report',
+        #         },
+        #         'value': expense['report_id'],
+        #         'action_id': 'open_submit_report_dialog'
+        #     }
 
-            actions.append(submit_report_cta)
+        #     actions.append(submit_report_cta)
 
-    else:
+    # else:
 
-        add_to_report_cta = {
-            'type': 'button',
-            'style': 'primary',
-            'text': {
-                'type': 'plain_text',
-                'text': 'Add to Report',
-            },
-            'value': expense['id'],
-            'action_id': 'add_expense_to_report'
-        }
+    #     add_to_report_cta = {
+    #         'type': 'button',
+    #         'style': 'primary',
+    #         'text': {
+    #             'type': 'plain_text',
+    #             'text': 'Add to Report',
+    #         },
+    #         'value': expense['id'],
+    #         'action_id': 'add_expense_to_report'
+    #     }
 
-        actions.append(add_to_report_cta)
+    #     actions.append(add_to_report_cta)
 
     complete_expense_cta = {
         'type': 'button',
