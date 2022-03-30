@@ -3,6 +3,7 @@ import json
 from typing import Callable, Dict, Union
 
 from django.http.response import JsonResponse
+from django.core.cache import cache
 
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
@@ -61,10 +62,16 @@ class ViewSubmissionHandler:
         form_values = slack_payload['view']['state']['values']
         print('REACHED CREATE EXPENSE -> ', form_values)
 
-        expense_details, validation_errors = self.extract_form_values_and_validate(user, form_values)
+        expense_payload, validation_errors = self.extract_form_values_and_validate(user, form_values)
+        cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+        form_metadata = cache.get(cache_key)
 
-        print('EXPENSE -> ', json.dumps(expense_details, indent=2))
-        print('PV -> ', slack_payload['view']['private_metadata'])
+        if 'foreign_currency' in form_metadata['additional_currency_details']:
+            expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
+            expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
+
+        print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
+
         expense_id, message_ts = None, None
         if len(slack_payload['view']['private_metadata']) > 0:
             private_metadata = utils.decode_state(slack_payload['view']['private_metadata'])
@@ -72,7 +79,7 @@ class ViewSubmissionHandler:
             message_ts = private_metadata.get('message_ts')
 
         if expense_id is not None:
-            expense_details['id'] = expense_id
+            expense_payload['id'] = expense_id
 
         print('VALIDATION ERRORS -> ', validation_errors)
 
@@ -152,7 +159,7 @@ class ViewSubmissionHandler:
 
 
     def extract_form_values_and_validate(self, user, form_values: Dict) -> Union[Dict, Dict]:
-        expense_details = {}
+        expense_payload = {}
         validation_errors = {}
         custom_fields = []
 
@@ -165,10 +172,10 @@ class ViewSubmissionHandler:
 
                     if inner_value['type'] in ['static_select', 'external_select']:
                         if inner_value['selected_option'] is not None:
-                            value = inner_value['selected_option']['value']
+                            form_value = inner_value['selected_option']['value']
 
                         if 'LOCATION' in key:
-                            value = fyle_expense.get_place_by_place_id(value)
+                            form_value = fyle_expense.get_place_by_place_id(form_value)
 
                     if inner_value['type'] in ['multi_static_select', 'multi_external_select']:
 
@@ -178,41 +185,41 @@ class ViewSubmissionHandler:
                         values_list = []
                         for val in inner_value['selected_options']:
                             values_list.append(val['value'])
-                        value = values_list
+                        form_value = values_list
 
                     elif inner_value['type'] == 'datepicker':
 
                         if datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
                             validation_errors[key] = 'Date selected cannot be in future'
 
-                        value = inner_value['selected_date']
+                        form_value = inner_value['selected_date']
 
                     elif inner_value['type'] == 'plain_text_input':
 
                         if 'TEXT' in key:
-                            value = inner_value['value'].strip() if inner_value['value'] is not None else None
+                            form_value = inner_value['value'].strip() if inner_value['value'] is not None else None
 
                         elif 'NUMBER' in key:
-                            value = inner_value['value']
+                            form_value = inner_value['value']
                             try:
-                                value = float(inner_value['value']) if inner_value['value'] is not None else None
+                                form_value = float(inner_value['value']) if inner_value['value'] is not None else None
 
-                                if value is not None and value < 0:
+                                if form_value is not None and form_value < 0:
                                     validation_errors[key] = 'Negative numbers are not allowed'
 
-                                value = round(value, 2) if value is not None else None
+                                form_value = round(form_value, 2) if value is not None else None
 
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'
 
                     elif inner_value['type'] == 'checkboxes':
 
-                        value = False
+                        form_value = False
                         if len(inner_value['selected_options']) > 0:
-                            value = True
+                            form_value = True
 
                     custom_field_mappings['name'] = inner_key
-                    custom_field_mappings['value'] = value
+                    custom_field_mappings['value'] = form_value
 
                     custom_fields.append(custom_field_mappings)
             else:
@@ -220,14 +227,14 @@ class ViewSubmissionHandler:
 
                     if inner_value['type'] in ['static_select', 'external_select']:
                         if inner_value['selected_option'] is not None:
-                            expense_details[inner_key] = inner_value['selected_option']['value']
+                            expense_payload[inner_key] = inner_value['selected_option']['value']
 
                     if inner_value['type'] == 'multi_static_select':
 
                         values_list = []
                         for val in inner_value['selected_options']:
                             values_list.append(val['value'])
-                        expense_details[inner_key] = values_list
+                        expense_payload[inner_key] = values_list
 
 
                     elif inner_value['type'] == 'datepicker':
@@ -235,32 +242,32 @@ class ViewSubmissionHandler:
                         if datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
                             validation_errors[key] = 'Date selected cannot be for future'
 
-                        expense_details[inner_key] = inner_value['selected_date']
+                        expense_payload[inner_key] = inner_value['selected_date']
 
                     elif inner_value['type'] == 'plain_text_input':
                         if 'TEXT' in key:
-                            value = inner_value['value'].strip()
+                            form_value = inner_value['value'].strip()
 
                         elif 'NUMBER' in key:
-                            value = inner_value['value']
+                            form_value = inner_value['value']
                             try:
-                                value = float(inner_value['value']) if inner_value['value'] is not None else None
+                                form_value = float(inner_value['value']) if inner_value['value'] is not None else None
 
-                                if value is not None and value < 0:
+                                if form_value is not None and form_value < 0:
                                     validation_errors[key] = 'Negative numbers are not allowed'
 
-                                value = round(value, 2) if value is not None else None
+                                form_value = round(form_value, 2) if value is not None else None
 
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'
-                        expense_details[inner_key] = value
+                        expense_payload[inner_key] = form_value
 
                     elif inner_value['type'] == 'checkboxes':
 
-                        expense_details[inner_key] = False
+                        expense_payload[inner_key] = False
                         if len(inner_value['selected_options']) > 0:
-                            expense_details[inner_key] = True
+                            expense_payload[inner_key] = True
 
-        expense_details['custom_fields'] = custom_fields
+        expense_payload['custom_fields'] = custom_fields
 
-        return expense_details, validation_errors
+        return expense_payload, validation_errors
