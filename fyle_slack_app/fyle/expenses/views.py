@@ -9,6 +9,7 @@ from fyle.platform.platform import Platform
 from fyle_slack_app.fyle.utils import get_fyle_sdk_connection
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
+from fyle_slack_app.libs import assertions, http
 
 
 class FyleExpense:
@@ -120,6 +121,26 @@ class FyleExpense:
 
         return is_cost_center_available
 
+
+    def upsert_expense(self, expense_payload: Dict, refresh_token: str) -> Dict:
+        access_token = fyle_utils.get_fyle_access_token(refresh_token)
+        cluster_domain = fyle_utils.get_cluster_domain(refresh_token)
+
+        url = '{}/platform/v1/spender/expenses'.format(cluster_domain)
+        headers = {
+            'content-type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+
+        expense_payload = {
+            'data': expense_payload
+        }
+
+        response = http.post(url, json=expense_payload, headers=headers)
+        print('RESPONSE -> ', response.text)
+        assertions.assert_valid(response.status_code == 200, 'Error fetching cluster domain')
+        print('RESPONSE -> ', response.json())
+        return response.json()['data']
 
     @staticmethod
     def get_currencies():

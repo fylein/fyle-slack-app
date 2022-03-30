@@ -269,7 +269,7 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
                 'type': 'plain_text',
                 'text': 'Enter Amount',
             },
-            'action_id': 'amount',
+            'action_id': 'claim_amount',
         },
         'label': {'type': 'plain_text', 'text': 'Amount'},
     }
@@ -717,6 +717,10 @@ def expense_dialog_form(
 def get_expense_message_details_section(expense: Dict, expense_url: str, actions: List[Dict], receipt_message: str, report_message: str) -> List[Dict]:
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
+    
+    expense_details = expense['purpose']
+    if expense['category']['name'] is not None:
+        expense_details = '{} ({})'.format(expense_details, expense['category']['name'])
 
     expense_message_details_section = [
         {
@@ -770,7 +774,7 @@ def get_expense_message_details_section(expense: Dict, expense_url: str, actions
                 },
                 {
                     'type': 'mrkdwn',
-                    'text': '*Expense Details: * \n Travel to Office (Uber)'
+                    'text': '*Expense Details: * \n {}'.format(expense_details)
                 }
             ]
         },

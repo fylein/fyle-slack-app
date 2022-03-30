@@ -1,6 +1,8 @@
 import datetime
 import json
+
 from typing import Callable, Dict, Union
+from dateutil.parser import parse
 
 from django.http.response import JsonResponse
 from django.core.cache import cache
@@ -66,6 +68,9 @@ class ViewSubmissionHandler:
         cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
         form_metadata = cache.get(cache_key)
 
+        expense_payload['source'] = 'SLACK'
+        expense_payload['spent_at'] = str(parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+
         if 'foreign_currency' in form_metadata['additional_currency_details']:
             expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
             expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
@@ -92,22 +97,11 @@ class ViewSubmissionHandler:
 
         slack_client = slack_utils.get_slack_client(team_id)
 
-        # expense_id = 'txCCVGvNpDMM'
-        expense_id = 'tx0mjvrfuizk'
-        # expense_id = 'txjNT3H5dTw1'
-
         fyle_expense = FyleExpense(user)
 
-        expense_query_params = {
-            'offset': 0,
-            'limit': '1',
-            'order': 'created_at.desc',
-            'id': 'eq.{}'.format(expense_id)
-        }
+        expense = fyle_expense.upsert_expense(expense_payload, user.fyle_refresh_token)
 
-        expense = fyle_expense.get_expenses(query_params=expense_query_params)
-
-        view_expense_message = expense_messages.view_expense_message(expense['data'][0], user)
+        view_expense_message = expense_messages.view_expense_message(expense, user)
 
         if expense_id is None or message_ts is None:
             slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
