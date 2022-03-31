@@ -127,7 +127,7 @@ def handle_currency_selection(user: User, selected_currency: str, view_id: str, 
     if home_currency != selected_currency:
         form_current_state = slack_payload['view']['state']['values']
         exchange_rate = fyle_expense.get_exchange_rate(selected_currency, home_currency)
-        amount = form_current_state['NUMBER_default_field_amount_block']['amount']['value']
+        amount = form_current_state['NUMBER_default_field_amount_block']['claim_amount']['value']
         additional_currency_details = get_additional_currency_details(amount, home_currency, selected_currency, exchange_rate)
 
     current_expense_form_details['additional_currency_details'] = additional_currency_details

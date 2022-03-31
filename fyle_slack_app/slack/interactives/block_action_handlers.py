@@ -42,7 +42,7 @@ class BlockActionHandler:
             'category_id': self.handle_category_selection,
             'project_id': self.handle_project_selection,
             'currency': self.handle_currency_selection,
-            'amount': self.handle_amount_entered,
+            'claim_amount': self.handle_amount_entered,
             'add_to_report': self.handle_add_to_report,
             'add_expense_to_report': self.handle_add_expense_to_report,
             'add_expense_to_report_selection': self.handle_add_expense_to_report_selection,

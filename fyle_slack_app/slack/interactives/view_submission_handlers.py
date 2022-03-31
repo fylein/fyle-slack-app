@@ -69,7 +69,7 @@ class ViewSubmissionHandler:
         form_metadata = cache.get(cache_key)
 
         expense_payload['source'] = 'SLACK'
-        expense_payload['spent_at'] = str(parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ"))
+        expense_payload['spent_at'] = parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         if 'foreign_currency' in form_metadata['additional_currency_details']:
             expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
