@@ -725,7 +725,7 @@ def get_expense_message_details_section(expense: Dict, expense_url: str, actions
     expense_message_details_section = [
         {
             'type': 'section',
-            'block_id': expense['id'],
+            'block_id': 'expense_id.{}'.format(expense['id']),
             'text': {
                 'type': 'mrkdwn',
                 'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
