@@ -137,10 +137,50 @@ class FyleExpense:
         }
 
         response = http.post(url, json=expense_payload, headers=headers)
-        print('RESPONSE -> ', response.text)
-        assertions.assert_valid(response.status_code == 200, 'Error fetching cluster domain')
-        print('RESPONSE -> ', response.json())
+        assertions.assert_valid(response.status_code == 200, 'Error creating expense')
         return response.json()['data']
+
+    @staticmethod
+    def create_receipt(receipt_payload: Dict, refresh_token: str) -> Dict:
+        access_token = fyle_utils.get_fyle_access_token(refresh_token)
+        cluster_domain = fyle_utils.get_cluster_domain(refresh_token)
+
+        url = '{}/platform/v1/spender/files'.format(cluster_domain)
+        headers = {
+            'content-type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+
+        payload = {
+            'data': receipt_payload
+        }
+
+        response = http.post(url, json=payload, headers=headers)
+        assertions.assert_valid(response.status_code == 200, 'Error creating expense')
+        return response.json()['data']
+
+
+    @staticmethod
+    def generate_receipt_url(receipt_id: Dict, refresh_token: str) -> Dict:
+        access_token = fyle_utils.get_fyle_access_token(refresh_token)
+        cluster_domain = fyle_utils.get_cluster_domain(refresh_token)
+
+        url = '{}/platform/v1/spender/files/generate_urls'.format(cluster_domain)
+        headers = {
+            'content-type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+
+        payload = {
+            'data': {
+                'id': receipt_id
+            }
+        }
+
+        response = http.post(url, json=payload, headers=headers)
+        assertions.assert_valid(response.status_code == 200, 'Error creating receipt url')
+        return response.json()['data']
+
 
     @staticmethod
     def get_currencies():

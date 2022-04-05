@@ -3,6 +3,8 @@ import base64
 from slack_sdk import WebClient
 
 from django.conf import settings
+from django.db import transaction
+from fyle_slack_app.fyle.expenses.views import FyleExpense
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger
@@ -132,8 +134,17 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
             if 'expense_id' in expense_block_id:
                 _ , expense_id = expense_block_id.split('.')
 
-                print('ATTACH RECEIPT TO EXPENSE FLOW')
-                print('EXPENSE ID -> ', expense_id)
+                with transaction.atomic():
+                    receipt_payload = {
+                        'name': file_info['file']['name'],
+                        'type': 'RECEIPT'
+                    }
+
+                    receipt = FyleExpense.create_receipt(receipt_payload, user.fyle_refresh_token)
+                    receipt_urls = FyleExpense.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
+
+                    print('ATTACH RECEIPT TO EXPENSE FLOW')
+                    print('EXPENSE ID -> ', expense_id)
 
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow
