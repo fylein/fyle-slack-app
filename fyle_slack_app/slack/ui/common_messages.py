@@ -1,3 +1,4 @@
+from typing import Dict, List
 from fyle_slack_app.slack import utils as slack_utils
 
 IN_PROGRESS_MESSAGE = {
@@ -13,10 +14,29 @@ IN_PROGRESS_MESSAGE = {
         'style': 'primary',
         'text': {
             'type': 'plain_text',
-            'text': 'Approving :hourglass_flowing_sand:',
+            'text': ':hourglass_flowing_sand: Approving',
             'emoji': True
         },
         'action_id': 'pre_auth_message_approve',
         'value': 'pre_auth_message_approve',
     }
 }
+
+
+def get_updated_approval_notification_message(notification_message: List[Dict], custom_message: str, cta: bool) -> List[Dict]:
+    report_notification_message = []
+    for message_block in notification_message:
+        if cta is False and message_block['type'] == 'actions':
+            continue
+        report_notification_message.append(message_block)
+
+    report_section = {
+        'type': 'section',
+        'text': {
+            'type': 'mrkdwn',
+            'text': custom_message
+        }
+    }
+    report_notification_message.insert(3, report_section)
+
+    return report_notification_message
