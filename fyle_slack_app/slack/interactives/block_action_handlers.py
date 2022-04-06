@@ -201,11 +201,15 @@ class BlockActionHandler:
 
 
     def handle_tasks_viewed_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-
+        user = utils.get_or_none(User, slack_user_id=user_id)
         task_name = slack_payload['actions'][0]['value']
         event_data = {
             'slack_user_id': user_id,
-            'team_id': team_id
+            'team_id': team_id,
+            'task': task_name,
+            'email': user.email,
+            'fyle_org_id': user.fyle_org_id,
+            'fyle_user_id': user.fyle_user_id
         }
         self.track_view_in_fyle_action(user_id, task_name, event_data)
 
