@@ -7,7 +7,7 @@ from django.db import transaction
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
-from fyle_slack_app.libs import utils, assertions, logger
+from fyle_slack_app.libs import utils, assertions, logger, http
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -106,13 +106,10 @@ def uninstall_app(team_id: str) -> None:
 def handle_file_shared(file_id: str, user_id: str, team_id: str):
 
     slack_client = get_slack_client(team_id)
-
     file_info =  slack_client.files_info(file=file_id)
-
     user = utils.get_or_none(User, slack_user_id=user_id)
 
     file_message_details = file_info['file']['shares']['private'][user.slack_dm_channel_id][0]
-
     file_url = file_info['file']['url_private']
     file_content = get_file_content_from_slack(file_url, user.slack_team.bot_access_token)
     encoded_file = base64.b64encode(file_content).decode('utf-8')
@@ -139,10 +136,11 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                         'name': file_info['file']['name'],
                         'type': 'RECEIPT'
                     }
-
                     receipt = FyleExpense.create_receipt(receipt_payload, user.fyle_refresh_token)
                     receipt_urls = FyleExpense.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
-
+                    upload_url = receipt_urls['upload_url']
+                    upload_file_response = http.put(upload_url, data=encoded_file, headers={'content-type': receipt_urls['content_type']})
+                    print('UFR -> ', upload_file_response.text)
                     print('ATTACH RECEIPT TO EXPENSE FLOW')
                     print('EXPENSE ID -> ', expense_id)
 

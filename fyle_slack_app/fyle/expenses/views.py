@@ -156,6 +156,7 @@ class FyleExpense:
         }
 
         response = http.post(url, json=payload, headers=headers)
+        print('CR -> ', response.text)
         assertions.assert_valid(response.status_code == 200, 'Error creating expense')
         return response.json()['data']
 
@@ -178,6 +179,7 @@ class FyleExpense:
         }
 
         response = http.post(url, json=payload, headers=headers)
+        print('GRU -> ', response.text)
         assertions.assert_valid(response.status_code == 200, 'Error creating receipt url')
         return response.json()['data']
 
