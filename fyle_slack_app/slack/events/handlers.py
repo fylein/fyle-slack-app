@@ -6,10 +6,10 @@ from fyle.platform import Platform
 
 from django.http import JsonResponse
 from django.utils import timezone
-from django_q.tasks import schedule, async_task
-from django_q.models import Schedule
 from django.core.cache import cache
 from django.conf import settings
+from django_q.tasks import schedule, async_task
+from django_q.models import Schedule
 
 from fyle_slack_app.models import User
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_sdk_connection
