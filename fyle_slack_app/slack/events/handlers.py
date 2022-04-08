@@ -121,7 +121,7 @@ class SlackEventHandler:
                 'order': 'created_at.desc',
                 'or': '(state.eq.APPROVER_INQUIRY,state.eq.DRAFT)'
             })
-            cache.set(f'{user_id}.sent_back_and_draft_reports', sent_back_and_draft_reports, 3600)
+            cache.set(f'{user_id}.sent_back_and_draft_reports', sent_back_and_draft_reports, 300)
 
         sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
         if len(sent_back_reports) > 0:
@@ -158,7 +158,7 @@ class SlackEventHandler:
                 'order': 'created_at.desc',
                 'or': '(state.eq.COMPLETE,state.eq.DRAFT)'
             })
-            cache.set(f'{user_id}.incomplete_and_unreported_expenses', incomplete_and_unreported_expenses, 3600)
+            cache.set(f'{user_id}.incomplete_and_unreported_expenses', incomplete_and_unreported_expenses, 300)
 
         incomplete_expenses = list(filter(lambda expense: expense['state'] == 'DRAFT', incomplete_and_unreported_expenses['data']))
 
