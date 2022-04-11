@@ -90,6 +90,7 @@ class SlackEventHandler:
             platform = get_fyle_sdk_connection(user.fyle_refresh_token)
             spender_profile = get_fyle_profile(user.fyle_refresh_token)
             home_currency = spender_profile['org']['currency']
+            currency_symbol = slack_utils.get_currency_symbol(home_currency)
             sent_back_reports, draft_reports = self.get_sent_back_and_draft_reports(platform, user_id)
             unreported_expenses, incomplete_expenses = self.get_unreported_and_incomplete_expenses(platform, user_id)
 
@@ -98,7 +99,7 @@ class SlackEventHandler:
                 incomplete_expenses=incomplete_expenses,
                 unreported_expenses=unreported_expenses,
                 draft_reports=draft_reports,
-                home_currency=home_currency
+                currency_symbol=currency_symbol
             )
         else:
             user_info = slack_client.users_info(user=user_id)
