@@ -306,7 +306,6 @@ class FyleFylerNotification(FyleNotificationView):
                 )
 
                 self.track_notification('Visa Card Expense Notification Received', user, 'EXPENSE', expense)
-                
 
         return JsonResponse({}, status=200)
 

@@ -1,7 +1,6 @@
 from typing import Dict
 
 from fyle.platform.platform import Platform
-from fyle_slack_app import tracking
 
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
