@@ -1,5 +1,6 @@
 from typing import Dict
 import enum
+# pylint: disable=import-error
 from forex_python.converter import CurrencyCodes
 
 from slack_sdk.errors import SlackApiError
