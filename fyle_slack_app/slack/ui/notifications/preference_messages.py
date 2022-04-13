@@ -108,7 +108,7 @@ NOTIFICATION_TYPE_UI_DETAILS = {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '*Card Transaction made :credit_card: * \n_Get notified and attach receipt when a card transaction is made._'
+                'text': '*Card Transaction made :credit_card: * \n_Get notified and attach receipt when a card transaction is made_'
             },
             'accessory': {
                 'type': 'radio_buttons',
