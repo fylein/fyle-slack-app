@@ -16,5 +16,3 @@ class FyleCorporateCards:
     def get_corporate_card_by_id(self, query_params: Dict) -> Dict:
         corporate_card = self.connection.v1beta.spender.corporate_cards.list(query_params=query_params)
         return corporate_card
-
-    # comment
