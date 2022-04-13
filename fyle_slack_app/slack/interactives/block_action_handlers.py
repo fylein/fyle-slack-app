@@ -38,7 +38,6 @@ class BlockActionHandler:
             'report_paid_notification_preference': self.handle_notification_preference_selection,
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
-            'expense_mandatory_receipt_missing_notification_preference': self.handle_notification_preference_selection,
             'open_feedback_dialog': self.handle_feedback_dialog,
             'sent_back_reports_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
             'incomplete_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
@@ -152,8 +151,7 @@ class BlockActionHandler:
             'report_approver_sendback_notification_preference': NotificationType.REPORT_APPROVER_SENDBACK.value,
             'report_paid_notification_preference': NotificationType.REPORT_PAID.value,
             'report_commented_notification_preference': NotificationType.REPORT_COMMENTED.value,
-            'expense_commented_notification_preference': NotificationType.EXPENSE_COMMENTED.value,
-            'expense_mandatory_receipt_missing_notification_preference': NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value
+            'expense_commented_notification_preference': NotificationType.EXPENSE_COMMENTED.value
         }
 
         is_enabled = True if value == 'enable' else False
