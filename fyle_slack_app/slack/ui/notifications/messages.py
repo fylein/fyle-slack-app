@@ -494,8 +494,8 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
 
     readable_spend_date = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
     card_number = expense['matched_corporate_card_transactions'][0]['corporate_card_number']
-    masked_card_number = '****{}'.format(card_number[-4:])
-    card_details = '`{}` *(VISA)*'.format(masked_card_number)
+    card_number_last_4_digits = card_number[-4:]
+    card_details = 'Ending {} (VISA)'.format(card_number_last_4_digits)
 
     card_expense_section_block = [
         {
@@ -514,7 +514,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
                 },
                 {
                     'type': 'mrkdwn',
-                    'text': 'Card Details:\n {}'.format(card_details)
+                    'text': 'Card No.:\n *{}*'.format(card_details)
                 }
             ]
         },
