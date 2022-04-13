@@ -108,7 +108,7 @@ NOTIFICATION_TYPE_UI_DETAILS = {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '*Receipt missintg in card expense :receipt: * \n_Get notified when a card expense with missing receipt is created_'
+                'text': '*Card Transaction made :credit_card: * \n_Get notified and attach receipt when a card transaction is made._'
             },
             'accessory': {
                 'type': 'radio_buttons',
