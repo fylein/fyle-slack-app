@@ -101,20 +101,6 @@ NOTIFICATION_TYPE_UI_DETAILS = {
                 'action_id': 'expense_commented_notification_preference'
             }
         }
-    },
-    NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value: {
-        'role_required': 'FYLER',
-        'ui': {
-            'type': 'section',
-            'text': {
-                'type': 'mrkdwn',
-                'text': '*Receipt missintg in card expense :receipt: * \n_Get notified when a card expense with missing receipt is created_'
-            },
-            'accessory': {
-                'type': 'radio_buttons',
-                'action_id': 'expense_mandatory_receipt_missing_notification_preference'
-            }
-        }
     }
 }
 
