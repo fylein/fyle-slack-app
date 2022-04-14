@@ -488,3 +488,76 @@ def get_expense_commented_notification(expense: Dict, user_display_name: str, ex
     expense_section_block.insert(1, expense_comment_block)
 
     return expense_section_block, title_text
+
+
+def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict]:
+
+    readable_spend_date = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
+    card_number = expense['matched_corporate_card_transactions'][0]['corporate_card_number']
+    card_number_last_4_digits = card_number[-4:]
+    card_details = 'Ending {} (VISA)'.format(card_number_last_4_digits)
+
+    card_expense_section_block = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': title_text
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Date of Spend:\n *{}*'.format(readable_spend_date)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Card No.:\n *{}*'.format(card_details)
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Receipt:\n :x: *Missing*'
+                }
+            ]
+        }
+    ]
+
+    if expense['merchant'] is not None:
+        merchant_field = {
+            'type': 'mrkdwn',
+            'text': 'Merchant:\n *{}*'.format(expense['merchant'])
+        }
+        card_expense_section_block[2]['fields'].append(merchant_field)
+
+    return card_expense_section_block
+
+
+def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_url: str) -> List[Dict]:
+
+    currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
+
+    title_text = ':credit_card: A card expense of *{} {}* requires a :receipt: receipt. Please reply with a photo of your receipt in this thread!'.format(
+        currency_symbol,
+        expense['amount']
+    )
+
+    actions_block = {
+        'type': 'actions',
+        'elements': []
+    }
+
+    card_expense_section_block = get_card_expense_section_blocks(expense, title_text)
+
+    expense_view_in_fyle_section = get_expense_view_in_fyle_action(expense_url, 'View in Fyle', expense['id'])
+
+    actions_block['elements'].append(expense_view_in_fyle_section)
+    card_expense_section_block.append(actions_block)
+
+    return card_expense_section_block, title_text
