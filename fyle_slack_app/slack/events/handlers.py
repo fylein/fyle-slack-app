@@ -1,18 +1,14 @@
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict
 
 from datetime import timedelta
 
-from fyle.platform import Platform
-
 from django.http import JsonResponse
 from django.utils import timezone
-from django.core.cache import cache
-from django.conf import settings
 from django_q.tasks import schedule, async_task
 from django_q.models import Schedule
 
 from fyle_slack_app.models import User
-from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_sdk_connection
+from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack.ui.dashboard import messages
 from fyle_slack_app.slack import utils as slack_utils
@@ -29,7 +25,8 @@ class SlackEventHandler:
         self._event_callback_handlers = {
             'team_join': self.handle_new_user_joined,
             'app_home_opened': self.handle_app_home_opened,
-            'app_uninstalled': self.handle_app_uninstalled
+            'app_uninstalled': self.handle_app_uninstalled,
+            'file_shared': self.handle_file_shared
         }
 
 
@@ -87,17 +84,7 @@ class SlackEventHandler:
 
         # User is not present i.e. user hasn't done Fyle authorization
         if user is not None:
-            platform = get_fyle_sdk_connection(user.fyle_refresh_token)
-
-            sent_back_reports, draft_reports = self.get_sent_back_and_draft_reports(platform, user_id)
-            unreported_expenses, incomplete_expenses = self.get_unreported_and_incomplete_expenses(platform, user_id)
-
-            dashboard_view = messages.get_dashboard_view(
-                sent_back_reports=sent_back_reports,
-                incomplete_expenses=incomplete_expenses,
-                unreported_expenses=unreported_expenses,
-                draft_reports=draft_reports
-            )
+            dashboard_view = messages.get_post_authorization_message()
         else:
             user_info = slack_client.users_info(user=user_id)
             assertions.assert_good(user_info['ok'] is True)
@@ -110,78 +97,22 @@ class SlackEventHandler:
 
         return JsonResponse({}, status=200)
 
+    def handle_file_shared(self, slack_payload: Dict, team_id: str) -> JsonResponse:
 
-    def get_sent_back_and_draft_reports(self, platform: Platform, user_id: str) -> Tuple[Dict, Dict]:
-        sent_back_and_draft_reports = cache.get(f'{user_id}.sent_back_and_draft_reports')
+        file_id = slack_payload['event']['file_id']
 
-        if sent_back_and_draft_reports is None:
-            sent_back_and_draft_reports = platform.v1beta.spender.reports.list(query_params={
-                'limit': 100,
-                'offset': 0,
-                'order': 'created_at.desc',
-                'or': '(state.eq.APPROVER_INQUIRY,state.eq.DRAFT)'
-            })
-            cache.set(f'{user_id}.sent_back_and_draft_reports', sent_back_and_draft_reports, 300)
+        user_id = slack_payload['event']['user_id']
 
-        sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
-        if len(sent_back_reports) > 0:
-            url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
-            sent_back_reports = {
-                'total_amount': sum(report['amount'] for report in sent_back_reports),
-                'count': len(sent_back_reports),
-                'url': utils.convert_to_branchio_url(url, {'state': 'inquiry'})
-            }
-        else:
-            sent_back_reports = None
+        async_task(
+            'fyle_slack_app.slack.events.tasks.handle_file_shared',
+            file_id,
+            user_id,
+            team_id
+        )
 
-        draft_reports = list(filter(lambda report: report['state'] == 'DRAFT', sent_back_and_draft_reports['data']))
-        if len(draft_reports) > 0:
-            url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
-            draft_reports = {
-                'total_amount': sum(report['amount'] for report in draft_reports),
-                'count': len(draft_reports),
-                'url': utils.convert_to_branchio_url(url, {'state': 'draft'})
-            }
-        else:
-            draft_reports = None
+        response = JsonResponse({}, status=200)
 
-        return sent_back_reports, draft_reports
+        # Passing this for slack not to retry `file_shared` event again
+        response['X-Slack-No-Retry'] = 1
 
-
-    def get_unreported_and_incomplete_expenses(self, platform: Platform, user_id: str) -> Tuple[Dict, Dict]:
-        incomplete_and_unreported_expenses = cache.get(f'{user_id}.incomplete_and_unreported_expenses')
-
-        if incomplete_and_unreported_expenses is None:
-            incomplete_and_unreported_expenses = platform.v1beta.spender.expenses.list(query_params={
-                'limit': 100,
-                'offset': 0,
-                'order': 'created_at.desc',
-                'or': '(state.eq.COMPLETE,state.eq.DRAFT)'
-            })
-            cache.set(f'{user_id}.incomplete_and_unreported_expenses', incomplete_and_unreported_expenses, 300)
-
-        incomplete_expenses = list(filter(lambda expense: expense['state'] == 'DRAFT', incomplete_and_unreported_expenses['data']))
-
-        if len(incomplete_expenses) > 0:
-            url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
-            incomplete_expenses = {
-                'total_amount': sum(expense['amount'] for expense in incomplete_expenses),
-                'count': len(incomplete_expenses),
-                'url': utils.convert_to_branchio_url(url, {'state': 'draft'})
-            }
-        else:
-            incomplete_expenses = None
-
-        unreported_expenses = list(filter(lambda expense: expense['state'] == 'COMPLETE', incomplete_and_unreported_expenses['data']))
-
-        if len(unreported_expenses) > 0:
-            url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
-            unreported_expenses = {
-                'total_amount': sum(expense['amount'] for expense in unreported_expenses),
-                'count': len(unreported_expenses),
-                'url': utils.convert_to_branchio_url(url)
-            }
-        else:
-            unreported_expenses = None
-
-        return unreported_expenses, incomplete_expenses
+        return response
