@@ -12,7 +12,7 @@ from django_q.tasks import schedule, async_task
 from django_q.models import Schedule
 
 from fyle_slack_app.models import User
-from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_sdk_connection
+from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile, get_fyle_sdk_connection
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.slack.ui.dashboard import messages
 from fyle_slack_app.slack import utils as slack_utils
@@ -88,7 +88,9 @@ class SlackEventHandler:
         # User is not present i.e. user hasn't done Fyle authorization
         if user is not None:
             platform = get_fyle_sdk_connection(user.fyle_refresh_token)
-
+            spender_profile = get_fyle_profile(user.fyle_refresh_token)
+            home_currency = spender_profile['org']['currency']
+            currency_symbol = slack_utils.get_currency_symbol(home_currency)
             sent_back_reports, draft_reports = self.get_sent_back_and_draft_reports(platform, user_id)
             unreported_expenses, incomplete_expenses = self.get_unreported_and_incomplete_expenses(platform, user_id)
 
@@ -96,7 +98,8 @@ class SlackEventHandler:
                 sent_back_reports=sent_back_reports,
                 incomplete_expenses=incomplete_expenses,
                 unreported_expenses=unreported_expenses,
-                draft_reports=draft_reports
+                draft_reports=draft_reports,
+                currency_symbol=currency_symbol
             )
         else:
             user_info = slack_client.users_info(user=user_id)
@@ -126,8 +129,9 @@ class SlackEventHandler:
         sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
         if len(sent_back_reports) > 0:
             url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
+            total_amount = round(sum(report['amount'] for report in sent_back_reports), 2)
             sent_back_reports = {
-                'total_amount': sum(report['amount'] for report in sent_back_reports),
+                'total_amount': total_amount,
                 'count': len(sent_back_reports),
                 'url': utils.convert_to_branchio_url(url, {'state': 'inquiry'})
             }
@@ -137,8 +141,9 @@ class SlackEventHandler:
         draft_reports = list(filter(lambda report: report['state'] == 'DRAFT', sent_back_and_draft_reports['data']))
         if len(draft_reports) > 0:
             url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
+            total_amount = round(sum(report['amount'] for report in draft_reports), 2)
             draft_reports = {
-                'total_amount': sum(report['amount'] for report in draft_reports),
+                'total_amount': total_amount,
                 'count': len(draft_reports),
                 'url': utils.convert_to_branchio_url(url, {'state': 'draft'})
             }
@@ -164,8 +169,9 @@ class SlackEventHandler:
 
         if len(incomplete_expenses) > 0:
             url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
+            total_amount = round(sum(expense['amount'] for expense in incomplete_expenses), 2)
             incomplete_expenses = {
-                'total_amount': sum(expense['amount'] for expense in incomplete_expenses),
+                'total_amount': total_amount,
                 'count': len(incomplete_expenses),
                 'url': utils.convert_to_branchio_url(url, {'state': 'draft'})
             }
@@ -176,8 +182,9 @@ class SlackEventHandler:
 
         if len(unreported_expenses) > 0:
             url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
+            total_amount = round(sum(expense['amount'] for expense in unreported_expenses), 2)
             unreported_expenses = {
-                'total_amount': sum(expense['amount'] for expense in unreported_expenses),
+                'total_amount': total_amount,
                 'count': len(unreported_expenses),
                 'url': utils.convert_to_branchio_url(url)
             }
