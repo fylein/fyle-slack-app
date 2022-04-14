@@ -1,9 +1,11 @@
+import base64
 from slack_sdk import WebClient
 
 from django.conf import settings
+from django.db import transaction
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
-from fyle_slack_app.libs import utils, assertions, logger
+from fyle_slack_app.libs import http, utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -97,3 +99,50 @@ def uninstall_app(team_id: str) -> None:
 
         # Deleting team :)
         team.delete()
+
+def handle_file_shared(file_id: str, user_id: str, team_id: str):
+
+    slack_client = slack_utils.get_slack_client(team_id)
+    file_info =  slack_client.files_info(file=file_id)
+    user = utils.get_or_none(User, slack_user_id=user_id)
+
+    file_message_details = file_info['file']['shares']['private'][user.slack_dm_channel_id][0]
+    file_url = file_info['file']['url_private']
+    file_content = slack_utils.get_file_content_from_slack(file_url, user.slack_team.bot_access_token)
+    encoded_file = base64.b64encode(file_content).decode('utf-8')
+
+    # If thread_ts is present in message, this means file has been shared in a thread
+    if 'thread_ts' in file_message_details:
+        thread_ts = file_message_details['thread_ts']
+
+        message_history = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)
+
+        parent_message = message_history['messages'][0]
+
+        # If a user upload a file which doesn't contain blocks, don't do anything
+        if 'blocks' in parent_message:
+            expense_block_id = parent_message['blocks'][0]['block_id']
+
+            # If `expense_id` is present in message block id, this means user has uploaded the file to an expense thread
+            # i.e. this file needs to be attached to an expense as a receipt
+            if 'expense_id' in expense_block_id:
+                _ , expense_id = expense_block_id.split('.')
+
+                with transaction.atomic():
+                    receipt_payload = {
+                        'name': file_info['file']['name'],
+                        'type': 'RECEIPT'
+                    }
+                    receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
+                    receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
+                    upload_url = receipt_urls['upload_url']
+                    upload_file_response = http.put(upload_url, data=encoded_file, headers={'content-type': receipt_urls['content_type']})
+                    print('UFR -> ', upload_file_response.text)
+                    print('ATTACH RECEIPT TO EXPENSE FLOW')
+                    print('EXPENSE ID -> ', expense_id)
+
+    # This else block means file has been shared as a new message and an expense will be created with the file as receipt
+    # i.e. data extraction flow
+    else:
+        print('DE FLOW')
+        return None

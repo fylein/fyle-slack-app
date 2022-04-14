@@ -29,7 +29,8 @@ class SlackEventHandler:
         self._event_callback_handlers = {
             'team_join': self.handle_new_user_joined,
             'app_home_opened': self.handle_app_home_opened,
-            'app_uninstalled': self.handle_app_uninstalled
+            'app_uninstalled': self.handle_app_uninstalled,
+            'file_shared': self.handle_file_shared
         }
 
 
@@ -112,6 +113,26 @@ class SlackEventHandler:
         slack_client.views_publish(user_id=user_id, view=dashboard_view)
 
         return JsonResponse({}, status=200)
+    
+
+    def handle_file_shared(self, slack_payload: Dict, team_id: str) -> JsonResponse:
+        file_id = slack_payload['event']['file_id']
+
+        user_id = slack_payload['event']['user_id']
+
+        async_task(
+            'fyle_slack_app.slack.events.tasks.handle_file_shared',
+            file_id,
+            user_id,
+            team_id
+        )
+
+        response = JsonResponse({}, status=200)
+
+        # Passing this for slack not to retry `file_shared` event again
+        response['X-Slack-No-Retry'] = 1
+
+        return response
 
 
     def get_sent_back_and_draft_reports(self, platform: Platform, user_id: str) -> Tuple[Dict, Dict]:

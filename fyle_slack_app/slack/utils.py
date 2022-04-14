@@ -6,7 +6,7 @@ from forex_python.converter import CurrencyCodes
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
 
-from fyle_slack_app.libs import assertions, utils, logger
+from fyle_slack_app.libs import assertions, http, utils, logger
 from fyle_slack_app.models import Team
 
 logger = logger.get_logger(__name__)
@@ -51,3 +51,11 @@ def get_currency_symbol(currency: str) -> str:
     symbol = curr if curr is not None else currency
 
     return symbol
+
+
+def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
+    headers = {
+        'Authorization': 'Bearer {}'.format(bot_access_token)
+    }
+    file = http.get(url, headers=headers)
+    return file.content
