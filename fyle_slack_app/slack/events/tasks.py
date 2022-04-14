@@ -4,7 +4,6 @@ from slack_sdk import WebClient
 
 from django.conf import settings
 from django.db import transaction
-from fyle_slack_app.fyle.expenses.views import FyleExpense
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger, http
@@ -136,8 +135,8 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                         'name': file_info['file']['name'],
                         'type': 'RECEIPT'
                     }
-                    receipt = FyleExpense.create_receipt(receipt_payload, user.fyle_refresh_token)
-                    receipt_urls = FyleExpense.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
+                    receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
+                    receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
                     upload_url = receipt_urls['upload_url']
                     upload_file_response = http.put(upload_url, data=encoded_file, headers={'content-type': receipt_urls['content_type']})
                     print('UFR -> ', upload_file_response.text)
