@@ -11,7 +11,7 @@ from slack_sdk.web.client import WebClient
 from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle import utils as fyle_utils
-from fyle_slack_app.fyle.corporate_cards.views import FyleCorporateCards
+from fyle_slack_app.fyle.corporate_cards.views import FyleCorporateCard
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.notifications import messages as notification_messages
 from fyle_slack_app.models import User, NotificationPreference, UserSubscriptionDetail
@@ -278,20 +278,14 @@ class FyleFylerNotification(FyleNotificationView):
         expense = webhook_data['data']
 
         # Check if there are any matched corporate_card_transactions
-        if expense['matched_corporate_card_transactions']:
+        if expense['matched_corporate_card_transactions'] is not None and len(expense['matched_corporate_card_transactions']) > 0:
 
             corporate_card_id = expense['matched_corporate_card_transactions'][0]['corporate_card_id']
 
             # Fetch corporate card
-            query_params = {
-                'id': 'eq.{}'.format(corporate_card_id),
-                'order': 'created_at.desc',
-                'limit': '1',
-                'offset': '0'
-            }
-            card = FyleCorporateCards(user).get_corporate_card_by_id(query_params)
+            card = FyleCorporateCard(user).get_corporate_card_by_id(corporate_card_id)
 
-            if len(card['data']) > 0 and card['data'][0]['is_visa_enrolled'] is True:
+            if card['count'] > 0 and card['data'][0]['is_visa_enrolled'] is True:
                 expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
                 card_expense_notification_message, title_text = notification_messages.get_expense_mandatory_receipt_missing_notification(
