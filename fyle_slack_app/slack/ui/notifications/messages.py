@@ -500,6 +500,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
     card_expense_section_block = [
         {
             'type': 'section',
+            'block_id': 'expense_id.{}'.format(expense['id']),
             'text': {
                 'type': 'mrkdwn',
                 'text': title_text
