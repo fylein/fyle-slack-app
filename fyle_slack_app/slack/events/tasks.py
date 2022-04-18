@@ -135,11 +135,8 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                     }
                     receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
                     receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
-                    upload_url = receipt_urls['upload_url']
-                    upload_file_response = http.put(upload_url, data=encoded_file, headers={'content-type': receipt_urls['content_type']})
-                    print('UFR -> ', upload_file_response.text)
-                    print('ATTACH RECEIPT TO EXPENSE FLOW')
-                    print('EXPENSE ID -> ', expense_id)
+                    upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
+                    attach_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
 
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow
