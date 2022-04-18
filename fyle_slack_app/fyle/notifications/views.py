@@ -10,12 +10,12 @@ from slack_sdk.web.client import WebClient
 
 from fyle_slack_app import tracking
 from fyle_slack_app.libs import utils, assertions, logger
-from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.fyle import utils as fyle_utils
+from fyle_slack_app.fyle.corporate_cards.views import FyleCorporateCard
+from fyle_slack_app.slack import utils as slack_utils
+from fyle_slack_app.slack.ui.notifications import messages as notification_messages
 from fyle_slack_app.models import User, NotificationPreference, UserSubscriptionDetail
 from fyle_slack_app.models.notification_preferences import NotificationType
-from fyle_slack_app.slack.ui.notifications import messages as notification_messages
-
 
 logger = logger.get_logger(__name__)
 
@@ -120,6 +120,7 @@ class FyleFylerNotification(FyleNotificationView):
             NotificationType.REPORT_APPROVER_SENDBACK.value: self.handle_report_approver_sendback,
             NotificationType.REPORT_COMMENTED.value: self.handle_report_commented,
             NotificationType.EXPENSE_COMMENTED.value: self.handle_expense_commented,
+            NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value: self.handle_expense_mandatory_receipt_missing,
             NotificationType.REPORT_PAID.value: self.handle_report_paid
         }
 
@@ -269,6 +270,36 @@ class FyleFylerNotification(FyleNotificationView):
             )
 
             self.track_notification('Expense Commented Notification Received', user, 'EXPENSE', expense)
+
+        return JsonResponse({}, status=200)
+
+
+    def handle_expense_mandatory_receipt_missing(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
+        expense = webhook_data['data']
+
+        # Check if there are any matched corporate_card_transactions
+        if expense['matched_corporate_card_transactions'] is not None and len(expense['matched_corporate_card_transactions']) > 0:
+
+            corporate_card_id = expense['matched_corporate_card_transactions'][0]['corporate_card_id']
+
+            # Fetch corporate card
+            card = FyleCorporateCard(user).get_corporate_card_by_id(corporate_card_id)
+
+            if card['count'] > 0 and card['data'][0]['is_visa_enrolled'] is True:
+                expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
+
+                card_expense_notification_message, title_text = notification_messages.get_expense_mandatory_receipt_missing_notification(
+                    expense,
+                    expense_url
+                )
+
+                slack_client.chat_postMessage(
+                    text=title_text,
+                    channel=user.slack_dm_channel_id,
+                    blocks=card_expense_notification_message
+                )
+
+                self.track_notification('Visa Card Expense Notification Received', user, 'EXPENSE', expense)
 
         return JsonResponse({}, status=200)
 
