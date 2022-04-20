@@ -127,6 +127,21 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
             # i.e. this file needs to be attached to an expense as a receipt
             if 'expense_id' in expense_block_id:
                 _ , expense_id = expense_block_id.split('.')
+                
+                receipt_uploading_message_block = [{
+                    'type': 'section',
+                    'text': {
+                        'type': 'mrkdwn',
+                        'text': ':mag: Uploading receipt.... Your receipt will be attached shortly!'
+                    }
+                }]
+
+                response = slack_client.chat_postMessage(
+                    channel=user.slack_dm_channel_id,
+                    blocks=receipt_uploading_message_block,
+                    thread_ts=thread_ts
+                )
+                message_ts = response['message']['ts']
 
                 with transaction.atomic():
                     receipt_payload = {
@@ -136,7 +151,37 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                     receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
                     receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
                     upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
-                    attach_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+                    attached_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+
+                    receipt_uploaded_success_message_block = [{
+                        'type': 'section',
+                        'text': {
+                            'type': 'mrkdwn',
+                            'text': ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
+                        }
+                    }]
+                    slack_client.chat_update(
+                        channel=user.slack_dm_channel_id,
+                        blocks=receipt_uploaded_success_message_block,
+                        ts=message_ts,
+                        thread_ts=thread_ts
+                    )
+
+                    # Update the parent message accordingly
+                    parent_message_blocks = parent_message['blocks']
+                    currency_symbol = slack_utils.get_currency_symbol(attached_receipt['currency'])
+                    parent_message_blocks[0]['text']['text'] = ':credit_card: A card expense of *{} {}* has been created!'.format(
+                        currency_symbol,
+                        attached_receipt['amount']
+                    )
+                    parent_message_blocks[2]['fields'][0]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
+                    parent_message_ts = parent_message['thread_ts']
+
+                    slack_client.chat_update(
+                        channel=user.slack_dm_channel_id,
+                        blocks=parent_message_blocks,
+                        ts=parent_message_ts
+                    )
 
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow

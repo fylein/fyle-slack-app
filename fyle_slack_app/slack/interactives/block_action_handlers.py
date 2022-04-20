@@ -44,7 +44,8 @@ class BlockActionHandler:
             'incomplete_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
             'unreported_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
             'draft_reports_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
-            'open_report_expenses_dialog': self.handle_report_expenses_dialog
+            'open_report_expenses_dialog': self.handle_report_expenses_dialog,
+            'attach_receipt': self.handle_attach_receipt
         }
 
 
@@ -253,6 +254,27 @@ class BlockActionHandler:
             team_id=team_id,
             private_metadata=private_metadata,
             modal_view_id=modal_view_id
+        )
+
+        return JsonResponse({})
+
+
+    def handle_attach_receipt(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        message_ts = slack_payload['container']['message_ts']
+
+        user = utils.get_or_none(User, slack_user_id=user_id)
+
+        # Add the check to verify if receipt is attached to this expense or not
+        # Code to be added here
+
+        attach_receipt_message = '*Drag* or *attach* a receipt (to the message box) for this expense!'
+
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        slack_client.chat_postMessage(
+            text=attach_receipt_message,
+            thread_ts=message_ts,
+            channel=user.slack_dm_channel_id
         )
 
         return JsonResponse({})
