@@ -1,3 +1,4 @@
+from cgitb import text
 from typing import Callable, Dict
 
 from datetime import timedelta
@@ -98,9 +99,7 @@ class SlackEventHandler:
         return JsonResponse({}, status=200)
 
     def handle_file_shared(self, slack_payload: Dict, team_id: str) -> JsonResponse:
-
         file_id = slack_payload['event']['file_id']
-
         user_id = slack_payload['event']['user_id']
 
         async_task(
