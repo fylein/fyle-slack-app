@@ -43,7 +43,7 @@ services:
       DB_PORT: 5432
     env_file: 
       - .env
-    entrypoint: python manage.py qcluster
+    entrypoint: bash run_qcluster.sh
     volumes:
       - .:/fyle-slack-app
     depends_on:
