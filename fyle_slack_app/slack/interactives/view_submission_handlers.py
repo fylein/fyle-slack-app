@@ -73,7 +73,8 @@ class ViewSubmissionHandler:
 
         if 'foreign_currency' in form_metadata['additional_currency_details']:
             expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
-            expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
+            expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['claim_amount']
+            expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
 
         print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
 
@@ -201,7 +202,7 @@ class ViewSubmissionHandler:
                                 if form_value is not None and form_value < 0:
                                     validation_errors[key] = 'Negative numbers are not allowed'
 
-                                form_value = round(form_value, 2) if value is not None else None
+                                form_value = round(form_value, 2) if form_value is not None else None
 
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'
@@ -250,7 +251,7 @@ class ViewSubmissionHandler:
                                 if form_value is not None and form_value < 0:
                                     validation_errors[key] = 'Negative numbers are not allowed'
 
-                                form_value = round(form_value, 2) if value is not None else None
+                                form_value = round(form_value, 2) if form_value is not None else None
 
                             except ValueError:
                                 validation_errors[key] = 'Only numbers are allowed in this fields'

@@ -22,6 +22,7 @@ def get_additional_currency_details(amount: int, home_currency: str, selected_cu
     additional_currency_details = {
         'foreign_currency': selected_currency,
         'home_currency': home_currency,
+        'claim_amount': amount,
         'total_amount': round(exchange_rate * amount, 2)
     }
 
