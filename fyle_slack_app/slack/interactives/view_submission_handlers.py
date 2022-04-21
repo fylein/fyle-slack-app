@@ -184,7 +184,7 @@ class ViewSubmissionHandler:
 
                     elif inner_value['type'] == 'datepicker':
 
-                        if datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
+                        if inner_value['selected_date'] is not None and datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
                             validation_errors[key] = 'Date selected cannot be in future'
 
                         form_value = inner_value['selected_date']
@@ -233,8 +233,7 @@ class ViewSubmissionHandler:
 
 
                     elif inner_value['type'] == 'datepicker':
-
-                        if datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
+                        if inner_value['selected_date'] and datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
                             validation_errors[key] = 'Date selected cannot be for future'
 
                         expense_payload[inner_key] = inner_value['selected_date']

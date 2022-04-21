@@ -166,7 +166,7 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                     'type': 'plain_text',
                     'text': '{}'.format(field_details['placeholder']),
                 },
-                'action_id': 'spent_at',
+                'action_id': action_id,
             },
             'label': {
                 'type': 'plain_text',
