@@ -137,9 +137,7 @@ class FyleExpense:
         }
 
         response = http.post(url, json=expense_payload, headers=headers)
-        print('RESPONSE -> ', response.text)
         assertions.assert_valid(response.status_code == 200, 'Error fetching cluster domain')
-        print('RESPONSE -> ', response.json())
         return response.json()['data']
 
     @staticmethod
