@@ -219,6 +219,7 @@ LOGGING = {
 LOG_LEVEL = os.environ.get('LOGGING_LEVEL', 'DEBUG')
 
 # Fyle Settings
+FYLE_APP_URL = os.environ['FYLE_APP_URL']
 FYLE_ACCOUNTS_URL = os.environ['FYLE_ACCOUNTS_URL']
 FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
 FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
