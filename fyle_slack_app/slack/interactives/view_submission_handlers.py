@@ -7,6 +7,8 @@ from dateutil.parser import parse
 from django.http.response import JsonResponse
 from django.core.cache import cache
 
+from django_q.tasks import async_task
+
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
@@ -95,18 +97,14 @@ class ViewSubmissionHandler:
                 'errors': validation_errors
             })
 
-        slack_client = slack_utils.get_slack_client(team_id)
-
-        fyle_expense = FyleExpense(user)
-
-        expense = fyle_expense.upsert_expense(expense_payload, user.fyle_refresh_token)
-
-        view_expense_message = expense_messages.view_expense_message(expense, user)
-
-        if expense_id is None or message_ts is None:
-            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
-        else:
-            slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=message_ts)
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_upsert_expense',
+            user,
+            team_id,
+            expense_payload,
+            expense_id,
+            message_ts
+        )
 
         return JsonResponse({})
 
@@ -170,7 +168,8 @@ class ViewSubmissionHandler:
 
                         if 'LOCATION' in key:
                             _ , inner_key = key.split('__')
-                            form_value = fyle_expense.get_place_by_place_id(form_value)
+                            if form_value is not None:
+                                form_value = fyle_expense.get_place_by_place_id(form_value)
 
                     if inner_value['type'] in ['multi_static_select', 'multi_external_select']:
 
@@ -225,12 +224,12 @@ class ViewSubmissionHandler:
                         if 'LOCATION' in key:
                             _ , inner_key = key.split('__')
                             place_id = inner_value['selected_option']['value'] if inner_value['selected_option'] is not None else None
-                            print('PLACE ID => ', place_id)
-                            location = fyle_expense.get_place_by_place_id(place_id)
-                            if 'locations' in expense_payload:
-                                expense_payload['locations'].append(location)
-                            else:
-                                expense_payload['locations'] = [location]
+                            if place_id is not None:
+                                location = fyle_expense.get_place_by_place_id(place_id)
+                                if 'locations' in expense_payload:
+                                    expense_payload['locations'].append(location)
+                                else:
+                                    expense_payload['locations'] = [location]
                         elif inner_value['selected_option'] is not None:
                             expense_payload[inner_key] = inner_value['selected_option']['value']
 
