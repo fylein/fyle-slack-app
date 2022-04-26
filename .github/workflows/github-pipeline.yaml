@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       SECRET_KEY: thisisafakedjangosecretkey
+      FYLE_APP_URL: fakefyleappurl
       FYLE_CLIENT_ID: fakefyleclientid
       FYLE_CLIENT_SECRET: fakefyleclientsecret
       FYLE_ACCOUNTS_URL: fakefyleaccounturl
@@ -52,6 +53,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Run pylint checks
+      run: |
+        pylint --rcfile=.pylintrc fyle_slack_app/
     - name: Test with pytest
       run: |
         pytest -vvv

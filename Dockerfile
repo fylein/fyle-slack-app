@@ -3,6 +3,9 @@ FROM python:3.8-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
+RUN apt-get update && \
+    apt-get install -y libpq-dev gcc python3.8-dev
+
 #================================================================
 # pip install required modules
 #================================================================
@@ -18,9 +21,6 @@ RUN pip install -r /tmp/requirements.txt
 RUN mkdir -p /fyle-slack-app
 WORKDIR /fyle-slack-app
 COPY . /fyle-slack-app
-
-# Run pylint checks
-RUN pylint --rcfile=.pylintrc fyle_slack_app/ fyle_slack_service/
 
 # Expose server port
 EXPOSE 8000

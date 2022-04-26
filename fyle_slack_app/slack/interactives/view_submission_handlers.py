@@ -9,11 +9,16 @@ from django.core.cache import cache
 
 from django_q.tasks import async_task
 
+from django_q.tasks import async_task
+
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.libs import utils
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
+from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
+
+
 
 
 class ViewSubmissionHandler:
@@ -25,7 +30,9 @@ class ViewSubmissionHandler:
         self._view_submission_handlers = {
             'upsert_expense': self.handle_upsert_expense,
             'submit_report': self.handle_submit_report,
-            'add_expense_to_report': self.handle_add_expense_to_report
+            'add_expense_to_report': self.handle_add_expense_to_report,
+            'feedback_submission': self.handle_feedback_submission,
+            'report_approval_from_modal': self.handle_report_approval_from_modal
         }
 
 
@@ -60,7 +67,6 @@ class ViewSubmissionHandler:
 
 
     def handle_upsert_expense(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-
         user = utils.get_or_none(User, slack_user_id=user_id)
 
         form_values = slack_payload['view']['state']['values']
@@ -146,6 +152,22 @@ class ViewSubmissionHandler:
         elif 'SELECT_add_to_existing_report_block' in add_expense_to_report_form_values:
             existing_report_id = add_expense_to_report_form_values['SELECT_add_to_existing_report_block']['existing_report']['selected_option']['value']
 
+        encoded_private_metadata = slack_payload['view']['private_metadata']
+        private_metadata = utils.decode_state(encoded_private_metadata)
+
+    def handle_feedback_submission(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        form_values = slack_payload['view']['state']['values']
+        encoded_private_metadata = slack_payload['view']['private_metadata']
+        private_metadata = utils.decode_state(encoded_private_metadata)
+
+        async_task(
+            'fyle_slack_app.slack.interactives.tasks.handle_feedback_submission',
+            user,
+            team_id,
+            form_values,
+            private_metadata
+        )
 
         return JsonResponse({})
 
@@ -278,3 +300,23 @@ class ViewSubmissionHandler:
         expense_payload['custom_fields'] = custom_fields
 
         return expense_payload, validation_errors
+
+    def handle_report_approval_from_modal(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        encoded_private_metadata = slack_payload['view']['private_metadata']
+        private_metadata = utils.decode_state(encoded_private_metadata)
+
+        # Modifying the slack payload in order to mimic the payload structure sent to "approve_report" function
+        slack_payload['actions'] = [
+            {
+                'value': private_metadata['report_id']
+            }
+        ]
+
+        slack_payload['message'] = {}
+        slack_payload['message']['ts'] = private_metadata['notification_message_ts']
+        slack_payload['message']['blocks'] = private_metadata['notification_message_blocks']
+        slack_payload['is_approved_from_modal'] = True
+
+        BlockActionHandler().approve_report(slack_payload=slack_payload, user_id=user_id, team_id=team_id)
+
+        return JsonResponse({}, status=200)

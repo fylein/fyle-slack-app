@@ -9,6 +9,7 @@ from fyle.platform import exceptions
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url, get_fyle_profile
 from fyle_slack_app.models import User, NotificationPreference
+from fyle_slack_app.slack.ui.common_messages import IN_PROGRESS_MESSAGE
 from fyle_slack_app.slack.ui.dashboard import messages as dashboard_messages
 from fyle_slack_app.slack.ui.notifications import preference_messages as notification_preference_messages
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
@@ -50,12 +51,23 @@ class SlackCommandHandler:
         return handler(user_id, team_id, user_dm_channel_id, trigger_id)
 
 
-    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
+    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+        message_block = [IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.UNLINKING_ACCOUNT.value]]
+        slack_client = slack_utils.get_slack_client(team_id)
+
+        # Posting in-progress message, and get the timestamp of the posted message
+        message = slack_client.chat_postMessage(
+            channel=user_dm_channel_id,
+            blocks=message_block
+        )
+        message_ts = message['message']['ts']
+
         async_task(
             'fyle_slack_app.slack.commands.tasks.fyle_unlink_account',
             user_id,
             team_id,
-            user_dm_channel_id
+            user_dm_channel_id,
+            message_ts
         )
         return JsonResponse({}, status=200)
 
