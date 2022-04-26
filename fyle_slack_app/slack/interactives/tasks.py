@@ -178,11 +178,7 @@ def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_
 
 
 def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str, slack_payload: List[Dict]) -> None:
-
     slack_client = get_slack_client(team_id)
-
-    expense_id = 'txCCVGvNpDMM'
-
     fyle_expense = FyleExpense(user)
 
     expense_query_params = {
@@ -200,7 +196,7 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     expense_form_details = FyleExpense.get_expense_form_details(user, view_id)
 
-    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    cache_key = '{}.form_metadata'.format(view_id)
     form_metadata = cache.get(cache_key)
 
     # Add additional metadata to differentiate create and edit expense

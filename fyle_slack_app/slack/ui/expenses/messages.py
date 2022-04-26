@@ -252,7 +252,7 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
         'label': {'type': 'plain_text', 'text': 'Currency'},
     }
 
-    if expense is not None:
+    if expense is not None and expense['currency'] is not None:
         currency_block['element']['initial_option']['text']['text'] = expense['currency']
         currency_block['element']['initial_option']['value'] = expense['currency']
 
@@ -274,8 +274,8 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
         'label': {'type': 'plain_text', 'text': 'Amount'},
     }
 
-    if expense is not None:
-        amount_block['element']['initial_value'] = str(expense['amount'])
+    if expense is not None and expense['claim_amount'] is not None:
+        amount_block['element']['initial_value'] = str(expense['claim_amount'])
 
     blocks.append(amount_block)
 
@@ -350,7 +350,7 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
         'label': {'type': 'plain_text', 'text': 'Date of Spend'},
     }
 
-    if expense is not None:
+    if expense is not None and expense['spent_at'] is not None:
         date_of_spend_block['element']['initial_date'] = utils.get_formatted_datetime(expense['spent_at'], '%Y-%m-%d')
 
     default_fields_blocks.append(date_of_spend_block)
@@ -369,7 +369,7 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
         'label': {'type': 'plain_text', 'text': 'Purpose'},
     }
 
-    if expense is not None:
+    if expense is not None and expense['purpose'] is not None:
         purpose_block['element']['initial_value'] = expense['purpose']
 
     default_fields_blocks.append(purpose_block)
@@ -389,8 +389,15 @@ def get_default_fields_blocks(additional_currency_details: Dict = None, expense:
         'label': {'type': 'plain_text', 'text': 'Merchant'},
     }
 
-    if expense is not None:
-        merchant_block['element']['initial_value'] = expense['merchant']
+    if expense is not None and expense['merchant'] is not None:
+        initial_option = {
+            'text': {
+                'type': 'plain_text',
+                'text': expense['merchant'],
+            },
+            'value': expense['merchant'],
+        }
+        merchant_block['element']['initial_option'] = initial_option
 
     default_fields_blocks.append(merchant_block)
 
@@ -417,7 +424,7 @@ def get_projects_and_billable_block(selected_project: Dict = None, expense: Dict
         'label': {'type': 'plain_text', 'text': 'Project'},
     }
 
-    if expense is not None:
+    if expense is not None and expense['project'] is not None:
         project_block['element']['initial_option'] = {
             'text': {
                 'type': 'plain_text',
@@ -478,7 +485,7 @@ def get_categories_block(expense: Dict = None) -> Dict:
         'label': {'type': 'plain_text', 'text': 'Category'},
     }
 
-    if expense is not None:
+    if expense is not None and expense['category'] is not None:
         category_block['element']['initial_option'] = {
             'text': {
                 'type': 'plain_text',
@@ -506,7 +513,7 @@ def get_cost_centers_block(expense: Dict = None) -> Dict:
         'label': {'type': 'plain_text', 'text': 'Cost Center'},
     }
 
-    if expense is not None:
+    if expense is not None and expense['cost_center'] is not None:
         cost_centers_block['element']['initial_option'] = {
             'text': {
                 'type': 'plain_text',
