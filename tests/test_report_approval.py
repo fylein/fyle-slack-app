@@ -10,7 +10,8 @@ from fyle_slack_app.fyle.report_approvals.tasks import process_report_approval
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.slack_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.fyle_utils')
 @mock.patch('fyle_slack_app.fyle.report_approvals.tasks.notification_messages')
-def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_report_approval, slack_client, utils, mock_fyle):
+@mock.patch('fyle_slack_app.fyle.report_approvals.tasks.UserFeedback')
+def test_report_approve(user_feedback, notification_messages, fyle_utils, slack_utils, fyle_report_approval, slack_client, utils, mock_fyle):
     mock_team = mock.Mock(spec=Team)
     mock_user = mock.Mock(spec=User)
 
@@ -39,6 +40,8 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     mock_approved_report = mock_fyle.approver.reports.approve()
     fyle_report_approval.approve_report.return_value = mock_approved_report
 
+    user_feedback.trigger_feedback.return_vap8e = None
+
     notification_messages.get_report_approval_notification.return_value = 'mock-report-approval-notification-message', 'mock-title-text'
 
     mock_chat_post_message = 'chat-post-message'
@@ -50,9 +53,10 @@ def test_report_approve(notification_messages, fyle_utils, slack_utils, fyle_rep
     mock_team_id = 'mock-team-id'
     mock_message_timestamp = 'mock-message-timestamp'
     mock_notification_message = 'mock-notification-message'
+    mock_is_approved_from_modal = 'mock-is-approved-from-modal'
     report_approved_message = 'Expense report approved :rocket:'
 
-    process_report_approval(mock_report_id, mock_fyle_user_id, mock_team_id, mock_message_timestamp, mock_notification_message)
+    process_report_approval(mock_report_id, mock_fyle_user_id, mock_team_id, mock_message_timestamp, mock_notification_message, mock_is_approved_from_modal)
 
     # Assertion check for required methods that have been called
 

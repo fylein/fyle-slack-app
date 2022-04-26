@@ -1,11 +1,13 @@
 from typing import Dict, List
 
 from fyle_slack_app.libs import utils
+from fyle_slack_app.slack import utils as slack_utils
 
 
 def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
+    report_currency_symbol = slack_utils.get_currency_symbol(report['currency'])
 
     report_section_block = [
         {
@@ -34,7 +36,7 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
                 {
                     'type': 'mrkdwn',
                     'text': '*Amount:*\n {} {}'.format(
-                        report['currency'],
+                        report_currency_symbol,
                         report['amount']
                     )
                 },
@@ -57,17 +59,17 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     if sub_category is not None and category != sub_category:
         category = '{} / {}'.format(category, sub_category)
 
-    currency = expense['currency']
-    amount =  expense['amount']
+    currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
+    amount = expense['amount']
 
-    amount_details = '*Amount:*\n {} {}'.format(currency, amount)
+    amount_details = '*Amount:*\n {} {}'.format(currency_symbol, amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
-        foreign_currency = expense['foreign_currency']
-        foreign_amount =  expense['foreign_amount']
+        foreign_currency_symbol = slack_utils.get_currency_symbol(expense['foreign_currency'])
+        foreign_amount = expense['foreign_amount']
 
-        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency, foreign_amount)
+        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency_symbol, foreign_amount)
 
     expense_section_block = [
         {
@@ -133,13 +135,29 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     return expense_section_block
 
 
+def get_report_review_in_slack_action(button_text: str, report_id: str) -> Dict:
+    report_review_in_slack_action = {
+        'type': 'button',
+        'style': 'primary',
+        'text': {
+            'type': 'plain_text',
+            'text': ':slack: {}'.format(button_text),
+            'emoji': True
+        },
+        'value': report_id,
+        'action_id': 'open_report_expenses_dialog'
+    }
+
+    return report_review_in_slack_action
+
+
 def get_report_review_in_fyle_action(report_url: str, button_text: str, report_id: str) -> Dict:
 
     report_review_in_fyle_action = {
         'type': 'button',
         'text': {
             'type': 'plain_text',
-            'text': button_text,
+            'text': ':eyes: {}'.format(button_text),
             'emoji': True
         },
         'action_id': 'review_report_in_fyle',
@@ -267,9 +285,9 @@ def get_report_approval_state_section(report: Dict) -> Dict:
 def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':white_check_mark: Your expense report <{}|[{}]> has been approved'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
     report_section_block = get_report_notification(report, report_url, title_text)
 
     report_approval_state_section = get_report_approval_state_section(report)
@@ -282,9 +300,9 @@ def get_report_approved_notification(report: Dict, report_url: str) -> List[Dict
 def get_report_payment_processing_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':moneybag: Payment is being processed for your expense report <{}|[{}]>'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -294,9 +312,9 @@ def get_report_payment_processing_notification(report: Dict, report_url: str) ->
 def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
 
     title_text = ':dollar: Reimbursement for your expense report <{}|[{}]> is here!'.format(
-                    report_url,
-                    report['seq_num']
-                )
+        report_url,
+        report['seq_num']
+    )
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -306,11 +324,11 @@ def get_report_paid_notification(report: Dict, report_url: str) -> List[Dict]:
 def get_report_approver_sendback_notification(report: Dict, report_url: str, report_sendback_reason: str) -> List[Dict]:
 
     title_text = ':bangbang: *{}* ({}) sent back your expense report <{}|[{}]> '.format(
-                    report['updated_by_user']['full_name'],
-                    report['updated_by_user']['email'],
-                    report_url,
-                    report['seq_num']
-                )
+        report['updated_by_user']['full_name'],
+        report['updated_by_user']['email'],
+        report_url,
+        report['seq_num']
+    )
 
     report_section_block = get_report_notification(report, report_url, title_text)
 
@@ -333,10 +351,10 @@ def get_report_approver_sendback_notification(report: Dict, report_url: str, rep
 
 def get_report_submitted_notification(report: Dict, report_url: str) -> List[Dict]:
 
-    title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted approval'.format(
-                    report_url,
-                    report['seq_num']
-                )
+    title_text = ':clipboard: Your expense report <{}|[{}]> has been submitted for approval'.format(
+        report_url,
+        report['seq_num']
+    )
     report_section_block = get_report_notification(report, report_url, title_text)
 
     report_approval_state_section = get_report_approval_state_section(report)
@@ -353,11 +371,11 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     report_seq_num = report['seq_num']
 
     title_text = ':envelope_with_arrow: *{}* ({}) submitted an expense report <{}|[{}]> for your approval'.format(
-                    user_display_name,
-                    user_email,
-                    report_url,
-                    report_seq_num
-                )
+        user_display_name,
+        user_email,
+        report_url,
+        report_seq_num
+    )
 
     report_section_block = get_report_section_blocks(title_text, report)
 
@@ -367,7 +385,7 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
     }
 
     if message is not None:
-        report_view_action_text = 'View in Fyle'
+        report_view_in_fyle_action_text = 'View in Fyle'
         message_section = {
             'type': 'section',
             'text': {
@@ -377,13 +395,14 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         report_section_block.append(message_section)
     else:
-        report_view_action_text = 'Review in Fyle'
+        report_view_in_fyle_action_text = 'Review in Fyle'
+
         report_approve_action = {
             'type': 'button',
             'style': 'primary',
             'text': {
                 'type': 'plain_text',
-                'text': 'Approve',
+                'text': ':rocket: Approve',
                 'emoji': True
             },
             'action_id': 'approve_report',
@@ -391,9 +410,14 @@ def get_report_approval_notification(report: Dict, user_display_name: str, repor
         }
         actions_block['elements'].append(report_approve_action)
 
-    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_action_text, report['id'])
+        # Adding "Review in Slack" button to the message block
+        report_view_in_slack_action_text = 'Review in Slack'
+        report_view_in_slack_section = get_report_review_in_slack_action(report_view_in_slack_action_text, report['id'])
+        actions_block['elements'].append(report_view_in_slack_section)
 
+    report_view_in_fyle_section = get_report_review_in_fyle_action(report_url, report_view_in_fyle_action_text, report['id'])
     actions_block['elements'].append(report_view_in_fyle_section)
+
     report_section_block.append(actions_block)
 
     # Adding Notification Preference message as footer
@@ -464,3 +488,76 @@ def get_expense_commented_notification(expense: Dict, user_display_name: str, ex
     expense_section_block.insert(1, expense_comment_block)
 
     return expense_section_block, title_text
+
+
+def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict]:
+
+    readable_spend_date = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
+    card_number = expense['matched_corporate_card_transactions'][0]['corporate_card_number']
+    card_number_last_4_digits = card_number[-4:]
+    card_details = 'Ending {} (VISA)'.format(card_number_last_4_digits)
+
+    card_expense_section_block = [
+        {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': title_text
+            }
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Date of Spend:\n *{}*'.format(readable_spend_date)
+                },
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Card No.:\n *{}*'.format(card_details)
+                }
+            ]
+        },
+        {
+            'type': 'section',
+            'fields': [
+                {
+                    'type': 'mrkdwn',
+                    'text': 'Receipt:\n :x: *Missing*'
+                }
+            ]
+        }
+    ]
+
+    if expense['merchant'] is not None:
+        merchant_field = {
+            'type': 'mrkdwn',
+            'text': 'Merchant:\n *{}*'.format(expense['merchant'])
+        }
+        card_expense_section_block[2]['fields'].append(merchant_field)
+
+    return card_expense_section_block
+
+
+def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_url: str) -> List[Dict]:
+
+    currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
+
+    title_text = ':credit_card: A card expense of *{} {}* requires a :receipt: receipt. Please reply with a photo of your receipt in this thread!'.format(
+        currency_symbol,
+        expense['amount']
+    )
+
+    actions_block = {
+        'type': 'actions',
+        'elements': []
+    }
+
+    card_expense_section_block = get_card_expense_section_blocks(expense, title_text)
+
+    expense_view_in_fyle_section = get_expense_view_in_fyle_action(expense_url, 'View in Fyle', expense['id'])
+
+    actions_block['elements'].append(expense_view_in_fyle_section)
+    card_expense_section_block.append(actions_block)
+
+    return card_expense_section_block, title_text

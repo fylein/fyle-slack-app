@@ -85,7 +85,7 @@ def test_slack_authorization(track_installation, slack_client, async_task, team,
 
 @mock.patch('fyle_slack_app.fyle.authorization.views.utils')
 @mock.patch('fyle_slack_app.fyle.authorization.views.fyle_utils')
-@mock.patch('fyle_slack_app.fyle.authorization.views.get_slack_user_dm_channel_id')
+@mock.patch('fyle_slack_app.slack.utils.get_slack_user_dm_channel_id')
 @mock.patch('fyle_slack_app.fyle.authorization.views.WebClient')
 @mock.patch('fyle_slack_app.fyle.authorization.views.transaction')
 @mock.patch.object(FyleAuthorization, 'create_user')
@@ -112,7 +112,7 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     # Returns next value each time get_or_none is called
     # in function which is to be tested
     mock_team = mock.Mock(spec=Team)
-    utils.get_or_none.side_effect = [mock_team, None]
+    utils.get_or_none.side_effect = [mock_team, None, None]
 
     utils.decode_state = decode_state
 
@@ -149,19 +149,20 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
     fyle_utils.get_fyle_profile.assert_called_once_with(mock_fyle_refresh_token)
 
     create_user.assert_called()
-    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile['user_id'])
+    create_user.assert_called_with(slack_client(), mock_team, state_params['user_id'], 'UDM12345', mock_fyle_refresh_token, mock_fyle_profile)
 
     send_post_authorization_message.assert_called_once()
     send_post_authorization_message.assert_called_with(slack_client(), mock_slack_user_dm_channel_id)
 
-    # Check is get_or_none function has been called twice
-    assert utils.get_or_none.call_count == 2
+    # Check is get_or_none function has been called thrice
+    assert utils.get_or_none.call_count == 3
 
-    # We call get_or_none twice in view to be tested
+    # We call get_or_none thrice in view to be tested
     # This check if the parameters passed in each call are correct or not
     expected_calls = [
         mock.call(Team, id=state_params['team_id']),
-        mock.call(User, slack_user_id=state_params['user_id'])
+        mock.call(User, slack_user_id=state_params['user_id']),
+        mock.call(User, fyle_user_id=mock_fyle_profile['user_id'])
     ]
 
     utils.get_or_none.assert_has_calls(expected_calls)

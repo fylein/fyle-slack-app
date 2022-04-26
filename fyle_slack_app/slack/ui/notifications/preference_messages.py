@@ -101,6 +101,20 @@ NOTIFICATION_TYPE_UI_DETAILS = {
                 'action_id': 'expense_commented_notification_preference'
             }
         }
+    },
+    NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value: {
+        'role_required': 'FYLER',
+        'ui': {
+            'type': 'section',
+            'text': {
+                'type': 'mrkdwn',
+                'text': '*Card Transaction made :credit_card: * \n_Get notified and attach receipt when a card transaction is made_'
+            },
+            'accessory': {
+                'type': 'radio_buttons',
+                'action_id': 'expense_mandatory_receipt_missing_notification_preference'
+            }
+        }
     }
 }
 
@@ -171,7 +185,7 @@ def get_notification_preferences_blocks(notification_preferences: List[Dict], fy
 
                 notification_preferences_blocks.append(
                     {
-                    'type': 'divider'
+                        'type': 'divider'
                     }
                 )
     return notification_preferences_blocks

@@ -7,7 +7,7 @@ from slack_sdk.web import WebClient
 
 from fyle_slack_app.models import Team
 from fyle_slack_app.libs import utils, assertions, logger
-from fyle_slack_app.slack.authorization.tasks import get_slack_user_dm_channel_id
+from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app import tracking
 
 
@@ -20,7 +20,7 @@ class SlackAuthorization(View):
 
         error = request.GET.get('error')
 
-        # If any error occured redirecting to FyleHQ website
+        # If any error occurs, redirect to FyleHQ website
         if error:
 
             logger.error('Slack bot installation failed %s', error)
@@ -53,7 +53,7 @@ class SlackAuthorization(View):
             # Slack bot is already installed in the workspace
             # Send user a message that bot is already installed
             slack_client = WebClient(token=bot_access_token)
-            slack_user_dm_channel_id = get_slack_user_dm_channel_id(slack_client, user_id)
+            slack_user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
 
             self.send_bot_already_installed_message(slack_client, slack_user_dm_channel_id)
 
