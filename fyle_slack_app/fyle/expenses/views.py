@@ -68,6 +68,18 @@ class FyleExpense:
         return self.connection.v1beta.spender.expenses.list(query_params=query_params)
 
 
+    def get_expense_by_id(self, expense_id: str) -> Dict:
+        query_params = {
+            'limit': 1,
+            'offset': 0,
+            'id': 'eq.{}'.format(expense_id),
+            'order': 'created_at.asc'
+        }
+        response = self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        expense = response['data'] if response['count'] == 1 else None
+        return expense
+
+
     def get_reports(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.reports.list(query_params=query_params)
 

@@ -4,6 +4,7 @@ from slack_sdk import WebClient
 
 from django.conf import settings
 from django.db import transaction
+from fyle_slack_app.fyle.expenses.views import FyleExpense
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger, http
@@ -131,31 +132,41 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
             if 'expense_id' in expense_block_id:
                 _ , expense_id = expense_block_id.split('.')
 
-                receipt_uploading_message = ':mag: Receipt uploading.... Your receipt will be attached shortly!'
-                response = slack_client.chat_postMessage(
-                    channel=user.slack_dm_channel_id,
-                    text=receipt_uploading_message,
-                    # blocks=receipt_uploading_message_blocks,
-                    thread_ts=thread_ts
-                )
-                message_ts = response['message']['ts']
+                fyle_expense = FyleExpense(user)
+                expense = fyle_expense.get_expense_by_id(expense_id)
 
-                receipt_payload = {
-                    'name': file_info['file']['name'],
-                    'type': 'RECEIPT'
-                }
-                receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
-                receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
-                upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
-                attach_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+                if expense is not None:
+                    receipt_uploading_message = ':mag: Receipt uploading.... Your receipt will be attached shortly!'
+                    response = slack_client.chat_postMessage(
+                        channel=user.slack_dm_channel_id,
+                        text=receipt_uploading_message,
+                        thread_ts=thread_ts
+                    )
+                    message_ts = response['message']['ts']
 
-                receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
-                slack_client.chat_update(
-                    channel=user.slack_dm_channel_id,
-                    text=receipt_uploaded_success_message,
-                    ts=message_ts,
-                    thread_ts=thread_ts
-                )
+                    receipt_payload = {
+                        'name': file_info['file']['name'],
+                        'type': 'RECEIPT'
+                    }
+                    receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
+                    receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
+                    upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
+                    attach_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+
+                    receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
+                    slack_client.chat_update(
+                        channel=user.slack_dm_channel_id,
+                        text=receipt_uploaded_success_message,
+                        ts=message_ts,
+                        thread_ts=thread_ts
+                    )
+                else:
+                    expense_deleted_message = 'Seems like this expense has been deleted :face_with_head_bandage:'
+                    slack_client.chat_postMessage(
+                        channel=user.slack_dm_channel_id,
+                        text=expense_deleted_message,
+                        thread_ts=thread_ts
+                    )
 
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow
