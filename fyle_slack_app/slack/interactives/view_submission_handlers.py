@@ -86,11 +86,8 @@ class ViewSubmissionHandler:
 
         print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
 
-        expense_id, message_ts = None, None
-        if len(slack_payload['view']['private_metadata']) > 0:
-            private_metadata = utils.decode_state(slack_payload['view']['private_metadata'])
-            expense_id = private_metadata.get('expense_id')
-            message_ts = private_metadata.get('message_ts')
+        expense_id = form_metadata.get('expense_id')
+        message_ts = form_metadata.get('message_ts')
 
         if expense_id is not None:
             expense_payload['id'] = expense_id
