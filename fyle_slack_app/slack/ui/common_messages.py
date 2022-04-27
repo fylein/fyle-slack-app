@@ -23,6 +23,17 @@ IN_PROGRESS_MESSAGE = {
 }
 
 
+def get_custom_text_section_block(message: str) -> List[Dict]:
+    section_block = [{
+        'type': 'section',
+        'text': {
+            'type': 'mrkdwn',
+            'text': message
+        }
+    }]
+    return section_block
+
+
 def get_updated_approval_notification_message(notification_message: List[Dict], custom_message: str, cta: bool) -> List[Dict]:
     report_notification_message = []
     for message_block in notification_message:

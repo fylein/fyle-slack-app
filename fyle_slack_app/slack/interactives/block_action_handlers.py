@@ -7,6 +7,8 @@ from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
+
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
 from fyle_slack_app.slack.ui import common_messages
@@ -261,21 +263,37 @@ class BlockActionHandler:
 
     def handle_attach_receipt(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         message_ts = slack_payload['container']['message_ts']
-
+        expense_id = slack_payload['actions'][0]['value']
         user = utils.get_or_none(User, slack_user_id=user_id)
-
-        # Add the check to verify if receipt is attached to this expense or not
-        # Code to be added here
-
-        attach_receipt_message = '*Drag* or *attach* a receipt (to the message box) for this expense!'
-
         slack_client = slack_utils.get_slack_client(team_id)
 
-        slack_client.chat_postMessage(
-            text=attach_receipt_message,
-            thread_ts=message_ts,
-            channel=user.slack_dm_channel_id
-        )
+        # Added the check to verify if a receipt is already attached to this expense or not
+        expense = FyleExpense(user).get_expense_by_id(expense_id)
+
+        if len(expense['data'][0]['files']) > 0:
+            # Case when receipt is already attached to the expense
+            # Update the parent message indicating the same
+            parent_message_blocks = slack_payload['message']['blocks']
+            parent_message_blocks[1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
+            
+            # Hide the 'Attach Receipt' button after receipt has been attached
+            if len(parent_message_blocks[3]['elements']) > 1:
+                del parent_message_blocks[3]['elements'][0]
+
+            slack_client.chat_update(
+                blocks=parent_message_blocks,
+                ts=message_ts,
+                channel=user.slack_dm_channel_id
+            )
+
+        else:
+            attach_receipt_message = ':paperclip: *Drag* or *attach* a :receipt: receipt for this expense in the thread below.'
+
+            slack_client.chat_postMessage(
+                text=attach_receipt_message,
+                thread_ts=message_ts,
+                channel=user.slack_dm_channel_id
+            )
 
         return JsonResponse({})
 

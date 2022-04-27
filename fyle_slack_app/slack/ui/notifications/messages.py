@@ -532,7 +532,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
                 },
                 {
                     'type': 'mrkdwn',
-                    'text': 'Card No.:\n *{}*'.format(card_details)
+                    'text': 'Receipt:\n :x: *Missing*'
                 }
             ]
         },
@@ -541,7 +541,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
             'fields': [
                 {
                     'type': 'mrkdwn',
-                    'text': 'Receipt:\n :x: *Missing*'
+                    'text': 'Card No.:\n *{}*'.format(card_details)
                 }
             ]
         }
