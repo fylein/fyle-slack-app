@@ -275,7 +275,7 @@ class BlockActionHandler:
             # Update the parent message indicating the same
             parent_message_blocks = slack_payload['message']['blocks']
             parent_message_blocks[1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
-            
+
             # Hide the 'Attach Receipt' button after receipt has been attached
             if len(parent_message_blocks[3]['elements']) > 1:
                 del parent_message_blocks[3]['elements'][0]

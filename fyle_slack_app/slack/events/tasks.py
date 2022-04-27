@@ -1,12 +1,11 @@
 from typing import Dict
-import base64
 from slack_sdk import WebClient
 
 from django.conf import settings
 from django.db import transaction
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
-from fyle_slack_app.libs import http, utils, assertions, logger
+from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
@@ -130,7 +129,7 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
             # i.e. this file needs to be attached to an expense as a receipt
             if 'expense_id' in expense_block_id:
                 _ , expense_id = expense_block_id.split('.')
-                
+
                 receipt_uploading_message = ':mag: Uploading receipt.... Your receipt will be attached shortly!'
                 receipt_uploading_message_block = common_messages.get_custom_text_section_block(receipt_uploading_message)
 
@@ -156,11 +155,11 @@ def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_i
             'name': file_info['file']['name'],
             'type': 'RECEIPT'
         }
-        
+
         try:
             receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
             receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
-            upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
+            fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
             attached_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
 
         except assertions.InvalidUsage as error:
@@ -183,7 +182,7 @@ def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_i
             parent_message_blocks = parent_message['blocks']
             parent_message_blocks[1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
             parent_message_ts = parent_message['thread_ts']
-            
+
             # Hide the 'Attach Receipt' button after receipt has been attached
             if len(parent_message_blocks[3]['elements']) > 1:
                 del parent_message_blocks[3]['elements'][0]
