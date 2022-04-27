@@ -140,23 +140,22 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                 )
                 message_ts = response['message']['ts']
 
-                with transaction.atomic():
-                    receipt_payload = {
-                        'name': file_info['file']['name'],
-                        'type': 'RECEIPT'
-                    }
-                    receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
-                    receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
-                    upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
-                    attach_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+                receipt_payload = {
+                    'name': file_info['file']['name'],
+                    'type': 'RECEIPT'
+                }
+                receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
+                receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
+                upload_file_response = fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
+                attach_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
 
-                    receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
-                    slack_client.chat_update(
-                        channel=user.slack_dm_channel_id,
-                        text=receipt_uploaded_success_message,
-                        ts=message_ts,
-                        thread_ts=thread_ts
-                    )
+                receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
+                slack_client.chat_update(
+                    channel=user.slack_dm_channel_id,
+                    text=receipt_uploaded_success_message,
+                    ts=message_ts,
+                    thread_ts=thread_ts
+                )
 
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow

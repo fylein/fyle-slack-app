@@ -164,7 +164,6 @@ def create_receipt(receipt_payload: Dict, refresh_token: str) -> Dict:
     }
 
     response = http.post(url, json=payload, headers=headers)
-    print('CR -> ', response.text)
     assertions.assert_valid(response.status_code == 200, 'Error creating expense')
     return response.json()['data']
 
@@ -186,7 +185,6 @@ def generate_receipt_url(receipt_id: Dict, refresh_token: str) -> Dict:
     }
 
     response = http.post(url, json=payload, headers=headers)
-    print('GRU -> ', response.text)
     assertions.assert_valid(response.status_code == 200, 'Error creating receipt url')
     return response.json()['data']
 
