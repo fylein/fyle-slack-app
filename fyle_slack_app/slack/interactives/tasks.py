@@ -40,29 +40,26 @@ def get_additional_currency_details(amount: int, home_currency: str, selected_cu
 
 
 def handle_project_selection(user: User, team_id: str, project_id: str, view_id: str, slack_payload: Dict) -> None:
-
     slack_client = get_slack_client(team_id)
-
-    project_query_params = {
-        'offset': 0,
-        'limit': '1',
-        'order': 'created_at.desc',
-        'id': 'eq.{}'.format(int(project_id)),
-        'is_enabled': 'eq.{}'.format(True)
-    }
-
+    project = None
     fyle_expense = FyleExpense(user)
 
-    project = fyle_expense.get_projects(project_query_params)
-
-    project = project['data'][0]
-
-    project = {
-        'id': project['id'],
-        'name': project['name'],
-        'display_name': project['display_name'],
-        'sub_project': project['sub_project']
-    }
+    if project_id is not None:
+        project_query_params = {
+            'offset': 0,
+            'limit': '1',
+            'order': 'created_at.desc',
+            'id': 'eq.{}'.format(int(project_id)),
+            'is_enabled': 'eq.{}'.format(True)
+        }
+        project = fyle_expense.get_projects(project_query_params)
+        project = project['data'][0]
+        project = {
+            'id': project['id'],
+            'name': project['name'],
+            'display_name': project['display_name'],
+            'sub_project': project['sub_project']
+        }
 
     current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
 
