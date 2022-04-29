@@ -215,3 +215,24 @@ def upload_file_to_s3(upload_url: str, file_content: str, content_type: str):
     response = http.put(upload_url, data=file_content, headers={'content-type': content_type})
     assertions.assert_valid(response.status_code == 200, 'Error uploading file to s3')
     return response
+
+
+def is_receipt_file_supported(file_info: Dict):
+    response_message = None
+    
+    # Check if filetype is supported or not
+    if file_info['file']['filetype'] not in ['pdf', 'png', 'jpg', 'jpeg']:
+        response_message = 'Invalid file type, please upload JPG, JPEG, PNG, or PDF'
+        return False, response_message
+
+    # Check if file size is under the max limit
+    max_file_size_limit = 5 * 1024 * 1024
+    if file_info['file']['size'] < 1:
+        response_message = 'Please upload file sizes greater than 0KB'
+        return False, response_message
+    
+    elif file_info['file']['size'] > max_file_size_limit:
+        response_message = 'Please upload file sizes lesser than 5MB'
+        return False, response_message
+
+    return True, response_message

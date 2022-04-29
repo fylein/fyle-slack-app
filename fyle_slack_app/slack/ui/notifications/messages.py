@@ -497,7 +497,7 @@ def get_card_expense_attach_receipt_action(button_text: str, expense_id: str) ->
         'style': 'primary',
         'text': {
             'type': 'plain_text',
-            'text': button_text,
+            'text': 'Attach Receipt',
             'emoji': True
         },
         'action_id': 'attach_receipt',
@@ -573,7 +573,7 @@ def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_ur
 
     card_expense_section_block = get_card_expense_section_blocks(expense, title_text)
 
-    attach_receipt_section = get_card_expense_attach_receipt_action('Attach Receipt', expense['id'])
+    attach_receipt_section = get_card_expense_attach_receipt_action(expense['id'])
     actions_block['elements'].append(attach_receipt_section)
 
     expense_view_in_fyle_section = get_expense_view_in_fyle_action(expense_url, 'View in Fyle', expense['id'])

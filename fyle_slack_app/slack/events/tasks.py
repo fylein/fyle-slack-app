@@ -4,6 +4,9 @@ from slack_sdk import WebClient
 from django.conf import settings
 from django.db import transaction
 
+from fyle.platform import exceptions
+from fyle_slack_app.fyle.expenses.views import FyleExpense
+
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
 from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
@@ -103,15 +106,13 @@ def uninstall_app(team_id: str) -> None:
 
 
 def handle_file_shared(file_id: str, user_id: str, team_id: str):
-
     slack_client = slack_utils.get_slack_client(team_id)
-    file_info =  slack_client.files_info(file=file_id)
     user = utils.get_or_none(User, slack_user_id=user_id)
 
+    file_info =  slack_client.files_info(file=file_id)
     file_message_details = file_info['file']['shares']['private'][user.slack_dm_channel_id][0]
     file_url = file_info['file']['url_private']
     file_content = slack_utils.get_file_content_from_slack(file_url, user.slack_team.bot_access_token)
-    # encoded_file = base64.b64encode(file_content).decode('utf-8')
 
     # If thread_ts is present in message, this means file has been shared in a thread
     if 'thread_ts' in file_message_details:
@@ -120,6 +121,18 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
         message_history = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)
 
         parent_message = message_history['messages'][0]
+
+        # Check if file is supported or not
+        is_file_supported, file_response_message = fyle_utils.is_receipt_file_supported(file_info)
+        if is_file_supported is not True:
+            # If file not supported, notify user in the same slack thread
+            file_not_supported_message_block = common_messages.get_custom_text_section_block(file_response_message)
+            slack_client.chat_postMessage(
+                channel=user.slack_dm_channel_id,
+                blocks=file_not_supported_message_block,
+                thread_ts=thread_ts
+            )
+            return
 
         # If a user upload a file which doesn't contain blocks, don't do anything
         if 'blocks' in parent_message:
@@ -130,18 +143,45 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
             if 'expense_id' in expense_block_id:
                 _ , expense_id = expense_block_id.split('.')
 
-                receipt_uploading_message = ':mag: Uploading receipt.... Your receipt will be attached shortly!'
-                receipt_uploading_message_block = common_messages.get_custom_text_section_block(receipt_uploading_message)
+                expense = FyleExpense(user).get_expense_by_id(expense_id)
+                
+                if expense['count'] == 0:
+                    # Case when expense has been deleted or user has no longer access to it
 
-                response = slack_client.chat_postMessage(
-                    channel=user.slack_dm_channel_id,
-                    blocks=receipt_uploading_message_block,
-                    thread_ts=thread_ts
-                )
-                message_ts = response['message']['ts']
+                    logger.error('Expense not found with id -> %s', expense_id)
 
-                # Handle creation of receipt file urls, uploading to s3, and attaching receipt to the expense
-                handle_upload_and_attach_receipt(slack_client, user, file_info, file_content, expense_id, parent_message, message_ts, thread_ts)
+                    no_access_message = 'Looks like you no longer have access to this expense :face_with_head_bandage:'
+                    no_access_message_block = common_messages.get_custom_text_section_block(no_access_message)
+
+                    # Post message in slack thread
+                    slack_client.chat_postMessage(
+                        channel=user.slack_dm_channel_id,
+                        blocks=no_access_message_block,
+                        thread_ts=thread_ts
+                    )
+
+                    # Update parent message
+                    parent_message_blocks = parent_message['blocks']
+                    parent_message_blocks[-1] = no_access_message_block
+                    slack_client.chat_update(
+                        blocks=parent_message_blocks,
+                        ts=message_ts,
+                        channel=user.slack_dm_channel_id
+                    )
+
+                else:
+                    receipt_uploading_message = ':mag: Uploading receipt.... Your receipt will be attached shortly!'
+                    receipt_uploading_message_block = common_messages.get_custom_text_section_block(receipt_uploading_message)
+
+                    response = slack_client.chat_postMessage(
+                        channel=user.slack_dm_channel_id,
+                        blocks=receipt_uploading_message_block,
+                        thread_ts=thread_ts
+                    )
+                    message_ts = response['message']['ts']
+
+                    # Handle creation of receipt file urls, uploading to s3, and attaching receipt to the expense
+                    handle_upload_and_attach_receipt(slack_client, user, file_info, file_content, expense_id, parent_message, message_ts, thread_ts)
 
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow
@@ -150,55 +190,54 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
 
 
 def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_info: Dict, file_content: str, expense_id: str, parent_message: Dict, message_ts: str, thread_ts: str):
-    with transaction.atomic():
-        receipt_payload = {
-            'name': file_info['file']['name'],
-            'type': 'RECEIPT'
-        }
+    receipt_payload = {
+        'name': file_info['file']['name'],
+        'type': 'RECEIPT'
+    }
 
-        try:
-            receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
-            receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
-            fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
-            attached_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+    try:
+        receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
+        receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
+        fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
+        attached_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
 
-        except assertions.InvalidUsage as error:
-            logger.error('Unable to attach receipt to expense with id -> %s', expense_id)
-            logger.error('Error -> %s', error)
-            attached_receipt = None
+    except assertions.InvalidUsage as error:
+        logger.error('Unable to attach receipt to expense with id -> %s', expense_id)
+        logger.error('Error -> %s', error)
+        attached_receipt = None
 
-        if attached_receipt is not None:
-            # Update the message in slack thread
-            receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
-            receipt_uploaded_success_message_block = common_messages.get_custom_text_section_block(receipt_uploaded_success_message)
-            slack_client.chat_update(
-                channel=user.slack_dm_channel_id,
-                blocks=receipt_uploaded_success_message_block,
-                ts=message_ts,
-                thread_ts=thread_ts
-            )
+    if attached_receipt is not None:
+        # Update the message in slack thread
+        receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
+        receipt_uploaded_success_message_block = common_messages.get_custom_text_section_block(receipt_uploaded_success_message)
+        slack_client.chat_update(
+            channel=user.slack_dm_channel_id,
+            blocks=receipt_uploaded_success_message_block,
+            ts=message_ts,
+            thread_ts=thread_ts
+        )
 
-            # Update the parent message accordingly
-            parent_message_blocks = parent_message['blocks']
-            parent_message_blocks[1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
-            parent_message_ts = parent_message['thread_ts']
+        # Update the parent message accordingly
+        parent_message_blocks = parent_message['blocks']
+        parent_message_blocks[1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
+        parent_message_ts = parent_message['thread_ts']
 
-            # Hide the 'Attach Receipt' button after receipt has been attached
-            if len(parent_message_blocks[3]['elements']) > 1:
-                del parent_message_blocks[3]['elements'][0]
+        # Hide the 'Attach Receipt' button after receipt has been attached
+        if len(parent_message_blocks[3]['elements']) > 1:
+            del parent_message_blocks[3]['elements'][0]
 
-            slack_client.chat_update(
-                channel=user.slack_dm_channel_id,
-                blocks=parent_message_blocks,
-                ts=parent_message_ts
-            )
+        slack_client.chat_update(
+            channel=user.slack_dm_channel_id,
+            blocks=parent_message_blocks,
+            ts=parent_message_ts
+        )
 
-        else:
-            error_message = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'
-            error_message_block = common_messages.get_custom_text_section_block(error_message)
-            slack_client.chat_update(
-                channel=user.slack_dm_channel_id,
-                blocks=error_message_block,
-                ts=message_ts,
-                thread_ts=thread_ts
-            )
+    else:
+        error_message = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'
+        error_message_block = common_messages.get_custom_text_section_block(error_message)
+        slack_client.chat_update(
+            channel=user.slack_dm_channel_id,
+            blocks=error_message_block,
+            ts=message_ts,
+            thread_ts=thread_ts
+        )
