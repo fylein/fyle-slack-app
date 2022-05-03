@@ -285,7 +285,7 @@ class FyleFylerNotification(FyleNotificationView):
             # Fetch corporate card
             card = FyleCorporateCard(user).get_corporate_card_by_id(corporate_card_id)
 
-            if card['count'] > 0 and card['data'][0]['is_visa_enrolled'] is True:
+            if card is not None and card[0]['is_visa_enrolled'] is True:
                 expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
 
                 card_expense_notification_message, title_text = notification_messages.get_expense_mandatory_receipt_missing_notification(

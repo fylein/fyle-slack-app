@@ -20,4 +20,6 @@ class FyleExpense:
             'limit': '1',
             'offset': '0'
         }
-        return self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        response = self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        expense = response['data'] if response['count'] == 1 else None
+        return expense

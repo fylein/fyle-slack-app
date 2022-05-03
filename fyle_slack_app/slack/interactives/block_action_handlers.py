@@ -3,8 +3,6 @@ from typing import Callable, Dict
 from django.http import JsonResponse
 from django_q.tasks import async_task
 
-from fyle.platform import exceptions
-
 from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
@@ -272,7 +270,7 @@ class BlockActionHandler:
         # Fetch expense
         expense = FyleExpense(user).get_expense_by_id(expense_id)
 
-        if expense['count'] == 0:
+        if expense is None:
             # Case when expense has been deleted or user has no longer access to it
 
             logger.error('Expense not found with id -> %s', expense_id)
@@ -295,7 +293,7 @@ class BlockActionHandler:
         else:
             # Case when expense exist
 
-            if len(expense['data'][0]['files']) > 0:
+            if len(expense[0]['files']) > 0:
                 # Case when receipt is already attached to the expense
                 # Update the parent message indicating the same
                 parent_message_blocks = slack_payload['message']['blocks']
@@ -314,7 +312,7 @@ class BlockActionHandler:
                 event_data = {
                     'slack_user_id': user_id,
                     'team_id': team_id,
-                    'task': slack_payload['actions'][0]['value'],
+                    'expense_id': slack_payload['actions'][0]['value'],
                     'email': user.email,
                     'fyle_org_id': user.fyle_org_id,
                     'fyle_user_id': user.fyle_user_id
