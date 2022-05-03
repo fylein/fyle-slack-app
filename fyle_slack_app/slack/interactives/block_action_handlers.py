@@ -311,6 +311,16 @@ class BlockActionHandler:
                     channel=user.slack_dm_channel_id
                 )
 
+                event_data = {
+                    'slack_user_id': user_id,
+                    'team_id': team_id,
+                    'task': slack_payload['actions'][0]['value'],
+                    'email': user.email,
+                    'fyle_org_id': user.fyle_org_id,
+                    'fyle_user_id': user.fyle_user_id
+                }
+                self.track_view_in_fyle_action(user_id, 'User clicked on Attach Receipt button', event_data)
+
             else:
                 attach_receipt_message = ':paperclip: *Drag* or *attach* a :receipt: receipt for this expense in the thread below.'
 

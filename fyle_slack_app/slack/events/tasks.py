@@ -12,6 +12,8 @@ from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
+
+from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.authorization import messages
 from fyle_slack_app.slack.ui import common_messages
@@ -231,6 +233,16 @@ def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_i
             blocks=parent_message_blocks,
             ts=parent_message_ts
         )
+
+        event_data = {
+            'slack_user_id': user.slack_user_id,
+            'team_id': user.slack_team_id,
+            'task': expense_id,
+            'email': user.email,
+            'fyle_org_id': user.fyle_org_id,
+            'fyle_user_id': user.fyle_user_id
+        }
+        BlockActionHandler().track_view_in_fyle_action(user_id, 'Receipt attached from Slack', event_data)
 
     else:
         error_message = 'Looks like something went wrong :zipper_mouth_face: \n Please try again'

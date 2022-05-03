@@ -490,7 +490,7 @@ def get_expense_commented_notification(expense: Dict, user_display_name: str, ex
     return expense_section_block, title_text
 
 
-def get_card_expense_attach_receipt_action(button_text: str, expense_id: str) -> Dict:
+def get_card_expense_attach_receipt_action(expense_id: str) -> Dict:
 
     card_expense_attach_receipt_action = {
         'type': 'button',
