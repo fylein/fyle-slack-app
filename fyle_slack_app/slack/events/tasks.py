@@ -109,7 +109,7 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
     slack_client = slack_utils.get_slack_client(team_id)
     user = utils.get_or_none(User, slack_user_id=user_id)
 
-    file_info =  slack_client.files_info(file=file_id)
+    file_info = slack_client.files_info(file=file_id)
     file_message_details = file_info['file']['shares']['private'][user.slack_dm_channel_id][0]
     file_url = file_info['file']['url_private']
     file_content = slack_utils.get_file_content_from_slack(file_url, user.slack_team.bot_access_token)
@@ -165,7 +165,8 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                         # Update parent message
                         parent_message_blocks = parent_message['blocks']
                         parent_message_ts = parent_message['ts']
-                        parent_message_blocks[-1] = no_access_message_block
+                        parent_message_blocks[-1] = no_access_message_block[0]
+
                         slack_client.chat_update(
                             blocks=parent_message_blocks,
                             ts=parent_message_ts,
