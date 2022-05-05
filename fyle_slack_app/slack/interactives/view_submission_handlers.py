@@ -70,7 +70,6 @@ class ViewSubmissionHandler:
         user = utils.get_or_none(User, slack_user_id=user_id)
 
         form_values = slack_payload['view']['state']['values']
-        print('REACHED CREATE EXPENSE -> ', form_values)
 
         expense_payload, validation_errors = self.extract_form_values_and_validate(user, form_values)
         cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
@@ -84,6 +83,9 @@ class ViewSubmissionHandler:
             expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['claim_amount']
             expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
 
+        if 'project' in form_metadata and form_metadata['project'] is not None:
+            expense_payload['project_id'] = form_metadata['project']['id']
+
         print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
 
         expense_id = form_metadata.get('expense_id')
@@ -91,8 +93,6 @@ class ViewSubmissionHandler:
 
         if expense_id is not None:
             expense_payload['id'] = expense_id
-
-        print('VALIDATION ERRORS -> ', validation_errors)
 
         # If valdiation errors are present then return errors
         if bool(validation_errors) is True:

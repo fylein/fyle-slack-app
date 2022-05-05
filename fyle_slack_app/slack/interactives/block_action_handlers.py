@@ -201,8 +201,10 @@ class BlockActionHandler:
 
 
     def handle_project_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-
-        project_id = slack_payload['actions'][0]['selected_option']['value']
+        if slack_payload['actions'][0]['selected_option'] is None:
+            project_id = None
+        else:
+            project_id = slack_payload['actions'][0]['selected_option']['value']
 
         view_id = slack_payload['container']['view_id']
 
