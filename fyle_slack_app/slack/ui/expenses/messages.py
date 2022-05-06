@@ -323,7 +323,7 @@ def get_amount_and_currency_block(additional_currency_details: Dict = None, expe
             'label': {'type': 'plain_text', 'text': 'Total Amount'},
         }
 
-        if int(additional_currency_details['total_amount']) != 0:
+        if float(additional_currency_details['total_amount']) != 0:
             total_amount_block['element']['initial_value'] = str(additional_currency_details['total_amount'])
 
         blocks.insert(3, total_amount_block)
