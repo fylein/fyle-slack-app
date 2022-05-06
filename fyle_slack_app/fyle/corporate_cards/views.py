@@ -20,5 +20,6 @@ class FyleCorporateCard:
             'limit': '1',
             'offset': '0'
         }
-        corporate_card = self.connection.v1beta.spender.corporate_cards.list(query_params=query_params)
+        response = self.connection.v1beta.spender.corporate_cards.list(query_params=query_params)
+        corporate_card = response['data'] if response['count'] == 1 else None
         return corporate_card
