@@ -76,15 +76,6 @@ def send_slack_response_in_thread(user: User, slack_client: WebClient, thread_me
     return response
 
 
-def update_slack_thread_message(user: User, slack_client: WebClient, thread_message_block: List[Dict], message_ts: str, thread_ts: str):
-    slack_client.chat_update(
-        channel=user.slack_dm_channel_id,
-        blocks=thread_message_block,
-        ts=message_ts,
-        thread_ts=thread_ts
-    )
-
-
 def update_slack_parent_message(user: User, slack_client: WebClient, parent_message: Dict, response_block: List[Dict], hide_only_primary_button: bool, hide_all_buttons: bool):
     parent_message_blocks = parent_message['blocks']
     parent_message_ts = parent_message['ts']

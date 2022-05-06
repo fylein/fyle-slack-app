@@ -194,7 +194,7 @@ def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_i
 
         error_message = 'Looks like something went wrong :zipper_mouth_face: \n Please try again.'
         error_message_block = common_messages.get_custom_text_section_block(error_message)
-        slack_utils.update_slack_thread_message(user, slack_client, error_message_block, message_ts, thread_ts)
+        slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=error_message_block, ts=message_ts, thread_ts=thread_ts)
 
 
 def file_attached_update_in_slack(user: User, slack_client: WebClient, expense_id: str, parent_message: Dict, message_ts: str, thread_ts: str):
@@ -202,7 +202,7 @@ def file_attached_update_in_slack(user: User, slack_client: WebClient, expense_i
     # Update the message in slack thread
     receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
     receipt_uploaded_success_message_block = common_messages.get_custom_text_section_block(receipt_uploaded_success_message)
-    slack_utils.update_slack_thread_message(user, slack_client, receipt_uploaded_success_message_block, message_ts, thread_ts)
+    slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=receipt_uploaded_success_message_block, ts=message_ts, thread_ts=thread_ts)
 
     # Update the parent message
     parent_message['blocks'][1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
