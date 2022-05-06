@@ -14,6 +14,8 @@ from fyle_slack_app.models import User, NotificationPreference, UserFeedback
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
+
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
 from fyle_slack_app.slack.ui import common_messages
@@ -62,7 +64,8 @@ class BlockActionHandler:
             'incomplete_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
             'unreported_expenses_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
             'draft_reports_viewed_in_fyle': self.handle_tasks_viewed_in_fyle,
-            'open_report_expenses_dialog': self.handle_report_expenses_dialog
+            'open_report_expenses_dialog': self.handle_report_expenses_dialog,
+            'attach_receipt': self.handle_attach_receipt
         }
 
 
@@ -579,6 +582,49 @@ class BlockActionHandler:
             private_metadata=private_metadata,
             modal_view_id=modal_view_id
         )
+
+        return JsonResponse({})
+
+
+    def handle_attach_receipt(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        slack_client = slack_utils.get_slack_client(team_id)
+        message_ts = slack_payload['container']['message_ts']
+        expense_id = slack_payload['actions'][0]['value']
+        parent_message = slack_payload['message']
+
+        # Fetch expense
+        expense = FyleExpense(user).get_expense_by_id(expense_id)
+
+        # Case when expense has been deleted or user has no longer access to it
+        if expense is None:
+            logger.error('Expense not found with id -> %s', expense_id)
+            no_access_message = 'Looks like you no longer have access to this expense :face_with_head_bandage:'
+            no_access_message_block = common_messages.get_custom_text_section_block(no_access_message)
+            slack_utils.update_slack_parent_message(user, slack_client, parent_message, no_access_message_block, hide_only_primary_button=False, hide_all_buttons=True)
+
+        # Case when expense exist
+        else:
+            # Case when receipt is already attached to the expense
+            if len(expense[0]['files']) > 0:
+                # Update the parent message indicating the same
+                parent_message['blocks'][1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
+                slack_utils.update_slack_parent_message(user, slack_client, parent_message, None, True, False)
+
+                event_data = {
+                    'slack_user_id': user_id,
+                    'team_id': team_id,
+                    'expense_id': slack_payload['actions'][0]['value'],
+                    'email': user.email,
+                    'fyle_org_id': user.fyle_org_id,
+                    'fyle_user_id': user.fyle_user_id
+                }
+                self.track_view_in_fyle_action(user_id, 'User clicked on Attach Receipt button', event_data)
+
+            else:
+                attach_receipt_message = ':paperclip: *Drag* or *attach* a :receipt: receipt for this expense in the thread below.'
+                attach_receipt_message_block = common_messages.get_custom_text_section_block(attach_receipt_message)
+                slack_utils.send_slack_response_in_thread(user, slack_client, attach_receipt_message_block, message_ts)
 
         return JsonResponse({})
 
