@@ -237,9 +237,12 @@ def handle_submit_report_dialog(user: User, team_id: str, report_id: str, view_i
     slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
 
 
-def handle_upsert_expense(user: User, form_metadata: Dict, team_id: str, expense_payload: Dict, expense_id: str, message_ts: str):
+def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payload: Dict, expense_id: str, message_ts: str):
     slack_client = get_slack_client(team_id)
     fyle_expense = FyleExpense(user)
+
+    cache_key = '{}.form_metadata'.format(view_id)
+    form_metadata = cache.get(cache_key)
 
     if 'foreign_currency' in form_metadata['additional_currency_details']:
         expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
@@ -248,6 +251,9 @@ def handle_upsert_expense(user: User, form_metadata: Dict, team_id: str, expense
 
     if 'project' in form_metadata and form_metadata['project'] is not None:
         expense_payload['project_id'] = form_metadata['project']['id']
+
+    if expense_id is not None:
+        expense_payload['id'] = expense_id
 
     expense = fyle_expense.upsert_expense(expense_payload, user.fyle_refresh_token)
     view_expense_message = expense_messages.view_expense_message(expense, user)
