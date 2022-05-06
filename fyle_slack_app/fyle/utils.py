@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Union
 
 import requests
 
@@ -164,7 +164,7 @@ def create_receipt(receipt_payload: Dict, refresh_token: str) -> Dict:
     }
 
     response = http.post(url, json=payload, headers=headers)
-    assertions.assert_valid(response.status_code == 200, 'Error creating expense')
+    assertions.assert_valid(response.status_code == 200, 'Error creating receipt file in Fyle')
     return response.json()['data']
 
 
@@ -215,3 +215,26 @@ def upload_file_to_s3(upload_url: str, file_content: str, content_type: str):
     response = http.put(upload_url, data=file_content, headers={'content-type': content_type})
     assertions.assert_valid(response.status_code == 200, 'Error uploading file to s3')
     return response
+
+
+def is_receipt_file_supported(file_info: Dict) -> Union[bool, str]:
+    is_receipt_supported = True
+    response_message = None
+    max_file_size_limit = 5 * 1024 * 1024
+
+    # Check if filetype is supported or not
+    if file_info['file']['filetype'] not in ['jpg', 'jpeg', 'png', 'pdf']:
+        response_message = 'Invalid file type, please upload JPG, JPEG, PNG, or PDF'
+        is_receipt_supported = False
+
+    # Check if file size is under the min limit
+    elif file_info['file']['size'] < 1:
+        response_message = 'Please upload file sizes greater than 0KB'
+        is_receipt_supported = False
+
+    # Check if file size is under the min limit
+    elif file_info['file']['size'] > max_file_size_limit:
+        response_message = 'Please upload file sizes lesser than 5MB'
+        is_receipt_supported = False
+
+    return is_receipt_supported, response_message

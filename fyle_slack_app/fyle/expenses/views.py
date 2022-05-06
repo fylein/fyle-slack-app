@@ -257,3 +257,15 @@ class FyleExpense:
             'custom_fields': custom_field_blocks
         }
         return current_form_details
+
+
+    def get_expense_by_id(self, expense_id: str) -> Dict:
+        query_params = {
+            'id': 'eq.{}'.format(expense_id),
+            'order': 'created_at.desc',
+            'limit': '1',
+            'offset': '0'
+        }
+        response = self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        expense = response['data'] if response['count'] == 1 else None
+        return expense

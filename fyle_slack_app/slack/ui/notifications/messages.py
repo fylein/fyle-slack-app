@@ -490,6 +490,23 @@ def get_expense_commented_notification(expense: Dict, user_display_name: str, ex
     return expense_section_block, title_text
 
 
+def get_card_expense_attach_receipt_action(expense_id: str) -> Dict:
+
+    card_expense_attach_receipt_action = {
+        'type': 'button',
+        'style': 'primary',
+        'text': {
+            'type': 'plain_text',
+            'text': 'Attach Receipt',
+            'emoji': True
+        },
+        'action_id': 'attach_receipt',
+        'value': expense_id,
+    }
+
+    return card_expense_attach_receipt_action
+
+
 def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict]:
 
     readable_spend_date = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
@@ -500,6 +517,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
     card_expense_section_block = [
         {
             'type': 'section',
+            'block_id': 'expense_id.{}'.format(expense['id']),
             'text': {
                 'type': 'mrkdwn',
                 'text': title_text
@@ -514,7 +532,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
                 },
                 {
                     'type': 'mrkdwn',
-                    'text': 'Card No.:\n *{}*'.format(card_details)
+                    'text': 'Receipt:\n :x: *Missing*'
                 }
             ]
         },
@@ -523,7 +541,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
             'fields': [
                 {
                     'type': 'mrkdwn',
-                    'text': 'Receipt:\n :x: *Missing*'
+                    'text': 'Card No.:\n *{}*'.format(card_details)
                 }
             ]
         }
@@ -555,9 +573,12 @@ def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_ur
 
     card_expense_section_block = get_card_expense_section_blocks(expense, title_text)
 
-    expense_view_in_fyle_section = get_expense_view_in_fyle_action(expense_url, 'View in Fyle', expense['id'])
+    attach_receipt_section = get_card_expense_attach_receipt_action(expense['id'])
+    actions_block['elements'].append(attach_receipt_section)
 
+    expense_view_in_fyle_section = get_expense_view_in_fyle_action(expense_url, 'View in Fyle', expense['id'])
     actions_block['elements'].append(expense_view_in_fyle_section)
+
     card_expense_section_block.append(actions_block)
 
     return card_expense_section_block, title_text
