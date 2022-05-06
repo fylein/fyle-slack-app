@@ -83,9 +83,6 @@ class ViewSubmissionHandler:
         expense_id = form_metadata.get('expense_id')
         message_ts = form_metadata.get('message_ts')
 
-        if expense_id is not None:
-            expense_payload['id'] = expense_id
-
         # If valdiation errors are present then return errors
         if bool(validation_errors) is True:
             return JsonResponse({
@@ -96,7 +93,7 @@ class ViewSubmissionHandler:
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_upsert_expense',
             user,
-            form_metadata,
+            slack_payload['view']['id'],
             team_id,
             expense_payload,
             expense_id,
