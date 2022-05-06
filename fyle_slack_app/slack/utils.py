@@ -95,7 +95,7 @@ def update_slack_parent_message(user: User, slack_client: WebClient, parent_mess
 
     elif hide_all_buttons:
         if parent_message_blocks[-1] and 'elements' in parent_message_blocks[-1]:
-            parent_message_blocks[-1] = response_block[0] 
+            parent_message_blocks[-1] = response_block[0]
 
     slack_client.chat_update(
         blocks=parent_message_blocks,

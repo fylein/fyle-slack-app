@@ -152,7 +152,7 @@ def handle_shared_file_slack_response(user: User, slack_client: WebClient, threa
     # Checking if the expense still exist
     if expense:
         # Expense exists, proceed with receipt uploading
-        receipt_uploading_message = ':hourglass_flowing_sand: Uploading receipt.... Your receipt will be attached shortly!'
+        receipt_uploading_message = ':hourglass_flowing_sand: Uploading receipt... Your receipt will be attached shortly!'
         receipt_uploading_message_block = common_messages.get_custom_text_section_block(receipt_uploading_message)
         response = slack_utils.send_slack_response_in_thread(user, slack_client, receipt_uploading_message_block, thread_ts)
         message_ts = response['message']['ts']
@@ -165,7 +165,7 @@ def handle_shared_file_slack_response(user: User, slack_client: WebClient, threa
         logger.error('Expense not found with id -> %s', expense_id)
         no_access_message = 'Looks like you no longer have access to this expense :face_with_head_bandage:'
         no_access_message_block = common_messages.get_custom_text_section_block(no_access_message)
-        
+
         # Post message in slack thread
         slack_utils.send_slack_response_in_thread(user, slack_client, no_access_message_block, thread_ts)
 
@@ -183,12 +183,12 @@ def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_i
         receipt = fyle_utils.create_receipt(receipt_payload, user.fyle_refresh_token)
         receipt_urls = fyle_utils.generate_receipt_url(receipt['id'], user.fyle_refresh_token)
         fyle_utils.upload_file_to_s3(receipt_urls['upload_url'], file_content, receipt_urls['content_type'])
-        attached_receipt = fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
+        fyle_utils.attach_receipt_to_expense(expense_id, receipt['id'], user.fyle_refresh_token)
 
         # Update slack thread message as well as the parent message accordingly
         file_attached_update_in_slack(user, slack_client, expense_id, parent_message, message_ts, thread_ts)
 
-    except assertions.InvalidUsage as error:
+    except assertions.InvalidUsage:
         logger.error('Unable to attach receipt to expense with id -> %s', expense_id)
         logger.error('Error -> Assertions - InvalidUsage')
 
@@ -198,7 +198,7 @@ def handle_upload_and_attach_receipt(slack_client: WebClient, user: User, file_i
 
 
 def file_attached_update_in_slack(user: User, slack_client: WebClient, expense_id: str, parent_message: Dict, message_ts: str, thread_ts: str):
-    # After successful uploading and attaching of receipt to the expense, 
+    # After successful uploading and attaching of receipt to the expense,
     # Update the message in slack thread
     receipt_uploaded_success_message = ':receipt: Receipt for this expense has been successfully attached :white_check_mark:'
     receipt_uploaded_success_message_block = common_messages.get_custom_text_section_block(receipt_uploaded_success_message)

@@ -276,7 +276,7 @@ class BlockActionHandler:
             logger.error('Expense not found with id -> %s', expense_id)
             no_access_message = 'Looks like you no longer have access to this expense :face_with_head_bandage:'
             no_access_message_block = common_messages.get_custom_text_section_block(no_access_message)
-            slack_utils.update_slack_parent_message(user, slack_client, parent_message, no_access_message_block, hide_only_primary_button=False, hide_all_buttons=True)            
+            slack_utils.update_slack_parent_message(user, slack_client, parent_message, no_access_message_block, hide_only_primary_button=False, hide_all_buttons=True)
 
         # Case when expense exist
         else:
