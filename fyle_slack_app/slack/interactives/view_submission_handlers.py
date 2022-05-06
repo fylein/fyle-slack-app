@@ -78,14 +78,6 @@ class ViewSubmissionHandler:
         expense_payload['source'] = 'SLACK'
         expense_payload['spent_at'] = parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
-        if 'foreign_currency' in form_metadata['additional_currency_details']:
-            expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
-            expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['claim_amount']
-            expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
-
-        if 'project' in form_metadata and form_metadata['project'] is not None:
-            expense_payload['project_id'] = form_metadata['project']['id']
-
         print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
 
         expense_id = form_metadata.get('expense_id')
@@ -104,6 +96,7 @@ class ViewSubmissionHandler:
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_upsert_expense',
             user,
+            form_metadata,
             team_id,
             expense_payload,
             expense_id,

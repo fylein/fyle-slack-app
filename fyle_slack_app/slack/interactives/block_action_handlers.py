@@ -509,13 +509,27 @@ class BlockActionHandler:
         expense_id = slack_payload['actions'][0]['value']
 
         response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
+        view_id = response['view']['id']
+        cache_key = '{}.form_metadata'.format(view_id)
+        form_metadata = cache.get(cache_key)
+        # Add additional metadata to differentiate create and edit expense
+        # message_ts to update message in edit case
+        if form_metadata is None:
+            form_metadata = {
+                'expense_id': expense_id,
+                'message_ts': slack_payload['container']['message_ts']
+            }
+        else:
+            form_metadata['expense_id'] = expense_id
+            form_metadata['message_ts'] = slack_payload['container']['message_ts']
+        cache.set(cache_key, form_metadata)
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_edit_expense',
             user,
             expense_id,
             team_id,
-            response['view']['id'],
+            view_id,
             slack_payload
         )
 
