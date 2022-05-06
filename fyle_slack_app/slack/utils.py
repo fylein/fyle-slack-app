@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import List, Dict
 import enum
 # pylint: disable=import-error
 from forex_python.converter import CurrencyCodes
@@ -7,7 +7,7 @@ from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
 
 from fyle_slack_app.libs import assertions, http, utils, logger
-from fyle_slack_app.models import Team
+from fyle_slack_app.models import Team, User
 
 logger = logger.get_logger(__name__)
 
@@ -59,3 +59,46 @@ def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
     }
     file = http.get(url, headers=headers)
     return file.content
+
+
+def get_slack_latest_parent_message(user: User, slack_client: WebClient, thread_ts: str) -> Dict:
+    message_history = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)
+    parent_message = message_history['messages'][0] if message_history['messages'] and message_history['messages'][0] else {}
+    return parent_message
+
+
+def send_slack_response_in_thread(user: User, slack_client: WebClient, thread_message_block: List[Dict], thread_ts: str) -> Dict:
+    response = slack_client.chat_postMessage(
+        channel=user.slack_dm_channel_id,
+        blocks=thread_message_block,
+        thread_ts=thread_ts
+    )
+    return response
+
+
+def update_slack_thread_message(user: User, slack_client: WebClient, thread_message_block: List[Dict], message_ts: str, thread_ts: str):
+    slack_client.chat_update(
+        channel=user.slack_dm_channel_id,
+        blocks=thread_message_block,
+        ts=message_ts,
+        thread_ts=thread_ts
+    )
+
+
+def update_slack_parent_message(user: User, slack_client: WebClient, parent_message: Dict, response_block: List[Dict], hide_only_primary_button: bool, hide_all_buttons: bool):
+    parent_message_blocks = parent_message['blocks']
+    parent_message_ts = parent_message['ts']
+
+    if hide_only_primary_button:
+        if parent_message_blocks[-1] and 'elements' in parent_message_blocks[-1] and len(parent_message_blocks[-1]['elements']) > 1:
+            del parent_message_blocks[-1]['elements'][0]
+
+    elif hide_all_buttons:
+        if parent_message_blocks[-1] and 'elements' in parent_message_blocks[-1]:
+            parent_message_blocks[-1] = response_block[0] 
+
+    slack_client.chat_update(
+        blocks=parent_message_blocks,
+        ts=parent_message_ts,
+        channel=user.slack_dm_channel_id
+    )

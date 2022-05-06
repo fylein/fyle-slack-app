@@ -262,52 +262,29 @@ class BlockActionHandler:
 
 
     def handle_attach_receipt(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        message_ts = slack_payload['container']['message_ts']
-        expense_id = slack_payload['actions'][0]['value']
         user = utils.get_or_none(User, slack_user_id=user_id)
         slack_client = slack_utils.get_slack_client(team_id)
+        message_ts = slack_payload['container']['message_ts']
+        expense_id = slack_payload['actions'][0]['value']
+        parent_message = slack_payload['message']
 
         # Fetch expense
         expense = FyleExpense(user).get_expense_by_id(expense_id)
 
+        # Case when expense has been deleted or user has no longer access to it
         if expense is None:
-            # Case when expense has been deleted or user has no longer access to it
-
             logger.error('Expense not found with id -> %s', expense_id)
+            no_access_message = 'Looks like you no longer have access to this expense :face_with_head_bandage:'
+            no_access_message_block = common_messages.get_custom_text_section_block(no_access_message)
+            slack_utils.update_slack_parent_message(user, slack_client, parent_message, no_access_message_block, hide_only_primary_button=False, hide_all_buttons=True)            
 
-            parent_message_blocks = slack_payload['message']['blocks']
-            no_access_message_section = {
-                'type': 'section',
-                'text': {
-                    'type': 'mrkdwn',
-                    'text': 'Looks like you no longer have access to this expense :face_with_head_bandage:'
-                }
-            }
-            parent_message_blocks[-1] = no_access_message_section
-            slack_client.chat_update(
-                blocks=parent_message_blocks,
-                ts=message_ts,
-                channel=user.slack_dm_channel_id
-            )
-
+        # Case when expense exist
         else:
-            # Case when expense exist
-
+            # Case when receipt is already attached to the expense
             if len(expense[0]['files']) > 0:
-                # Case when receipt is already attached to the expense
                 # Update the parent message indicating the same
-                parent_message_blocks = slack_payload['message']['blocks']
-                parent_message_blocks[1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
-
-                # Hide the 'Attach Receipt' button after receipt has been attached
-                if len(parent_message_blocks[3]['elements']) > 1:
-                    del parent_message_blocks[3]['elements'][0]
-
-                slack_client.chat_update(
-                    blocks=parent_message_blocks,
-                    ts=message_ts,
-                    channel=user.slack_dm_channel_id
-                )
+                parent_message['blocks'][1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
+                slack_utils.update_slack_parent_message(user, slack_client, parent_message, None, True, False)
 
                 event_data = {
                     'slack_user_id': user_id,
@@ -321,12 +298,8 @@ class BlockActionHandler:
 
             else:
                 attach_receipt_message = ':paperclip: *Drag* or *attach* a :receipt: receipt for this expense in the thread below.'
-
-                slack_client.chat_postMessage(
-                    text=attach_receipt_message,
-                    thread_ts=message_ts,
-                    channel=user.slack_dm_channel_id
-                )
+                attach_receipt_message_block = common_messages.get_custom_text_section_block(attach_receipt_message)
+                slack_utils.send_slack_response_in_thread(user, slack_client, attach_receipt_message_block, message_ts)
 
         return JsonResponse({})
 
