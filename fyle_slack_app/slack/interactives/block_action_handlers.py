@@ -207,8 +207,39 @@ class BlockActionHandler:
             project_id = slack_payload['actions'][0]['selected_option']['value']
 
         view_id = slack_payload['container']['view_id']
-
         user = utils.get_or_none(User, slack_user_id=user_id)
+
+        project = None
+        fyle_expense = FyleExpense(user)
+
+        if project_id is not None:
+            project_query_params = {
+                'offset': 0,
+                'limit': '1',
+                'order': 'created_at.desc',
+                'id': 'eq.{}'.format(int(project_id)),
+                'is_enabled': 'eq.{}'.format(True)
+            }
+            project = fyle_expense.get_projects(project_query_params)
+            project = project['data'][0]
+            project = {
+                'id': project['id'],
+                'name': project['name'],
+                'display_name': project['display_name'],
+                'sub_project': project['sub_project']
+        }
+
+        expense_form_details = {
+            'project': project
+        }
+
+        cache_key = '{}.form_metadata'.format(view_id)
+        form_metadata = cache.get(cache_key)
+        if form_metadata is None:
+            cache.set(cache_key, expense_form_details)
+        else:
+            form_metadata['project'] = project
+            cache.set(cache_key, form_metadata)
 
         current_view = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
         current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
@@ -241,7 +272,7 @@ class BlockActionHandler:
             'fyle_slack_app.slack.interactives.tasks.handle_project_selection',
             user,
             team_id,
-            project_id,
+            project,
             view_id,
             slack_payload
         )
