@@ -33,6 +33,7 @@ def get_additional_currency_details(amount: int, home_currency: str, selected_cu
     additional_currency_details = {
         'foreign_currency': selected_currency,
         'home_currency': home_currency,
+        'claim_amount': amount,
         'total_amount': round(exchange_rate * amount, 2)
     }
 
@@ -246,6 +247,7 @@ def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payloa
     if 'foreign_currency' in form_metadata['additional_currency_details']:
         expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
         expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
+        expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
 
     if 'project' in form_metadata and form_metadata['project'] is not None:
         expense_payload['project_id'] = form_metadata['project']['id']

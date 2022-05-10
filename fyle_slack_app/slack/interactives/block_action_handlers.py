@@ -580,6 +580,8 @@ class BlockActionHandler:
             channel=user.slack_dm_channel_id
         )
 
+        return JsonResponse({})
+
 
     def handle_tasks_viewed_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         user = utils.get_or_none(User, slack_user_id=user_id)

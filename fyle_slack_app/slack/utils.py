@@ -38,6 +38,13 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
 
     return user_display_name
 
+def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
+    headers = {
+        'Authorization': 'Bearer {}'.format(bot_access_token)
+    }
+    file = http.get(url, headers=headers)
+    return file.content
+
 
 def get_currency_symbol(currency: str) -> str:
     c = CurrencyCodes()
