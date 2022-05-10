@@ -9,8 +9,6 @@ from django.core.cache import cache
 
 from django_q.tasks import async_task
 
-from django_q.tasks import async_task
-
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
@@ -132,15 +130,19 @@ class ViewSubmissionHandler:
     def handle_add_expense_to_report(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
 
         add_expense_to_report_form_values = slack_payload['view']['state']['values']
+        # pylint: disable=unused-variable
         expense_id = slack_payload['view']['private_metadata']
 
         if 'TEXT_add_to_new_report_block' in add_expense_to_report_form_values:
+            # pylint: disable=unused-variable
             report_name = add_expense_to_report_form_values['TEXT_add_to_new_report_block']['report_name']['value']
 
         elif 'SELECT_add_to_existing_report_block' in add_expense_to_report_form_values:
+            # pylint: disable=unused-variable
             existing_report_id = add_expense_to_report_form_values['SELECT_add_to_existing_report_block']['existing_report']['selected_option']['value']
 
         encoded_private_metadata = slack_payload['view']['private_metadata']
+        # pylint: disable=unused-variable
         private_metadata = utils.decode_state(encoded_private_metadata)
 
     def handle_feedback_submission(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:

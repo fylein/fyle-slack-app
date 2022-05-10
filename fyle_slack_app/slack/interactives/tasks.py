@@ -1,8 +1,8 @@
 from typing import Dict, List
 
 from django.core.cache import cache
+from fyle.platform import exceptions
 
-from fyle_slack_app.models import User
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
@@ -15,7 +15,6 @@ from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
 from fyle_slack_app.slack.ui import common_messages
 from fyle_slack_app import tracking
-from fyle.platform import exceptions
 
 
 logger = logger.get_logger(__name__)

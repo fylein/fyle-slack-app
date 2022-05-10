@@ -712,7 +712,6 @@ def expense_dialog_form(
     })
 
     # Add to report section
-    # TODO: Uncomment this after report APIs become available
     # if add_to_report is not None:
     #     add_to_report_blocks = get_add_to_report_blocks(add_to_report, action_id='add_to_report')
 
@@ -724,7 +723,7 @@ def expense_dialog_form(
 def get_expense_message_details_section(expense: Dict, expense_url: str, actions: List[Dict], receipt_message: str, report_message: str) -> List[Dict]:
 
     spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
-    
+
     expense_details = expense['purpose']
     if expense['category']['name'] is not None:
         expense_details = '{} ({})'.format(expense_details, expense['category']['name'])
@@ -816,7 +815,6 @@ def view_expense_message(expense: Dict, user: User) -> Dict:
 
         actions.append(attach_receipt_cta)
 
-    # TODO: Uncomment after report APIs become available
     report_message = ':x: Not Added'
     if expense['report_id'] is not None:
         report_message = ':white_check_mark: Added'

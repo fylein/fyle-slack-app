@@ -5,17 +5,11 @@ from django.http import JsonResponse
 from django_q.tasks import async_task
 
 from fyle_slack_app.fyle.expenses.views import FyleExpense
-from fyle_slack_app.models import User, NotificationPreference
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.libs import assertions, utils, logger
-from fyle_slack_app.slack.utils import get_slack_user_dm_channel_id, get_slack_client
+from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.models import User, NotificationPreference, UserFeedback
-from fyle_slack_app.models.notification_preferences import NotificationType
-from fyle_slack_app.libs import assertions, utils, logger
-
-from fyle_slack_app.fyle.expenses.views import FyleExpense
-
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
 from fyle_slack_app.slack.ui.modals import messages as modal_messages
 from fyle_slack_app.slack.ui import common_messages
@@ -25,7 +19,7 @@ from fyle_slack_app import tracking
 
 logger = logger.get_logger(__name__)
 
-
+# pylint: disable=too-many-public-methods
 class BlockActionHandler:
 
     _block_action_handlers: Dict = {}
@@ -48,7 +42,6 @@ class BlockActionHandler:
             'report_commented_notification_preference': self.handle_notification_preference_selection,
             'expense_commented_notification_preference': self.handle_notification_preference_selection,
             'edit_expense': self.handle_edit_expense,
-            'attach_receipt': self.handle_attach_receipt,
             'category_id': self.handle_category_selection,
             'project_id': self.handle_project_selection,
             'currency': self.handle_currency_selection,
@@ -449,7 +442,6 @@ class BlockActionHandler:
 
         fyle_expense = FyleExpense(user)
 
-        # TODO: Clean this up
         expense_id = 'txCCVGvNpDMM'
 
         expense_query_params = {
@@ -478,7 +470,6 @@ class BlockActionHandler:
 
         slack_client = get_slack_client(team_id)
 
-        # TODO: Clean this up
         expense_id = 'txCCVGvNpDMM'
 
         fyle_expense = FyleExpense(user)
@@ -549,7 +540,6 @@ class BlockActionHandler:
 
         report_id = slack_payload['actions'][0]['value']
 
-        # TODO: Clean this up
         report_id = 'rpKJGi7nRzMF'
 
         response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
@@ -563,25 +553,6 @@ class BlockActionHandler:
         )
 
         return JsonResponse({})
-
-
-    def handle_attach_receipt(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-        message_ts = slack_payload['container']['message_ts']
-
-        user = utils.get_or_none(User, slack_user_id=user_id)
-
-        attach_receipt_message = '*Drag* or *attach* a receipt (to the message box) for this expense!'
-
-        slack_client = get_slack_client(team_id)
-
-        slack_client.chat_postMessage(
-            text=attach_receipt_message,
-            thread_ts=message_ts,
-            channel=user.slack_dm_channel_id
-        )
-
-        return JsonResponse({})
-
 
     def handle_tasks_viewed_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         user = utils.get_or_none(User, slack_user_id=user_id)

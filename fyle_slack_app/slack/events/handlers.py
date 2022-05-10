@@ -114,24 +114,6 @@ class SlackEventHandler:
 
         return JsonResponse({}, status=200)
 
-    def handle_file_shared(self, slack_payload: Dict, team_id: str) -> JsonResponse:
-        file_id = slack_payload['event']['file_id']
-        user_id = slack_payload['event']['user_id']
-
-        async_task(
-            'fyle_slack_app.slack.events.tasks.handle_file_shared',
-            file_id,
-            user_id,
-            team_id
-        )
-
-        response = JsonResponse({}, status=200)
-
-        # Passing this for slack not to retry `file_shared` event again
-        response['X-Slack-No-Retry'] = 1
-
-        return response
-
 
     def handle_file_shared(self, slack_payload: Dict, team_id: str) -> JsonResponse:
         file_id = slack_payload['event']['file_id']
