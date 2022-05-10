@@ -9,6 +9,7 @@ from fyle.platform.platform import Platform
 from fyle_slack_app.fyle.utils import get_fyle_sdk_connection
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
+from fyle_slack_app.libs import assertions, http
 
 
 class FyleExpense:
@@ -41,7 +42,7 @@ class FyleExpense:
             'offset': 0,
             'limit': '50',
             'order': 'created_at.desc',
-            'column_name': 'not_in.(purpose, txn_dt, vendor_id, cost_center_id)',
+            'column_name': 'not_in.(purpose, txn_dt, spent_at, merchant, vendor_id, cost_center_id)',
             'is_enabled': 'eq.{}'.format(True),
             'category_ids': 'cs.[{}]'.format(int(category_id))
         }
@@ -65,6 +66,18 @@ class FyleExpense:
 
     def get_expenses(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.expenses.list(query_params=query_params)
+
+
+    def get_expense_by_id(self, expense_id: str) -> Dict:
+        query_params = {
+            'limit': 1,
+            'offset': 0,
+            'id': 'eq.{}'.format(expense_id),
+            'order': 'created_at.asc'
+        }
+        response = self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        expense = response['data'] if response['count'] == 1 else None
+        return expense
 
 
     def get_reports(self, query_params: Dict) -> Dict:
@@ -119,6 +132,25 @@ class FyleExpense:
         is_cost_center_available = True if cost_centers['count'] > 0 else False
 
         return is_cost_center_available
+
+
+    def upsert_expense(self, expense_payload: Dict, refresh_token: str) -> Dict:
+        access_token = fyle_utils.get_fyle_access_token(refresh_token)
+        cluster_domain = fyle_utils.get_cluster_domain(refresh_token)
+
+        url = '{}/platform/v1/spender/expenses'.format(cluster_domain)
+        headers = {
+            'content-type': 'application/json',
+            'Authorization': 'Bearer {}'.format(access_token)
+        }
+
+        expense_payload = {
+            'data': expense_payload
+        }
+
+        response = http.post(url, json=expense_payload, headers=headers)
+        assertions.assert_valid(response.status_code == 200, 'Error creating expense')
+        return response.json()['data']
 
 
     @staticmethod

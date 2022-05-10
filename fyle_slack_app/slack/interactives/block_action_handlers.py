@@ -52,7 +52,7 @@ class BlockActionHandler:
             'category_id': self.handle_category_selection,
             'project_id': self.handle_project_selection,
             'currency': self.handle_currency_selection,
-            'amount': self.handle_amount_entered,
+            'claim_amount': self.handle_amount_entered,
             'add_to_report': self.handle_add_to_report,
             'add_expense_to_report': self.handle_add_expense_to_report,
             'add_expense_to_report_selection': self.handle_add_expense_to_report_selection,
@@ -204,12 +204,45 @@ class BlockActionHandler:
 
 
     def handle_project_selection(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
-
-        project_id = slack_payload['actions'][0]['selected_option']['value']
+        if slack_payload['actions'][0]['selected_option'] is None:
+            project_id = None
+        else:
+            project_id = slack_payload['actions'][0]['selected_option']['value']
 
         view_id = slack_payload['container']['view_id']
-
         user = utils.get_or_none(User, slack_user_id=user_id)
+
+        project = None
+        fyle_expense = FyleExpense(user)
+
+        if project_id is not None:
+            project_query_params = {
+                'offset': 0,
+                'limit': '1',
+                'order': 'created_at.desc',
+                'id': 'eq.{}'.format(int(project_id)),
+                'is_enabled': 'eq.{}'.format(True)
+            }
+            project = fyle_expense.get_projects(project_query_params)
+            project = project['data'][0]
+            project = {
+                'id': project['id'],
+                'name': project['name'],
+                'display_name': project['display_name'],
+                'sub_project': project['sub_project']
+        }
+
+        expense_form_details = {
+            'project': project
+        }
+
+        cache_key = '{}.form_metadata'.format(view_id)
+        form_metadata = cache.get(cache_key)
+        if form_metadata is None:
+            cache.set(cache_key, expense_form_details)
+        else:
+            form_metadata['project'] = project
+            cache.set(cache_key, form_metadata)
 
         current_view = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
         current_view['submit'] = {'type': 'plain_text', 'text': 'Add Expense', 'emoji': True}
@@ -242,7 +275,7 @@ class BlockActionHandler:
             'fyle_slack_app.slack.interactives.tasks.handle_project_selection',
             user,
             team_id,
-            project_id,
+            project,
             view_id,
             slack_payload
         )
@@ -479,13 +512,27 @@ class BlockActionHandler:
         expense_id = slack_payload['actions'][0]['value']
 
         response = slack_client.views_open(view=loading_modal, trigger_id=slack_payload['trigger_id'])
+        view_id = response['view']['id']
+        cache_key = '{}.form_metadata'.format(view_id)
+        form_metadata = cache.get(cache_key)
+        # Add additional metadata to differentiate create and edit expense
+        # message_ts to update message in edit case
+        if form_metadata is None:
+            form_metadata = {
+                'expense_id': expense_id,
+                'message_ts': slack_payload['container']['message_ts']
+            }
+        else:
+            form_metadata['expense_id'] = expense_id
+            form_metadata['message_ts'] = slack_payload['container']['message_ts']
+        cache.set(cache_key, form_metadata)
 
         async_task(
             'fyle_slack_app.slack.interactives.tasks.handle_edit_expense',
             user,
             expense_id,
             team_id,
-            response['view']['id'],
+            view_id,
             slack_payload
         )
 
@@ -532,6 +579,8 @@ class BlockActionHandler:
             thread_ts=message_ts,
             channel=user.slack_dm_channel_id
         )
+
+        return JsonResponse({})
 
 
     def handle_tasks_viewed_in_fyle(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
