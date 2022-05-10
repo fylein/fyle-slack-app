@@ -167,127 +167,94 @@ class ViewSubmissionHandler:
 
         fyle_expense = FyleExpense(user)
 
-        for key, value in form_values.items():
+        for block_id, value in form_values.items():
             custom_field_mappings = {}
-            if 'custom_field' in key:
-                for inner_key, inner_value in value.items():
+            for expense_field_key, form_detail in value.items():
+                form_value = None
+                if form_detail['type'] in ['static_select', 'external_select']:
+                    expense_field_key, form_value, expense_payload = self.extract_select_field_detail(
+                        expense_field_key,
+                        form_detail,
+                        block_id,
+                        fyle_expense,
+                        expense_payload
+                    )
 
-                    if inner_value['type'] in ['static_select', 'external_select']:
-                        if inner_value['selected_option'] is not None:
-                            form_value = inner_value['selected_option']['value']
+                if form_detail['type'] in ['multi_static_select', 'multi_external_select']:
+                    expense_field_key, form_value = self.extract_multi_select_field(expense_field_key, form_detail, block_id)
 
-                        if 'LOCATION' in key:
-                            _ , inner_key = key.split('__')
-                            if form_value is not None:
-                                form_value = fyle_expense.get_place_by_place_id(form_value)
+                elif form_detail['type'] == 'datepicker':
+                    form_value, validation_errors = self.extract_and_validate_date_field(form_detail, block_id, validation_errors)
 
-                    if inner_value['type'] in ['multi_static_select', 'multi_external_select']:
+                elif form_detail['type'] == 'plain_text_input':
+                    form_value, validation_errors = self.extract_and_validate_text_field(form_detail, block_id, validation_errors)
 
-                        if 'USER_LIST' in key:
-                            _ , inner_key = key.split('__')
+                elif form_detail['type'] == 'checkboxes':
+                    form_value = self.extract_checkbox_field(form_detail)
 
-                        values_list = []
-                        for val in inner_value['selected_options']:
-                            values_list.append(val['value'])
-                        form_value = values_list
-
-                    elif inner_value['type'] == 'datepicker':
-
-                        if inner_value['selected_date'] is not None and datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
-                            validation_errors[key] = 'Date selected cannot be in future'
-
-                        form_value = inner_value['selected_date']
-
-                    elif inner_value['type'] == 'plain_text_input':
-
-                        if 'TEXT' in key:
-                            form_value = inner_value['value'].strip() if inner_value['value'] is not None else None
-
-                        elif 'NUMBER' in key:
-                            form_value = inner_value['value']
-                            try:
-                                form_value = float(inner_value['value']) if inner_value['value'] is not None else None
-
-                                if form_value is not None and form_value < 0:
-                                    validation_errors[key] = 'Negative numbers are not allowed'
-
-                                form_value = round(form_value, 2) if form_value is not None else None
-
-                            except ValueError:
-                                validation_errors[key] = 'Only numbers are allowed in this fields'
-
-                    elif inner_value['type'] == 'checkboxes':
-
-                        form_value = False
-                        if len(inner_value['selected_options']) > 0:
-                            form_value = True
-
-                    custom_field_mappings['name'] = inner_key
-                    custom_field_mappings['value'] = form_value
-
-                    custom_fields.append(custom_field_mappings)
-            else:
-                for inner_key, inner_value in value.items():
-
-                    if inner_value['type'] in ['static_select', 'external_select']:
-
-                        if 'LOCATION' in key:
-                            _ , inner_key = key.split('__')
-                            place_id = inner_value['selected_option']['value'] if inner_value['selected_option'] is not None else None
-                            if place_id is not None:
-                                location = fyle_expense.get_place_by_place_id(place_id)
-                                if 'locations' in expense_payload:
-                                    expense_payload['locations'].append(location)
-                                else:
-                                    expense_payload['locations'] = [location]
-                        elif inner_value['selected_option'] is not None:
-                            expense_payload[inner_key] = inner_value['selected_option']['value']
-
-                    if inner_value['type'] == 'multi_static_select':
-
-                        if 'USER_LIST' in key:
-                            _ , inner_key = key.split('__')
-
-                        values_list = []
-                        for val in inner_value['selected_options']:
-                            values_list.append(val['value'])
-                        expense_payload[inner_key] = values_list
-
-
-                    elif inner_value['type'] == 'datepicker':
-
-                        if inner_value['selected_date'] is not None and datetime.datetime.strptime(inner_value['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
-                            validation_errors[key] = 'Date selected cannot be for future'
-
-                        expense_payload[inner_key] = inner_value['selected_date']
-
-                    elif inner_value['type'] == 'plain_text_input':
-                        if 'TEXT' in key:
-                            form_value = inner_value['value'].strip()
-
-                        elif 'NUMBER' in key:
-                            form_value = inner_value['value']
-                            try:
-                                form_value = float(inner_value['value']) if inner_value['value'] is not None else None
-
-                                if form_value is not None and form_value < 0:
-                                    validation_errors[key] = 'Negative numbers are not allowed'
-
-                                form_value = round(form_value, 2) if form_value is not None else None
-
-                            except ValueError:
-                                validation_errors[key] = 'Only numbers are allowed in this fields'
-                        expense_payload[inner_key] = form_value
-
-                    elif inner_value['type'] == 'checkboxes':
-
-                        expense_payload[inner_key] = False
-                        if len(inner_value['selected_options']) > 0:
-                            expense_payload[inner_key] = True
-
+                if form_value is not None:
+                    if 'custom_field' in block_id:
+                        custom_field_mappings['name'] = expense_field_key
+                        custom_field_mappings['value'] = form_value
+                        custom_fields.append(custom_field_mappings)
+                    else:
+                        expense_payload[expense_field_key] = form_value
         expense_payload['custom_fields'] = custom_fields
 
         return expense_payload, validation_errors
+
+    def extract_select_field_detail(self, expense_field_key: str, form_detail: Dict, block_id: str, fyle_expense: FyleExpense, expense_payload: Dict):
+        form_value = None
+        if form_detail['selected_option'] is not None:
+            form_value = form_detail['selected_option']['value']
+
+        if 'LOCATION' in block_id:
+            _ , expense_field_key = block_id.split('__')
+            place_id = form_detail['selected_option']['value'] if form_detail['selected_option'] is not None else None
+            if place_id is not None:
+                location = fyle_expense.get_place_by_place_id(place_id)
+                if 'locations' in expense_payload:
+                    expense_payload['locations'].append(location)
+                else:
+                    expense_payload['locations'] = [location]
+
+        return expense_field_key, form_value, expense_payload
+
+    def extract_multi_select_field(self, expense_field_key: str, form_detail: Dict, block_id: str):
+        if 'USER_LIST' in block_id:
+            _ , expense_field_key = block_id.split('__')
+        values_list = []
+        for val in form_detail['selected_options']:
+            values_list.append(val['value'])
+        form_value = values_list
+        return expense_field_key, form_value
+
+    def extract_and_validate_date_field(self, form_detail: Dict, block_id: str, validation_errors: Dict):
+        if form_detail['selected_date'] is not None and datetime.datetime.strptime(form_detail['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
+            validation_errors[block_id] = 'Date selected cannot be in future'
+        form_value = form_detail['selected_date']
+        return form_value, validation_errors
+
+    def extract_and_validate_text_field(self, form_detail: Dict, block_id: str, validation_errors: Dict):
+        if 'TEXT' in block_id:
+            form_value = form_detail['value'].strip() if form_detail['value'] is not None else None
+
+        elif 'NUMBER' in block_id:
+            form_value = form_detail['value']
+            try:
+                form_value = float(form_detail['value']) if form_detail['value'] is not None else None
+                if form_value is not None and form_value < 0:
+                    validation_errors[block_id] = 'Negative numbers are not allowed'
+                form_value = round(form_value, 2) if form_value is not None else None
+            except ValueError:
+                validation_errors[block_id] = 'Only numbers are allowed in this fields'
+        return form_value, validation_errors
+
+    def extract_checkbox_field(self, form_detail: Dict):
+        form_value = False
+        if len(form_detail['selected_options']) > 0:
+            form_value = True
+        return form_value
 
     def handle_report_approval_from_modal(self, slack_payload: Dict, user_id: str, team_id: str) -> JsonResponse:
         encoded_private_metadata = slack_payload['view']['private_metadata']
