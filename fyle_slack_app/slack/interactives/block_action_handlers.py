@@ -294,7 +294,7 @@ class BlockActionHandler:
         event_data = {
             'slack_user_id': user_id,
             'team_id': team_id,
-            'expense_id': slack_payload['actions'][0]['value'],
+            'expense_id': expense_id,
             'email': user.email,
             'fyle_org_id': user.fyle_org_id,
             'fyle_user_id': user.fyle_user_id
