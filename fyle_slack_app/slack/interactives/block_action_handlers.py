@@ -442,8 +442,6 @@ class BlockActionHandler:
 
         fyle_expense = FyleExpense(user)
 
-        expense_id = 'txCCVGvNpDMM'
-
         expense_query_params = {
             'offset': 0,
             'limit': '1',
@@ -469,8 +467,6 @@ class BlockActionHandler:
         trigger_id = slack_payload['trigger_id']
 
         slack_client = get_slack_client(team_id)
-
-        expense_id = 'txCCVGvNpDMM'
 
         fyle_expense = FyleExpense(user)
 
