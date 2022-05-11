@@ -74,7 +74,7 @@ class ViewSubmissionHandler:
         form_metadata = cache.get(cache_key)
 
         expense_payload['source'] = 'SLACK'
-        expense_payload['spent_at'] = parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        # expense_payload['spent_at'] = parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 
         print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
 
@@ -168,7 +168,6 @@ class ViewSubmissionHandler:
         custom_fields = []
 
         fyle_expense = FyleExpense(user)
-
         for block_id, value in form_values.items():
             custom_field_mappings = {}
             for expense_field_key, form_detail in value.items():
@@ -195,12 +194,13 @@ class ViewSubmissionHandler:
                     form_value = self.extract_checkbox_field(form_detail)
 
                 if form_value is not None:
-                    if 'custom_field' in block_id:
+                    if 'custom_field' in block_id and 'LOCATION' not in block_id and 'travel_classes' not in block_id:
                         custom_field_mappings['name'] = expense_field_key
                         custom_field_mappings['value'] = form_value
                         custom_fields.append(custom_field_mappings)
                     else:
-                        expense_payload[expense_field_key] = form_value
+                        if 'LOCATION' not in block_id and 'travel_classes' not in block_id:
+                            expense_payload[expense_field_key] = form_value
         expense_payload['custom_fields'] = custom_fields
 
         return expense_payload, validation_errors
@@ -219,6 +219,13 @@ class ViewSubmissionHandler:
                     expense_payload['locations'].append(location)
                 else:
                     expense_payload['locations'] = [location]
+        if 'travel_classes' in block_id:
+            travel_class = form_detail['selected_option']['value'] if form_detail['selected_option'] is not None else None
+            if travel_class is not None:
+                if 'travel_classes' in expense_payload:
+                    expense_payload['travel_classes'].append(travel_class)
+                else:
+                    expense_payload['travel_classes'] = [travel_class]
 
         return expense_field_key, form_value, expense_payload
 
@@ -235,6 +242,7 @@ class ViewSubmissionHandler:
         if form_detail['selected_date'] is not None and datetime.datetime.strptime(form_detail['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
             validation_errors[block_id] = 'Date selected cannot be in future'
         form_value = form_detail['selected_date']
+        form_value = parse(form_value).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         return form_value, validation_errors
 
     def extract_and_validate_text_field(self, form_detail: Dict, block_id: str, validation_errors: Dict):
