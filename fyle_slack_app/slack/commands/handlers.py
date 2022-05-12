@@ -51,7 +51,7 @@ class SlackCommandHandler:
         return handler(user_id, team_id, user_dm_channel_id, trigger_id)
 
 
-    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str) -> JsonResponse:
+    def handle_fyle_unlink_account(self, user_id: str, team_id: str, user_dm_channel_id: str,  trigger_id: str) -> JsonResponse:
         message_block = [IN_PROGRESS_MESSAGE[slack_utils.AsyncOperation.UNLINKING_ACCOUNT.value]]
         slack_client = slack_utils.get_slack_client(team_id)
 
