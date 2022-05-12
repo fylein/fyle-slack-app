@@ -244,7 +244,8 @@ class ViewSubmissionHandler:
         if form_detail['selected_date'] is not None and datetime.datetime.strptime(form_detail['selected_date'], '%Y-%m-%d') > datetime.datetime.now():
             validation_errors[block_id] = 'Date selected cannot be in future'
         form_value = form_detail['selected_date']
-        form_value = parse(form_value).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
+        if form_value is not None:
+            form_value = parse(form_value).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         return form_value, validation_errors
 
     def extract_and_validate_text_field(self, form_detail: Dict, block_id: str, validation_errors: Dict):
