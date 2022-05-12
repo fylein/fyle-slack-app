@@ -25,7 +25,7 @@ def get_sent_back_reports_dashboard_view(reports: Dict, currency_symbol: str) ->
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":back: *Sent Back Reports - {} {} ({})*".format(currency_symbol, reports['total_amount'], reports['count'])
+                "text": ":back: *Sent Back Reports - {} {} ({})*".format(currency_symbol, round(reports['total_amount'], 2), reports['count'])
             }
         },
         {
@@ -63,7 +63,7 @@ def get_incomplete_expenses_dashboard_view(expenses: Dict, currency_symbol: str)
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":x: *Incomplete Expenses - {} {} ({})*".format(currency_symbol, expenses['total_amount'], expenses['count'])
+                "text": ":x: *Incomplete Expenses - {} {} ({})*".format(currency_symbol, round(expenses['total_amount'], 2), expenses['count'])
             }
         },
         {
@@ -101,7 +101,7 @@ def get_unreported_expenses_dashboard_view(expenses: Dict, currency_symbol: str)
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":interrobang: *Unreported Expenses - {} {} ({})*".format(currency_symbol, expenses['total_amount'], expenses['count'])
+                "text": ":interrobang: *Unreported Expenses - {} {} ({})*".format(currency_symbol, round(expenses['total_amount'], 2), expenses['count'])
             }
         },
         {
@@ -139,7 +139,7 @@ def get_draft_reports_dashboard_view(reports: Dict, currency_symbol: str):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":open_file_folder: *Draft Reports - {} {} ({})*".format(currency_symbol, reports['total_amount'], reports['count'])
+                "text": ":open_file_folder: *Draft Reports - {} {} ({})*".format(currency_symbol, round(reports['total_amount'], 2), reports['count'])
             }
         },
         {

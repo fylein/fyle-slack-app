@@ -37,7 +37,7 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
                     'type': 'mrkdwn',
                     'text': '*Amount:*\n {} {}'.format(
                         report_currency_symbol,
-                        report['amount']
+                        round(report['amount'], 2)
                     )
                 },
                 {
@@ -60,14 +60,14 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
         category = '{} / {}'.format(category, sub_category)
 
     currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
-    amount = expense['amount']
+    amount = round(expense['amount'], 2)
 
     amount_details = '*Amount:*\n {} {}'.format(currency_symbol, amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
         foreign_currency_symbol = slack_utils.get_currency_symbol(expense['foreign_currency'])
-        foreign_amount = expense['foreign_amount']
+        foreign_amount = round(expense['foreign_amount'], 2)
 
         amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency_symbol, foreign_amount)
 
@@ -563,7 +563,7 @@ def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_ur
 
     title_text = ':credit_card: A card expense of *{} {}* requires a :receipt: receipt. Please reply with a photo of your receipt in this thread!'.format(
         currency_symbol,
-        expense['amount']
+        round(expense['amount'], 2)
     )
 
     actions_block = {
