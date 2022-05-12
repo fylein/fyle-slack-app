@@ -194,7 +194,7 @@ class ViewSubmissionHandler:
                     form_value = self.extract_checkbox_field(form_detail)
 
                 if form_value is not None:
-                    if 'custom_field' in block_id and 'LOCATION' not in block_id and 'travel_classes' not in block_id:
+                    if 'custom_field' in block_id and 'travel_classes' not in block_id:
                         custom_field_mappings['name'] = expense_field_key
                         custom_field_mappings['value'] = form_value
                         custom_fields.append(custom_field_mappings)
@@ -215,7 +215,9 @@ class ViewSubmissionHandler:
             place_id = form_detail['selected_option']['value'] if form_detail['selected_option'] is not None else None
             if place_id is not None:
                 location = fyle_expense.get_place_by_place_id(place_id)
-                if 'locations' in expense_payload:
+                if 'custom_field' in block_id:
+                    form_value = location
+                elif 'locations' in expense_payload:
                     expense_payload['locations'].append(location)
                 else:
                     expense_payload['locations'] = [location]
