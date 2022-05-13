@@ -1,5 +1,4 @@
 import datetime
-import json
 
 from typing import Callable, Dict, Union
 from dateutil.parser import parse
