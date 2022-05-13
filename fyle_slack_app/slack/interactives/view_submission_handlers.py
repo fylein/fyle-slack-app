@@ -74,10 +74,6 @@ class ViewSubmissionHandler:
         form_metadata = cache.get(cache_key)
 
         expense_payload['source'] = 'SLACK'
-        # expense_payload['spent_at'] = parse(expense_payload['spent_at']).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
-
-        print('EXPENSE -> ', json.dumps(expense_payload, indent=2))
-
         expense_id = form_metadata.get('expense_id')
         message_ts = form_metadata.get('message_ts')
 

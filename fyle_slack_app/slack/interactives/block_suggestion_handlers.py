@@ -301,8 +301,6 @@ class BlockSuggestionHandler:
 
         suggested_merchants = fyle_expense.get_merchants(query_params)
 
-        print('suggested_merchants: {}'.format(suggested_merchants))
-
         merchant_options = []
 
         if suggested_merchants['count'] > 0:
