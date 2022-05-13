@@ -1,3 +1,4 @@
+from cgitb import text
 from typing import Dict, List
 
 from django.core.cache import cache
@@ -7,7 +8,7 @@ from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
 from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
-from fyle_slack_app.libs import utils, logger
+from fyle_slack_app.libs import utils, logger, assertions
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
 from fyle_slack_app.models import User, UserFeedbackResponse
 from fyle_slack_app.slack import utils as slack_utils
@@ -254,13 +255,18 @@ def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payloa
     if expense_id is not None:
         expense_payload['id'] = expense_id
 
-    expense = fyle_expense.upsert_expense(expense_payload, user.fyle_refresh_token)
-    view_expense_message = expense_messages.view_expense_message(expense, user)
+    try:
+        expense = fyle_expense.upsert_expense(expense_payload, user.fyle_refresh_token)
+        view_expense_message = expense_messages.view_expense_message(expense, user)
 
-    if expense_id is None or message_ts is None:
-        slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
-    else:
-        slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=message_ts)
+        if expense_id is None or message_ts is None:
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
+        else:
+            slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=message_ts)
+    except assertions.InvalidUsage:
+        error_message = 'Seems like something went wrong while creating an expense, please try again or contact support@fylehq.com'
+        slack_client.chat_postMessage(channel=user.slack_dm_channel_id, text=error_message)
+
 
 
 def handle_feedback_submission(user: User, team_id: str, form_values: Dict, private_metadata: Dict):
