@@ -107,7 +107,7 @@ def get_report_section(report: Dict, report_url: str, private_metadata: str) -> 
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': ':page_facing_up: *Expenses ({}) for {} {}*'.format(report['num_expenses'], report_currency_symbol, report['amount'])
+                    'text': ':page_facing_up: *Expenses ({}) for {} {}*'.format(report['num_expenses'], report_currency_symbol, round(report['amount'], 2))
                 }
             }
         ]
@@ -143,7 +143,7 @@ def get_report_expenses_section(user: User, report_expenses: List[Dict]) -> List
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '{} expense of :dollar: *<{}|{} {}>*'.format(expense_initial_text, expense_url, expense_currency_symbol, expense['amount'])
+                'text': '{} expense of :dollar: *<{}|{} {}>*'.format(expense_initial_text, expense_url, expense_currency_symbol, round(expense['amount'], 2))
             }
         }
         expense_block.append(expense_block_title)

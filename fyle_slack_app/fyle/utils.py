@@ -116,7 +116,7 @@ def get_fyle_oauth_url(user_id: str, team_id: str) -> str:
     redirect_uri = '{}/fyle/authorization'.format(settings.SLACK_SERVICE_BASE_URL)
 
     FYLE_OAUTH_URL = '{}/app/developers/#/oauth/authorize?client_id={}&response_type=code&state={}&redirect_uri={}'.format(
-        settings.FYLE_ACCOUNTS_URL,
+        settings.FYLE_APP_URL,
         settings.FYLE_CLIENT_ID,
         base64_encoded_state,
         redirect_uri

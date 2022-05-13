@@ -627,20 +627,20 @@ class BlockActionHandler:
                 parent_message['blocks'][1]['fields'][1]['text'] = 'Receipt:\n :white_check_mark: *Attached*'
                 slack_utils.update_slack_parent_message(user, slack_client, parent_message, None, True, False)
 
-                event_data = {
-                    'slack_user_id': user_id,
-                    'team_id': team_id,
-                    'expense_id': slack_payload['actions'][0]['value'],
-                    'email': user.email,
-                    'fyle_org_id': user.fyle_org_id,
-                    'fyle_user_id': user.fyle_user_id
-                }
-                self.track_view_in_fyle_action(user_id, 'User clicked on Attach Receipt button', event_data)
-
             else:
                 attach_receipt_message = ':paperclip: *Drag* or *attach* a :receipt: receipt for this expense in the thread below.'
                 attach_receipt_message_block = common_messages.get_custom_text_section_block(attach_receipt_message)
                 slack_utils.send_slack_response_in_thread(user, slack_client, attach_receipt_message_block, message_ts)
+
+        event_data = {
+            'slack_user_id': user_id,
+            'team_id': team_id,
+            'expense_id': expense_id,
+            'email': user.email,
+            'fyle_org_id': user.fyle_org_id,
+            'fyle_user_id': user.fyle_user_id
+        }
+        self.track_view_in_fyle_action(user_id, 'User clicked on Attach Receipt button', event_data)
 
         return JsonResponse({})
 
