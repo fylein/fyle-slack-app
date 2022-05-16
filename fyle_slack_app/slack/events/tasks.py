@@ -155,10 +155,13 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
                 "source": "SLACK"
             }
         }
-
-        expense = fyle_utils.extract_expense_from_receipt(receipt_payload, user.fyle_refresh_token)
-        view_expense_message = expense_messages.view_expense_message(expense, user)
-        slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message, thread_ts=message_ts, reply_broadcast=True)
+        try:
+            expense = fyle_utils.extract_expense_from_receipt(receipt_payload, user.fyle_refresh_token)
+            view_expense_message = expense_messages.view_expense_message(expense, user)
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message, thread_ts=message_ts, reply_broadcast=True)
+        except assertions.InvalidUsage:
+            error_message = 'Seems like something went wrong while creating an expense, please try again or contact support@fylehq.com'
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, text=error_message, thread_ts=message_ts, reply_broadcast=True)
         return None
 
 
