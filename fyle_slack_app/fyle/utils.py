@@ -238,3 +238,18 @@ def is_receipt_file_supported(file_info: Dict) -> Union[bool, str]:
         is_receipt_supported = False
 
     return is_receipt_supported, response_message
+
+
+def extract_expense_from_receipt(receipt_payload: Dict, refresh_token: str) -> Dict:
+    access_token = get_fyle_access_token(refresh_token)
+    cluster_domain = get_cluster_domain(refresh_token)
+
+    url = '{}/platform/v1/spender/expenses/create_from_receipt'.format(cluster_domain)
+    headers = {
+        'content-type': 'application/json',
+        'Authorization': 'Bearer {}'.format(access_token)
+    }
+
+    response = http.post(url, json=receipt_payload, headers=headers)
+    assertions.assert_valid(response.status_code == 200, 'Error attaching receipt to expense')
+    return response.json()['data']
