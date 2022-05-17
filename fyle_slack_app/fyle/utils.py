@@ -251,5 +251,5 @@ def extract_expense_from_receipt(receipt_payload: Dict, refresh_token: str) -> D
     }
 
     response = http.post(url, json=receipt_payload, headers=headers)
-    assertions.assert_valid(response.status_code == 200, 'Error attaching receipt to expense')
+    assertions.assert_valid(response.status_code == 200, 'Error while creating an expense from receipt')
     return response.json()['data']

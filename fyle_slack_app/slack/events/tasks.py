@@ -144,7 +144,7 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow
     else:
-        expense_creation_message = ':hourglass_flowing_sand: Uploading receipt and creating an expense :zap:'
+        expense_creation_message = ':hourglass_flowing_sand: creating an expense and uploading receipt :zap:'
         expense_creation_message_block = common_messages.get_custom_text_section_block(expense_creation_message)
         message_ts = file_message_details['ts']
         slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=expense_creation_message_block, thread_ts=message_ts, reply_broadcast=True)
