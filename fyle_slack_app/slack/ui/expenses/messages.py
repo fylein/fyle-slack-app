@@ -722,9 +722,9 @@ def expense_dialog_form(
 
 def get_expense_message_details_section(expense: Dict, expense_url: str, actions: List[Dict], receipt_message: str, report_message: str) -> List[Dict]:
 
-    spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
-
-    expense_details = expense['purpose']
+    spent_at = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y') if expense['spent_at'] is not None else 'Not Specified'
+    amount = expense['amount'] if expense['amount'] is not None else 0.00
+    expense_details = expense['purpose'] if expense['purpose'] is not None else 'Not Specified'
     if expense['category']['name'] is not None:
         expense_details = '{} ({})'.format(expense_details, expense['category']['name'])
 
@@ -734,7 +734,7 @@ def get_expense_message_details_section(expense: Dict, expense_url: str, actions
             'block_id': 'expense_id.{}'.format(expense['id']),
             'text': {
                 'type': 'mrkdwn',
-                'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], expense['amount'])
+                'text': ':money_with_wings: An expense of *{} {}* has been created!'.format(expense['currency'], amount)
             },
             'accessory': {
                 'type': 'overflow',
