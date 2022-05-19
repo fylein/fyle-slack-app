@@ -86,10 +86,10 @@ class BlockSuggestionHandler:
         cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
         form_metadata = cache.get(cache_key)
 
-        project = form_metadata.get('project')
-
-        if project is not None:
-            category_query_params['restricted_project_ids'] = 'csn.[{}]'.format(project['id'])
+        if form_metadata is not None:
+            project = form_metadata.get('project')
+            if project is not None:
+                category_query_params['restricted_project_ids'] = 'csn.[{}]'.format(project['id'])
 
         suggested_categories = fyle_expense.get_categories(category_query_params)
 
