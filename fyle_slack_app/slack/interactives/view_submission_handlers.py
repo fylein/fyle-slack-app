@@ -73,8 +73,11 @@ class ViewSubmissionHandler:
         form_metadata = cache.get(cache_key)
 
         expense_payload['source'] = 'SLACK'
-        expense_id = form_metadata.get('expense_id')
-        message_ts = form_metadata.get('message_ts')
+        expense_id = None
+        message_ts = None
+        if form_metadata is not None:
+            expense_id = form_metadata.get('expense_id')
+            message_ts = form_metadata.get('message_ts')
 
         # If valdiation errors are present then return errors
         if bool(validation_errors) is True:
