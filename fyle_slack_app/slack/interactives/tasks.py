@@ -5,7 +5,6 @@ from fyle.platform import exceptions
 
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.slack.utils import get_slack_client
-from fyle_slack_app.slack.ui.expenses.messages import expense_dialog_form
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.libs import utils, logger, assertions
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
@@ -63,7 +62,7 @@ def handle_project_selection(user: User, team_id: str, project: Dict, view_id: s
 
     cache.set(cache_key, form_metadata)
 
-    new_expense_dialog_form = expense_dialog_form(
+    new_expense_dialog_form = expense_messages.expense_dialog_form(
         **current_expense_form_details
     )
 
@@ -88,7 +87,7 @@ def handle_category_selection(user: User, team_id: str, category_id: str, view_i
     category_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'category_loading_block'), None)
     current_ui_blocks.pop(category_loading_block_index)
 
-    new_expense_dialog_form = expense_dialog_form(
+    new_expense_dialog_form = expense_messages.expense_dialog_form(
         **current_expense_form_details
     )
 
@@ -126,7 +125,7 @@ def handle_currency_selection(user: User, selected_currency: str, view_id: str, 
 
     cache.set(cache_key, form_metadata)
 
-    expense_form = expense_dialog_form(
+    expense_form = expense_messages.expense_dialog_form(
         **current_expense_form_details
     )
 
@@ -160,7 +159,7 @@ def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_
 
     cache.set(cache_key, form_metadata)
 
-    expense_form = expense_dialog_form(
+    expense_form = expense_messages.expense_dialog_form(
         **current_expense_form_details
     )
 
@@ -196,7 +195,7 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     cache.set(cache_key, form_metadata)
 
-    expense_form = expense_dialog_form(
+    expense_form = expense_messages.expense_dialog_form(
         expense=expense,
         custom_fields=custom_fields,
         **expense_form_details
