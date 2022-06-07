@@ -11,11 +11,11 @@ from django_q.tasks import async_task
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
-from fyle_slack_app.libs import utils, logger
+from fyle_slack_app.libs import utils
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 
-logger = logger.get_logger(__name__)
+
 
 
 class ViewSubmissionHandler:

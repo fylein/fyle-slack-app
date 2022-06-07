@@ -4,10 +4,10 @@ from typing import Any, Dict, List
 import datetime
 
 from fyle_slack_app.models import User
-from fyle_slack_app.libs import utils, logger
+from fyle_slack_app.libs import utils
 from fyle_slack_app.fyle import utils as fyle_utils
 
-logger = logger.get_logger(__name__)
+
 
 def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
     value = None
@@ -66,7 +66,7 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
     if expense is not None:
         if is_additional_field is True:
             custom_field_value = get_additional_field_value(expense, action_id)
-    
+
         elif field_details['is_custom'] is True and len(expense['custom_fields']) > 0:
             custom_field_value = get_custom_field_value(expense['custom_fields'], field_details['field_name'])
 
@@ -252,7 +252,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                 },
                 'value': custom_field_value,
             }
-
 
     return custom_field
 
