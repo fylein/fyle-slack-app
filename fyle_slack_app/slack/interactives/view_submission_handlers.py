@@ -11,11 +11,11 @@ from django_q.tasks import async_task
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 from fyle_slack_app.models import User
 from fyle_slack_app.slack import utils as slack_utils
-from fyle_slack_app.libs import utils
+from fyle_slack_app.libs import utils, logger
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 
-
+logger = logger.get_logger(__name__)
 
 
 class ViewSubmissionHandler:
@@ -192,13 +192,16 @@ class ViewSubmissionHandler:
                     form_value = self.extract_checkbox_field(form_detail)
 
                 if form_value is not None:
-                    if 'custom_field' in block_id and 'travel_classes' not in block_id:
+                    if 'from_dt' in block_id:
+                        expense_payload['started_at'] = form_value
+                    elif 'to_dt' in block_id:
+                        expense_payload['ended_at'] = form_value
+                    elif 'custom_field' in block_id and 'travel_class' not in block_id:
                         custom_field_mappings['name'] = expense_field_key
                         custom_field_mappings['value'] = form_value
                         custom_fields.append(custom_field_mappings)
-                    else:
-                        if 'LOCATION' not in block_id and 'travel_classes' not in block_id:
-                            expense_payload[expense_field_key] = form_value
+                    elif 'LOCATION' not in block_id and 'travel_class' not in block_id:
+                        expense_payload[expense_field_key] = form_value
         expense_payload['custom_fields'] = custom_fields
 
         return expense_payload, validation_errors
@@ -219,7 +222,7 @@ class ViewSubmissionHandler:
                     expense_payload['locations'].append(location)
                 else:
                     expense_payload['locations'] = [location]
-        if 'travel_classes' in block_id:
+        if 'travel_class' in block_id:
             travel_class = form_detail['selected_option']['value'] if form_detail['selected_option'] is not None else None
             if travel_class is not None:
                 if 'travel_classes' in expense_payload:

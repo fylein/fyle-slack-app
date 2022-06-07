@@ -190,9 +190,10 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     # Add additional metadata to differentiate create and edit expense
     # message_ts to update message in edit case
-    form_metadata['expense_id'] = expense_id
-    form_metadata['message_ts'] = slack_payload['container']['message_ts']
-
+    if form_metadata is not None:
+        form_metadata['expense_id'] = expense_id
+        form_metadata['message_ts'] = slack_payload['container']['message_ts']
+    
     cache.set(cache_key, form_metadata)
 
     expense_form = expense_messages.expense_dialog_form(
@@ -242,12 +243,12 @@ def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payloa
     cache_key = '{}.form_metadata'.format(view_id)
     form_metadata = cache.get(cache_key)
 
-    if 'foreign_currency' in form_metadata['additional_currency_details']:
+    if form_metadata and 'foreign_currency' in form_metadata['additional_currency_details']:
         expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
         expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
         expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
 
-    if 'project' in form_metadata and form_metadata['project'] is not None:
+    if form_metadata and 'project' in form_metadata and form_metadata['project'] is not None:
         expense_payload['project_id'] = form_metadata['project']['id']
 
     if expense_id is not None:

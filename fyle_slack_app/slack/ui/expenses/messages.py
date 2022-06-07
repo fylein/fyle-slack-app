@@ -4,9 +4,10 @@ from typing import Any, Dict, List
 import datetime
 
 from fyle_slack_app.models import User
-from fyle_slack_app.libs import utils
+from fyle_slack_app.libs import utils, logger
 from fyle_slack_app.fyle import utils as fyle_utils
 
+logger = logger.get_logger(__name__)
 
 def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
     value = None
@@ -14,6 +15,29 @@ def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
         if custom_field['name'] == action_id:
             value = custom_field['value']
             break
+    return value
+
+
+def get_additional_field_value(expense: Dict, action_id: str) -> Any:
+    value = None
+    if action_id == 'flight_journey_travel_class':
+        value = expense['travel_classes'][0] if 'travel_classes' in expense and expense['travel_classes'] else None
+    elif action_id == 'flight_return_travel_class':
+        value = expense['travel_classes'][1] if 'travel_classes' in expense and expense['travel_classes'] else None
+    elif action_id == 'from_dt':
+        value = expense['started_at'] if 'started_at' in expense and expense['started_at'] else None
+    elif action_id == 'to_dt':
+        value = expense['ended_at'] if 'ended_at' in expense and expense['ended_at'] else None
+    elif action_id == 'location1':
+        if 'locations' in expense and expense['locations'][0] and expense['locations'][0]['formatted_address']:
+            value = expense['locations'][0]['formatted_address']
+        else:
+            None
+    elif action_id == 'location2':
+        if 'locations' in expense and expense['locations'][1] and expense['locations'][1]['formatted_address']:
+            value = expense['locations'][1]['formatted_address']
+        else:
+            None
     return value
 
 
@@ -41,8 +65,8 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
     # If already exisiting expense is passed then get the custom field value for that expense and add it to input fields
     if expense is not None:
         if is_additional_field is True:
-            custom_field_value = expense[action_id]
-
+            custom_field_value = get_additional_field_value(expense, action_id)
+    
         elif field_details['is_custom'] is True and len(expense['custom_fields']) > 0:
             custom_field_value = get_custom_field_value(expense['custom_fields'], field_details['field_name'])
 
@@ -175,8 +199,7 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
         }
 
         if custom_field_value is not None:
-            custom_field['element']['initial_date'] = utils.get_formatted_datetime(custom_field_value, '%B %d, %Y')
-
+            custom_field['element']['initial_date'] = utils.get_formatted_datetime(custom_field_value, '%Y-%m-%d')
 
     elif field_details['type'] == 'USER_LIST':
         block_id = '{}__{}'.format(block_id, field_details['field_name'])
@@ -220,6 +243,15 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                 'action_id': 'places_autocomplete',
             }
         }
+
+        if custom_field_value is not None:
+            custom_field['element']['initial_option'] = {
+                'text': {
+                    'type': 'plain_text',
+                    'text': custom_field_value,
+                },
+                'value': custom_field_value,
+            }
 
 
     return custom_field
