@@ -243,12 +243,12 @@ def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payloa
     cache_key = '{}.form_metadata'.format(view_id)
     form_metadata = cache.get(cache_key)
 
-    if form_metadata and 'foreign_currency' in form_metadata['additional_currency_details']:
+    if form_metadata and 'foreign_currency' in form_metadata['additional_currency_details'] and form_metadata['additional_currency_details']:
         expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
         expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
         expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
 
-    if form_metadata and 'project' in form_metadata and form_metadata['project'] is not None:
+    if form_metadata and 'project' in form_metadata and form_metadata['project']:
         expense_payload['project_id'] = form_metadata['project']['id']
 
     if expense_id is not None:
