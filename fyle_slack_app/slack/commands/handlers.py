@@ -28,7 +28,7 @@ class SlackCommandHandler:
         self._command_handlers = {
             'fyle_unlink_account': self.handle_fyle_unlink_account,
             'fyle_notification_preferences': self.handle_fyle_notification_preferences,
-            'expense_form': self.handle_expense_form
+            'fyle_expense_form': self.handle_fyle_expense_form
         }
 
     def handle_invalid_command(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str) -> JsonResponse:
@@ -112,7 +112,7 @@ class SlackCommandHandler:
         return JsonResponse({}, status=200)
 
 
-    def handle_expense_form(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str):
+    def handle_fyle_expense_form(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str):
         user = utils.get_or_none(User, slack_user_id=user_id)
 
         slack_client = slack_utils.get_slack_client(team_id)
