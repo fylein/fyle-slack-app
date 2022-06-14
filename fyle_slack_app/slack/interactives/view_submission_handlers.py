@@ -242,8 +242,8 @@ class ViewSubmissionHandler:
 
                 elif form_detail['type'] == 'checkboxes':
                     form_value = self.extract_checkbox_field(form_detail)
-                
-                if form_value is not None:                                        
+
+                if form_value is not None:
                     expense_payload = self.append_into_expense_payload_for_upsert_expense(
                         expense_payload,
                         expense_field_key,
