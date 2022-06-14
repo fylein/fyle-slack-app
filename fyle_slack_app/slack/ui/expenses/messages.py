@@ -8,17 +8,55 @@ from fyle_slack_app.libs import utils
 from fyle_slack_app.fyle import utils as fyle_utils
 
 
-def get_custom_field_value(custom_fields: List, action_id: str) -> Any:
+
+def get_custom_field_value(custom_fields: List, action_id: str, field_type: str) -> Any:
     value = None
     for custom_field in custom_fields:
         if custom_field['name'] == action_id:
+            # if field_type == 'LOCATION':
+            #     value = {}
+            #     value['location_text'] = custom_field['value']['formatted_address']
+            #     value['location_id'] = custom_field['value']['id']
+                
+            # else:
             value = custom_field['value']
             break
     return value
 
 
+def get_additional_field_value(expense: Dict, action_id: str) -> Any:
+    value = None
+    if 'flight_journey_travel_class' in action_id or 'train_travel_class' in action_id or 'bus_travel_class' in  action_id:
+        value = expense['travel_classes'][0] if 'travel_classes' in expense and expense['travel_classes'] else None
+    elif 'flight_return_travel_class' in action_id:
+        value = expense['travel_classes'][1] if 'travel_classes' in expense and expense['travel_classes'] else None
+    elif 'from_dt' in action_id:
+        value = expense['started_at'] if 'started_at' in expense and expense['started_at'] else None
+    elif 'to_dt' in action_id:
+        value = expense['ended_at'] if 'ended_at' in expense and expense['ended_at'] else None
+    elif 'location1' in action_id and len(expense['locations']) > 0:
+        value = {}
+        if 'locations' in expense and expense['locations'][0] and expense['locations'][0]['formatted_address']:
+            # value['location_text'] = expense['locations'][0]['formatted_address']
+            # value['location_id'] = expense['locations'][0]['id']
+            value = expense['locations'][0]
+        else:
+            value = None
+    elif 'location2' in action_id and len(expense['locations']) > 0:
+        value = {}
+        if 'locations' in expense and expense['locations'][1] and expense['locations'][1]['formatted_address']:
+            # value['location_text'] = expense['locations'][1]['formatted_address']
+            # value['location_id'] = expense['locations'][1]['id']
+            value = expense['locations'][1]
+        else:
+            value = None
+    else:
+        value = str(expense[action_id]) if action_id in expense else None
+    return value
+
+
 # pylint: disable=too-many-branches
-# is_additional_field is for fields which are not custom fields but are part of a specific categories
+# is_additional_field is for fields which are not custom fields but are part of specific categories
 def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = False, expense: Dict = None) -> Dict:
 
     block_id = '{}_block'.format(field_details['column_name'])
@@ -41,10 +79,10 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
     # If already exisiting expense is passed then get the custom field value for that expense and add it to input fields
     if expense is not None:
         if is_additional_field is True:
-            custom_field_value = expense[action_id]
+            custom_field_value = get_additional_field_value(expense, action_id)
 
         elif field_details['is_custom'] is True and len(expense['custom_fields']) > 0:
-            custom_field_value = get_custom_field_value(expense['custom_fields'], field_details['field_name'])
+            custom_field_value = get_custom_field_value(expense['custom_fields'], field_details['field_name'], field_details['type'])
 
     if field_details['type'] in ['NUMBER', 'TEXT']:
         custom_field = {
@@ -128,7 +166,8 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
                         }
                     )
 
-                custom_field['element']['initial_options'] = initial_options
+                if len(custom_field_value) > 0:
+                    custom_field['element']['initial_options'] = initial_options
 
     elif field_details['type'] == 'BOOLEAN':
         checkbox_option = {
@@ -153,7 +192,8 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
         }
 
         if custom_field_value is not None:
-            custom_field['element']['initial_option'] = checkbox_option
+            checkbox_option['value'] = field_details['field_name']
+            custom_field['element']['initial_options'] = [checkbox_option]
 
     elif field_details['type'] == 'DATE':
         custom_field = {
@@ -175,8 +215,7 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
         }
 
         if custom_field_value is not None:
-            custom_field['element']['initial_date'] = utils.get_formatted_datetime(custom_field_value, '%B %d, %Y')
-
+            custom_field['element']['initial_date'] = utils.get_formatted_datetime(custom_field_value, '%Y-%m-%d')
 
     elif field_details['type'] == 'USER_LIST':
         block_id = '{}__{}'.format(block_id, field_details['field_name'])
@@ -199,6 +238,29 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
             }
         }
 
+        if custom_field_value is not None:
+            # custom_field['element']['initial_options'] = {
+            #     'text': {
+            #         'type': 'plain_text',
+            #         'text': field_details['field_name'],
+            #     },
+            #     'value': custom_field_value,
+            # }
+
+            initial_options = []
+            for value in custom_field_value:
+                initial_options.append(
+                    {
+                        'text': {
+                            'type': 'plain_text',
+                            'text': value,
+                        },
+                        'value': value,
+                    }
+                )
+
+            if len(custom_field_value) > 0:
+                custom_field['element']['initial_options'] = initial_options
 
     elif field_details['type'] == 'LOCATION':
         block_id = '{}__{}'.format(block_id, field_details['field_name'])
@@ -221,6 +283,15 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
             }
         }
 
+        if custom_field_value is not None:
+            location_id = custom_field_value['id'] if 'id' in custom_field_value else 'None'
+            custom_field['element']['initial_option'] = {
+                'text': {
+                    'type': 'plain_text',
+                    'text': custom_field_value['formatted_address'],
+                },
+                'value': location_id,
+            }
 
     return custom_field
 
@@ -678,7 +749,7 @@ def expense_dialog_form(
     # If custom fields are present, render them in the form
     if custom_fields is not None:
 
-        # If cached custom fields are pass, render/ add them to UI directly
+        # If cached custom fields are present, render/ add them to UI directly
         # Cached custom fields come from slack request payload which sends UI blocks on interaction
         if isinstance(custom_fields, list):
             view['blocks'].extend(custom_fields)

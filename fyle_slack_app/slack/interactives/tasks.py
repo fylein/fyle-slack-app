@@ -42,7 +42,7 @@ def handle_project_selection(user: User, team_id: str, project: Dict, view_id: s
     slack_client = get_slack_client(team_id)
     fyle_expense = FyleExpense(user)
 
-    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
 
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
@@ -77,7 +77,7 @@ def handle_category_selection(user: User, team_id: str, category_id: str, view_i
 
     custom_fields = fyle_expense.get_custom_fields_by_category_id(category_id)
 
-    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
 
     current_expense_form_details['custom_fields'] = custom_fields
 
@@ -100,7 +100,7 @@ def handle_currency_selection(user: User, selected_currency: str, view_id: str, 
 
     fyle_expense = FyleExpense(user)
 
-    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
 
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
@@ -142,7 +142,7 @@ def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_
 
     selected_currency = form_current_state['SELECT_default_field_currency_block']['currency']['selected_option']['value']
 
-    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload)
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
 
     cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
     form_metadata = cache.get(cache_key)
@@ -190,9 +190,10 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     # Add additional metadata to differentiate create and edit expense
     # message_ts to update message in edit case
-    form_metadata['expense_id'] = expense_id
-    form_metadata['message_ts'] = slack_payload['container']['message_ts']
-
+    if form_metadata is not None:
+        form_metadata['expense_id'] = expense_id
+        form_metadata['message_ts'] = slack_payload['container']['message_ts']
+    
     cache.set(cache_key, form_metadata)
 
     expense_form = expense_messages.expense_dialog_form(
@@ -242,12 +243,12 @@ def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payloa
     cache_key = '{}.form_metadata'.format(view_id)
     form_metadata = cache.get(cache_key)
 
-    if 'foreign_currency' in form_metadata['additional_currency_details']:
+    if form_metadata and 'additional_currency_details' in form_metadata and form_metadata['additional_currency_details'] and 'foreign_currency' in form_metadata['additional_currency_details']:
         expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
-        expense_payload['foreign_amount'] = form_metadata['additional_currency_details']['total_amount']
+        expense_payload['foreign_amount'] = expense_payload['claim_amount']
         expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
 
-    if 'project' in form_metadata and form_metadata['project'] is not None:
+    if form_metadata and 'project' in form_metadata and form_metadata['project']:
         expense_payload['project_id'] = form_metadata['project']['id']
 
     if expense_id is not None:

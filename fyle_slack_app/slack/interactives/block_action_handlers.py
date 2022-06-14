@@ -371,7 +371,8 @@ class BlockActionHandler:
 
         slack_client = get_slack_client(team_id)
 
-        current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload)
+        user = utils.get_or_none(User, slack_user_id=user_id)
+        current_expense_form_details = FyleExpense.get_current_expense_form_details(slack_payload, user)
 
         cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
         form_metadata = cache.get(cache_key)

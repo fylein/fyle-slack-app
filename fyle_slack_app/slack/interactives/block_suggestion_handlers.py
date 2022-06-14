@@ -289,29 +289,35 @@ class BlockSuggestionHandler:
 
         user = utils.get_or_none(User, slack_user_id=user_id)
         merchant_value_entered = slack_payload['value']
-
+        merchant_options = []
         fyle_expense = FyleExpense(user)
 
-        query_params = {
-            'offset': 0,
-            'limit': '10',
-            'order': 'display_name.asc',
-            'q': merchant_value_entered
-        }
+        # Fetch all the options (choices) from Merchant expense field
+        merchants_expense_field = fyle_expense.get_merchants_expense_field()
 
-        suggested_merchants = fyle_expense.get_merchants(query_params)
+        if len(merchants_expense_field['data'][0]['options']) > 0:
+            suggested_merchants = merchants_expense_field['data'][0]['options']
 
-        merchant_options = []
+        else:
+            # Fetch the merchant list from merchants table in DB
+            suggested_merchants = fyle_expense.get_merchants(merchant_value_entered)
 
-        if suggested_merchants['count'] > 0:
-            for merchant in suggested_merchants['data']:
-                option = {
-                    'text': {
-                        'type': 'plain_text',
-                        'text': '{}'.format(merchant['display_name'])
-                    },
-                    'value': merchant['display_name'],
-                }
-                merchant_options.append(option)
+            if suggested_merchants['count'] > 0:
+                # Show merchants suggestions from merchants list
+                suggested_merchants = [merchant['display_name'] for merchant in suggested_merchants['data']]
+            else:
+                # Else, show the suggestion as it is, what the user has entered
+                # In this case, this user entered text will get stored as a new merchant in merchants table
+                suggested_merchants = [merchant_value_entered]
+
+        for merchant in suggested_merchants:
+            option = {
+                'text': {
+                    'type': 'plain_text',
+                    'text': '{}'.format(merchant)
+                },
+                'value': merchant
+            }
+            merchant_options.append(option)
 
         return merchant_options
