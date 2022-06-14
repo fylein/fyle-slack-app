@@ -193,7 +193,7 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
     if form_metadata is not None:
         form_metadata['expense_id'] = expense_id
         form_metadata['message_ts'] = slack_payload['container']['message_ts']
-    
+
     cache.set(cache_key, form_metadata)
 
     expense_form = expense_messages.expense_dialog_form(

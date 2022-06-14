@@ -166,11 +166,11 @@ class ViewSubmissionHandler:
 
         if 'travel_classes' in expense_payload:
             travel_classes = expense_payload['travel_classes']
-        
+
         if '_journey_travel_class' in block_id:
             travel_classes[0] = form_value
         elif '_return_travel_class' in block_id:
-            if len(travel_classes) == 1: 
+            if len(travel_classes) == 1:
                 travel_classes.append(form_value)
             else:
                 travel_classes[1] = form_value
@@ -181,8 +181,8 @@ class ViewSubmissionHandler:
     def append_into_expense_payload_for_upsert_expense(self, expense_payload: Dict, expense_field_key: str, form_value: any, block_id: str) -> Dict:
         # expense_payload is used as the payload which is sent to POST request of /spender/expenses API
         # Only single expense field will be appended to the expense payload at a time
-        # Can refer the expense post payload structure from here: https://docs.fylehq.com/docs/fyle-platform-docs/ -> Spender APIs -> Expenses -> Crreate or upadte expense (POST) 
-        
+        # Can refer the expense post payload structure from here: https://docs.fylehq.com/docs/fyle-platform-docs/ -> Spender APIs -> Expenses -> Crreate or upadte expense (POST)
+
         if 'from_dt' in block_id:
             expense_payload['started_at'] = form_value
 
@@ -218,11 +218,9 @@ class ViewSubmissionHandler:
     def extract_form_values_and_validate(self, user, form_values: Dict) -> Union[Dict, Dict]:
         expense_payload = {}
         validation_errors = {}
-        custom_fields = []
 
         fyle_expense = FyleExpense(user)
         for block_id, value in form_values.items():
-            custom_field_mappings = {}
             for expense_field_key, form_detail in value.items():
                 form_value = None
                 if form_detail['type'] in ['static_select', 'external_select']:
@@ -247,7 +245,7 @@ class ViewSubmissionHandler:
                 
                 if form_value is not None:                                        
                     expense_payload = self.append_into_expense_payload_for_upsert_expense(
-                        expense_payload, 
+                        expense_payload,
                         expense_field_key,
                         form_value,
                         block_id
