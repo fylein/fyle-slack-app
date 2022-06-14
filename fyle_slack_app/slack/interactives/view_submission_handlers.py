@@ -1,6 +1,6 @@
 import datetime
 
-from typing import Callable, Dict, Union
+from typing import Callable, List, Dict, Union
 from dateutil.parser import parse
 
 from django.http.response import JsonResponse
@@ -160,6 +160,61 @@ class ViewSubmissionHandler:
         return JsonResponse({})
 
 
+    def get_travel_class_list(self, expense_payload: Dict, block_id: str, form_value: str) -> List[Dict]:
+        # This method will give you the travel class object - travel_classes field
+        travel_classes = [None, None]
+
+        if 'travel_classes' in expense_payload:
+            travel_classes = expense_payload['travel_classes']
+        
+        if '_journey_travel_class' in block_id:
+            travel_classes[0] = form_value
+        elif '_return_travel_class' in block_id:
+            if len(travel_classes) == 1: 
+                travel_classes.append(form_value)
+            else:
+                travel_classes[1] = form_value
+
+        return travel_classes
+
+
+    def append_into_expense_payload_for_upsert_expense(self, expense_payload: Dict, expense_field_key: str, form_value: any, block_id: str) -> Dict:
+        # expense_payload is used as the payload which is sent to POST request of /spender/expenses API
+        # Only single expense field will be appended to the expense payload at a time
+        # Can refer the expense post payload structure from here: https://docs.fylehq.com/docs/fyle-platform-docs/ -> Spender APIs -> Expenses -> Crreate or upadte expense (POST) 
+        
+        if 'from_dt' in block_id:
+            expense_payload['started_at'] = form_value
+
+        elif 'to_dt' in block_id:
+            expense_payload['ended_at'] = form_value
+
+        elif 'custom_field' in block_id:
+            custom_field = {
+                'name': expense_field_key,
+                'value': form_value
+            }
+            if 'custom_fields' in expense_payload:
+                expense_payload['custom_fields'].append(custom_field)
+            else:
+                expense_payload['custom_fields'] = [custom_field]
+
+        elif 'LOCATION' in block_id:
+            if 'locations' in expense_payload:
+                expense_payload['locations'].append(form_value)
+            else:
+                expense_payload['locations'] = [form_value]
+
+        elif 'travel_class' in block_id:
+            travel_classes = self.get_travel_class_list(expense_payload, block_id, form_value)
+            expense_payload['travel_classes'] = travel_classes
+
+        else:
+            expense_payload[expense_field_key] = form_value
+
+        return expense_payload
+
+
     def extract_form_values_and_validate(self, user, form_values: Dict) -> Union[Dict, Dict]:
         expense_payload = {}
         validation_errors = {}
@@ -171,12 +226,11 @@ class ViewSubmissionHandler:
             for expense_field_key, form_detail in value.items():
                 form_value = None
                 if form_detail['type'] in ['static_select', 'external_select']:
-                    expense_field_key, form_value, expense_payload = self.extract_select_field_detail(
+                    expense_field_key, form_value = self.extract_select_field_detail(
                         expense_field_key,
                         form_detail,
                         block_id,
-                        fyle_expense,
-                        expense_payload
+                        fyle_expense
                     )
 
                 if form_detail['type'] in ['multi_static_select', 'multi_external_select']:
@@ -190,23 +244,18 @@ class ViewSubmissionHandler:
 
                 elif form_detail['type'] == 'checkboxes':
                     form_value = self.extract_checkbox_field(form_detail)
-
-                if form_value is not None:
-                    if 'from_dt' in block_id:
-                        expense_payload['started_at'] = form_value
-                    elif 'to_dt' in block_id:
-                        expense_payload['ended_at'] = form_value
-                    elif 'custom_field' in block_id and 'travel_class' not in block_id:
-                        custom_field_mappings['name'] = expense_field_key
-                        custom_field_mappings['value'] = form_value
-                        custom_fields.append(custom_field_mappings)
-                    elif 'LOCATION' not in block_id and 'travel_class' not in block_id:
-                        expense_payload[expense_field_key] = form_value
-        expense_payload['custom_fields'] = custom_fields
+                
+                if form_value is not None:                                        
+                    expense_payload = self.append_into_expense_payload_for_upsert_expense(
+                        expense_payload, 
+                        expense_field_key,
+                        form_value,
+                        block_id
+                    )
 
         return expense_payload, validation_errors
 
-    def extract_select_field_detail(self, expense_field_key: str, form_detail: Dict, block_id: str, fyle_expense: FyleExpense, expense_payload: Dict):
+    def extract_select_field_detail(self, expense_field_key: str, form_detail: Dict, block_id: str, fyle_expense: FyleExpense):
         form_value = None
         if form_detail['selected_option'] is not None:
             form_value = form_detail['selected_option']['value']
@@ -216,21 +265,14 @@ class ViewSubmissionHandler:
             place_id = form_detail['selected_option']['value'] if form_detail['selected_option'] is not None else None
             if place_id is not None:
                 location = fyle_expense.get_place_by_place_id(place_id)
-                if 'custom_field' in block_id:
-                    form_value = location
-                elif 'locations' in expense_payload:
-                    expense_payload['locations'].append(location)
-                else:
-                    expense_payload['locations'] = [location]
+                form_value = location
+                form_value['display'] = location['formatted_address']
+
         if 'travel_class' in block_id:
             travel_class = form_detail['selected_option']['value'] if form_detail['selected_option'] is not None else None
-            if travel_class is not None:
-                if 'travel_classes' in expense_payload:
-                    expense_payload['travel_classes'].append(travel_class)
-                else:
-                    expense_payload['travel_classes'] = [travel_class]
+            form_value = travel_class
 
-        return expense_field_key, form_value, expense_payload
+        return expense_field_key, form_value
 
     def extract_multi_select_field(self, expense_field_key: str, form_detail: Dict, block_id: str):
         if 'USER_LIST' in block_id:

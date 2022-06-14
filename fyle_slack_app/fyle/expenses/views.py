@@ -11,6 +11,8 @@ from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
 from fyle_slack_app.libs import assertions, http
 
+
+
 # pylint: disable=too-many-public-methods
 class FyleExpense:
 
@@ -50,6 +52,19 @@ class FyleExpense:
         return self.get_expense_fields(custom_fields_query_params)
 
 
+    def get_merchants_expense_field(self) -> Dict:
+        query_params = {
+            'column_name': 'eq.merchant',
+            'offset': 0,
+            'limit': '50',
+            'order': 'created_at.desc',
+            'is_enabled': 'eq.{}'.format(True),
+            'is_custom': 'eq.{}'.format(False)
+        }
+
+        return self.get_expense_fields(query_params)
+
+
     def get_categories(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.categories.list(query_params=query_params)
 
@@ -57,7 +72,13 @@ class FyleExpense:
     def get_projects(self, query_params: Dict) -> Dict:
         return self.connection.v1beta.spender.projects.list(query_params=query_params)
 
-    def get_merchants(self, query_params: Dict) -> Dict:
+    def get_merchants(self, query_text: str) -> Dict:
+        query_params = {
+            'offset': 0,
+            'limit': '10',
+            'order': 'display_name.asc',
+            'q': query_text
+        }
         return self.connection.v1beta.spender.merchants.list(query_params=query_params)
 
     def get_cost_centers(self, query_params: Dict) -> Dict:
@@ -213,20 +234,25 @@ class FyleExpense:
 
 
     @staticmethod
-    def get_current_expense_form_details(slack_payload: Dict) -> Dict:
+    def get_current_expense_form_details(slack_payload: Dict, user: User) -> Dict:
 
+        fyle_expense = FyleExpense(user)
         cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
         form_metadata =  cache.get(cache_key)
 
-        fields_render_property = form_metadata['fields_render_property']
-
-        additional_currency_details = form_metadata.get('additional_currency_details')
-
-        add_to_report = form_metadata.get('add_to_report')
+        if form_metadata is not None:
+            fields_render_property = form_metadata['fields_render_property']
+            additional_currency_details = form_metadata.get('additional_currency_details')
+            add_to_report = form_metadata.get('add_to_report')
+            project = form_metadata.get('project')
+        else:
+            expense_form_details = fyle_expense.get_expense_form_details(user, slack_payload['container']['view_id'])
+            fields_render_property = expense_form_details['fields_render_property']
+            additional_currency_details = expense_form_details['additional_currency_details']
+            add_to_report = expense_form_details['add_to_report']
+            project = expense_form_details['project']
 
         current_ui_blocks = slack_payload['view']['blocks']
-
-        project = form_metadata.get('project')
 
         custom_field_blocks = []
 
