@@ -13,12 +13,6 @@ def get_custom_field_value(custom_fields: List, action_id: str, field_type: str)
     value = None
     for custom_field in custom_fields:
         if custom_field['name'] == action_id:
-            # if field_type == 'LOCATION':
-            #     value = {}
-            #     value['location_text'] = custom_field['value']['formatted_address']
-            #     value['location_id'] = custom_field['value']['id']
-                
-            # else:
             value = custom_field['value']
             break
     return value
@@ -37,16 +31,12 @@ def get_additional_field_value(expense: Dict, action_id: str) -> Any:
     elif 'location1' in action_id and len(expense['locations']) > 0:
         value = {}
         if 'locations' in expense and expense['locations'][0] and expense['locations'][0]['formatted_address']:
-            # value['location_text'] = expense['locations'][0]['formatted_address']
-            # value['location_id'] = expense['locations'][0]['id']
             value = expense['locations'][0]
         else:
             value = None
     elif 'location2' in action_id and len(expense['locations']) > 0:
         value = {}
         if 'locations' in expense and expense['locations'][1] and expense['locations'][1]['formatted_address']:
-            # value['location_text'] = expense['locations'][1]['formatted_address']
-            # value['location_id'] = expense['locations'][1]['id']
             value = expense['locations'][1]
         else:
             value = None
@@ -239,14 +229,6 @@ def generate_custom_fields_ui(field_details: Dict, is_additional_field: bool = F
         }
 
         if custom_field_value is not None:
-            # custom_field['element']['initial_options'] = {
-            #     'text': {
-            #         'type': 'plain_text',
-            #         'text': field_details['field_name'],
-            #     },
-            #     'value': custom_field_value,
-            # }
-
             initial_options = []
             for value in custom_field_value:
                 initial_options.append(
