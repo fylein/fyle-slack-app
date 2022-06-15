@@ -9,7 +9,9 @@ from fyle.platform.platform import Platform
 from fyle_slack_app.fyle.utils import get_fyle_sdk_connection
 from fyle_slack_app.models.users import User
 from fyle_slack_app.fyle import utils as fyle_utils
+from fyle_slack_app.fyle.notifications.views import FyleNotificationView
 from fyle_slack_app.libs import assertions, http
+from fyle_slack_app import tracking
 
 
 
@@ -283,3 +285,23 @@ class FyleExpense:
         response = self.connection.v1beta.spender.expenses.list(query_params=query_params)
         expense = response['data'] if response['count'] == 1 else None
         return expense
+
+
+    @staticmethod
+    def get_expense_creation_tracking_data(user: User, expense_id: str = None) -> Dict:
+        event_data = FyleNotificationView.get_event_data(user)
+        event_data['org_id'] = user.fyle_org_id
+        if expense_id is not None:
+            event_data['expense_id'] = expense_id
+
+        return event_data
+
+
+    @staticmethod
+    def track_expense_creation(user: User, event_name: str, expense_id: str=None) -> Dict:
+        event_data = FyleExpense.get_expense_creation_tracking_data(user, expense_id)
+
+        tracking.identify_user(user.email)
+        tracking.track_event(user.email, event_name, event_data)
+
+        return event_data

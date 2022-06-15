@@ -112,4 +112,6 @@ def open_expense_form(user: User, team_id: str, view_id: str) -> None:
         **expense_form_details
     )
 
+    FyleExpense(user).track_expense_creation(user, 'User opened Expense Form modal using Slack slash command')
+
     slack_client.views_update(view=expense_form, view_id=view_id)

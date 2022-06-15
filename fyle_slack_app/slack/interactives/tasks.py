@@ -204,6 +204,8 @@ def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str,
 
     slack_client.views_update(view=expense_form, view_id=view_id)
 
+    fyle_expense.track_expense_creation(user, 'User clicked on Complete Expense button', expense['data'][0]['id'])
+
 
 def handle_submit_report_dialog(user: User, team_id: str, report_id: str, view_id: str):
 
@@ -266,6 +268,7 @@ def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payloa
         error_message = 'Seems like something went wrong while creating an expense, please try again or contact support@fylehq.com'
         slack_client.chat_postMessage(channel=user.slack_dm_channel_id, text=error_message)
 
+    fyle_expense.track_expense_creation(user, 'Expense created from Expense Form modal in Slack', expense_id)
 
 
 def handle_feedback_submission(user: User, team_id: str, form_values: Dict, private_metadata: Dict):
