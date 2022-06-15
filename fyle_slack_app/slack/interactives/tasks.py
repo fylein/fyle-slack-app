@@ -1,9 +1,13 @@
-from typing import Dict
+from typing import Dict, List
 
+from django.core.cache import cache
 from fyle.platform import exceptions
 
+from fyle_slack_app.fyle.expenses.views import FyleExpense
+from fyle_slack_app.slack.utils import get_slack_client
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
+from fyle_slack_app.libs import utils, logger, assertions
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
-
 from fyle_slack_app.models import User, UserFeedbackResponse
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.feedbacks import messages as feedback_messages
@@ -11,9 +15,260 @@ from fyle_slack_app.slack.ui.modals import messages as modal_messages
 from fyle_slack_app.slack.ui import common_messages
 from fyle_slack_app import tracking
 
-from fyle_slack_app.libs import utils, logger
 
 logger = logger.get_logger(__name__)
+
+def get_additional_currency_details(amount: int, home_currency: str, selected_currency: str, exchange_rate: float) -> Dict:
+
+    if amount is None or len(amount) == 0:
+        amount = 0
+    else:
+        try:
+            amount = round(float(amount), 2)
+        except ValueError:
+            amount = 0
+
+    additional_currency_details = {
+        'foreign_currency': selected_currency,
+        'home_currency': home_currency,
+        'claim_amount': amount,
+        'total_amount': round(exchange_rate * amount, 2)
+    }
+
+    return additional_currency_details
+
+
+def handle_project_selection(user: User, team_id: str, project: Dict, view_id: str, slack_payload: Dict) -> None:
+    slack_client = get_slack_client(team_id)
+    fyle_expense = FyleExpense(user)
+
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
+
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
+
+    # Removing custom fields when project is selected
+    current_expense_form_details['custom_fields'] = None
+
+    current_expense_form_details['selected_project'] = project
+
+    current_ui_blocks = slack_payload['view']['blocks']
+
+    # Removing loading info from below project input element
+    project_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'project_loading_block'), None)
+    current_ui_blocks.pop(project_loading_block_index)
+
+    form_metadata['project'] = project
+
+    cache.set(cache_key, form_metadata)
+
+    new_expense_dialog_form = expense_messages.expense_dialog_form(
+        **current_expense_form_details
+    )
+
+    slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
+
+
+def handle_category_selection(user: User, team_id: str, category_id: str, view_id: str, slack_payload: str) -> None:
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    custom_fields = fyle_expense.get_custom_fields_by_category_id(category_id)
+
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
+
+    current_expense_form_details['custom_fields'] = custom_fields
+
+    current_ui_blocks = slack_payload['view']['blocks']
+
+    # Removing loading info from below category input element
+    category_loading_block_index = next((index for (index, d) in enumerate(current_ui_blocks) if d['block_id'] == 'category_loading_block'), None)
+    current_ui_blocks.pop(category_loading_block_index)
+
+    new_expense_dialog_form = expense_messages.expense_dialog_form(
+        **current_expense_form_details
+    )
+
+    slack_client.views_update(view_id=view_id, view=new_expense_dialog_form)
+
+
+def handle_currency_selection(user: User, selected_currency: str, view_id: str, team_id: str, slack_payload: str) -> None:
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
+
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
+
+    additional_currency_details = current_expense_form_details['additional_currency_details']
+
+    home_currency = additional_currency_details['home_currency']
+
+    additional_currency_details = {
+        'home_currency': home_currency
+    }
+
+    if home_currency != selected_currency:
+        form_current_state = slack_payload['view']['state']['values']
+        exchange_rate = fyle_expense.get_exchange_rate(selected_currency, home_currency)
+        amount = form_current_state['NUMBER_default_field_amount_block']['claim_amount']['value']
+        additional_currency_details = get_additional_currency_details(amount, home_currency, selected_currency, exchange_rate)
+
+    current_expense_form_details['additional_currency_details'] = additional_currency_details
+
+    form_metadata['additional_currency_details'] = additional_currency_details
+
+    cache.set(cache_key, form_metadata)
+
+    expense_form = expense_messages.expense_dialog_form(
+        **current_expense_form_details
+    )
+
+    slack_client.views_update(view_id=view_id, view=expense_form)
+
+
+def handle_amount_entered(user: User, amount_entered: float, view_id: str, team_id: str, slack_payload: str) -> None:
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    form_current_state = slack_payload['view']['state']['values']
+
+    selected_currency = form_current_state['SELECT_default_field_currency_block']['currency']['selected_option']['value']
+
+    current_expense_form_details = fyle_expense.get_current_expense_form_details(slack_payload, user)
+
+    cache_key = '{}.form_metadata'.format(slack_payload['view']['id'])
+    form_metadata = cache.get(cache_key)
+
+    home_currency = current_expense_form_details['additional_currency_details']['home_currency']
+
+    exchange_rate = fyle_expense.get_exchange_rate(selected_currency, home_currency)
+
+    additional_currency_details = get_additional_currency_details(amount_entered, home_currency, selected_currency, exchange_rate)
+
+    current_expense_form_details['additional_currency_details'] = additional_currency_details
+
+    form_metadata['additional_currency_details'] = additional_currency_details
+
+    cache.set(cache_key, form_metadata)
+
+    expense_form = expense_messages.expense_dialog_form(
+        **current_expense_form_details
+    )
+
+    slack_client.views_update(view_id=view_id, view=expense_form)
+
+
+def handle_edit_expense(user: User, expense_id: str, team_id: str, view_id: str, slack_payload: List[Dict]) -> None:
+    slack_client = get_slack_client(team_id)
+    fyle_expense = FyleExpense(user)
+
+    expense_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'id': 'eq.{}'.format(expense_id)
+    }
+
+    expense = fyle_expense.get_expenses(query_params=expense_query_params)
+
+    expense = expense['data'][0]
+
+    custom_fields = fyle_expense.get_custom_fields_by_category_id(expense['category_id'])
+
+    expense_form_details = FyleExpense.get_expense_form_details(user, view_id)
+
+    cache_key = '{}.form_metadata'.format(view_id)
+    form_metadata = cache.get(cache_key)
+
+    # Add additional metadata to differentiate create and edit expense
+    # message_ts to update message in edit case
+    if form_metadata is not None:
+        form_metadata['expense_id'] = expense_id
+        form_metadata['message_ts'] = slack_payload['container']['message_ts']
+
+    cache.set(cache_key, form_metadata)
+
+    expense_form = expense_messages.expense_dialog_form(
+        expense=expense,
+        custom_fields=custom_fields,
+        **expense_form_details
+    )
+
+    slack_client.views_update(view=expense_form, view_id=view_id)
+
+    fyle_expense.track_expense_creation(user, 'User clicked on Complete Expense button', expense['id'])
+
+
+def handle_submit_report_dialog(user: User, team_id: str, report_id: str, view_id: str):
+
+    slack_client = get_slack_client(team_id)
+
+    fyle_expense = FyleExpense(user)
+
+    expense_query_params = {
+        'offset': 0,
+        'limit': '30',
+        'order': 'created_at.desc',
+        'report_id': 'eq.{}'.format(report_id)
+    }
+
+    expenses = fyle_expense.get_expenses(query_params=expense_query_params)
+
+    report_query_params = {
+        'offset': 0,
+        'limit': '1',
+        'order': 'created_at.desc',
+        'id': 'eq.{}'.format(report_id)
+    }
+
+    report = fyle_expense.get_reports(query_params=report_query_params)
+
+    add_expense_to_report_dialog = expense_messages.get_view_report_details_dialog(user, report=report['data'][0], expenses=expenses['data'])
+
+    add_expense_to_report_dialog['private_metadata'] = report_id
+
+    slack_client.views_update(view_id=view_id, view=add_expense_to_report_dialog)
+
+
+def handle_upsert_expense(user: User, view_id: str, team_id: str, expense_payload: Dict, expense_id: str, message_ts: str):
+    slack_client = get_slack_client(team_id)
+    fyle_expense = FyleExpense(user)
+
+    cache_key = '{}.form_metadata'.format(view_id)
+    form_metadata = cache.get(cache_key)
+
+    if form_metadata and 'additional_currency_details' in form_metadata and form_metadata['additional_currency_details'] and 'foreign_currency' in form_metadata['additional_currency_details']:
+        expense_payload['foreign_currency'] = form_metadata['additional_currency_details']['foreign_currency']
+        expense_payload['foreign_amount'] = expense_payload['claim_amount']
+        expense_payload['claim_amount'] = form_metadata['additional_currency_details']['total_amount']
+
+    if form_metadata and 'project' in form_metadata and form_metadata['project']:
+        expense_payload['project_id'] = form_metadata['project']['id']
+
+    if expense_id is not None:
+        expense_payload['id'] = expense_id
+
+    try:
+        expense = fyle_expense.upsert_expense(expense_payload, user.fyle_refresh_token)
+        view_expense_message = expense_messages.view_expense_message(expense, user)
+
+        if expense_id is None or message_ts is None:
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message)
+        else:
+            slack_client.chat_update(channel=user.slack_dm_channel_id, blocks=view_expense_message, ts=message_ts)
+    except assertions.InvalidUsage:
+        error_message = 'Seems like something went wrong while creating an expense, please try again or contact support@fylehq.com'
+        slack_client.chat_postMessage(channel=user.slack_dm_channel_id, text=error_message)
+
+    fyle_expense.track_expense_creation(user, 'Expense created from Expense Form modal', expense_id)
 
 
 def handle_feedback_submission(user: User, team_id: str, form_values: Dict, private_metadata: Dict):

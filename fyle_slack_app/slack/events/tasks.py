@@ -1,8 +1,8 @@
+import base64
 from typing import Dict, Union
 from slack_sdk import WebClient
 
 from django.conf import settings
-
 from fyle_slack_app.fyle.expenses.views import FyleExpense
 
 from fyle_slack_app.fyle.utils import get_fyle_oauth_url
@@ -10,10 +10,10 @@ from fyle_slack_app.libs import utils, assertions, logger
 from fyle_slack_app.models import Team, User, UserSubscriptionDetail
 from fyle_slack_app.models.user_subscription_details import SubscriptionType
 from fyle_slack_app.fyle import utils as fyle_utils
-
 from fyle_slack_app.slack.interactives.block_action_handlers import BlockActionHandler
 from fyle_slack_app.slack import utils as slack_utils
 from fyle_slack_app.slack.ui.authorization import messages
+from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.slack.ui import common_messages
 
 
@@ -109,6 +109,7 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
     slack_client = slack_utils.get_slack_client(team_id)
     user = utils.get_or_none(User, slack_user_id=user_id)
     file_info, file_content, file_message_details = gather_shared_file_data(user, slack_client, file_id)
+    encoded_file = base64.b64encode(file_content).decode('utf-8')
 
     # If thread_ts is present in message, this means file has been shared in a thread
     if 'thread_ts' in file_message_details:
@@ -143,6 +144,27 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
     # This else block means file has been shared as a new message and an expense will be created with the file as receipt
     # i.e. data extraction flow
     else:
+        expense_creation_message = ':hourglass_flowing_sand: Creating an expense and uploading receipt :zap:'
+        expense_creation_message_block = common_messages.get_custom_text_section_block(expense_creation_message)
+        message_ts = file_message_details['ts']
+        slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=expense_creation_message_block, thread_ts=message_ts, reply_broadcast=True)
+        receipt_payload = {
+            "data": {
+                "file_name": file_info['file']['name'],
+                "file_content": encoded_file,
+                "source": "SLACK"
+            }
+        }
+        try:
+            expense = fyle_utils.extract_expense_from_receipt(receipt_payload, user.fyle_refresh_token)
+            view_expense_message = expense_messages.view_expense_message(expense, user)
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, blocks=view_expense_message, thread_ts=message_ts, reply_broadcast=True)
+        except assertions.InvalidUsage:
+            error_message = 'Seems like something went wrong while creating an expense, please try again or contact support@fylehq.com'
+            slack_client.chat_postMessage(channel=user.slack_dm_channel_id, text=error_message, thread_ts=message_ts, reply_broadcast=True)
+
+        FyleExpense(user).track_expense_creation(user, 'Expense created from uploading Receipt in Slack', expense['id'])
+
         return None
 
 

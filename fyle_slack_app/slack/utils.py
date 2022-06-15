@@ -38,6 +38,13 @@ def get_user_display_name(slack_client: WebClient, user_details: Dict) -> str:
 
     return user_display_name
 
+def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
+    headers = {
+        'Authorization': 'Bearer {}'.format(bot_access_token)
+    }
+    file = http.get(url, headers=headers)
+    return file.content
+
 
 def get_currency_symbol(currency: str) -> str:
     c = CurrencyCodes()
@@ -51,15 +58,6 @@ def get_currency_symbol(currency: str) -> str:
     symbol = curr if curr is not None else currency
 
     return symbol
-
-
-def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
-    headers = {
-        'Authorization': 'Bearer {}'.format(bot_access_token)
-    }
-    file = http.get(url, headers=headers)
-    return file.content
-
 
 def get_slack_latest_parent_message(user: User, slack_client: WebClient, thread_ts: str) -> Dict:
     message_history = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)

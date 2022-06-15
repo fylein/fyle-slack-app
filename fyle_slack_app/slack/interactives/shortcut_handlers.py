@@ -57,6 +57,8 @@ class ShortcutHandler:
 
         user_dm_channel_id = slack_utils.get_slack_user_dm_channel_id(slack_client, user_id)
 
-        SlackCommandHandler().handle_fyle_notification_preferences(user_id, team_id, user_dm_channel_id)
+        trigger_id = slack_payload['trigger_id']
+
+        SlackCommandHandler().handle_fyle_notification_preferences(user_id, team_id, user_dm_channel_id, trigger_id)
 
         return JsonResponse({}, status=200)

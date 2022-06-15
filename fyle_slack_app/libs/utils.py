@@ -27,6 +27,9 @@ def get_or_none(model: Model, **kwargs: Any) -> Union[None, Model]:
 
 
 def get_formatted_datetime(datetime_value: datetime, required_format: str) -> str:
+    # Enable support for parsing arbitrary ISO 8601 strings ('Z' strings specifically)
+    datetime_value = datetime_value.replace('Z', '')
+
     datetime_value = datetime.datetime.fromisoformat(datetime_value)
     formatted_datetime = datetime_value.strftime(required_format)
     return formatted_datetime
