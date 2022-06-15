@@ -163,7 +163,7 @@ def handle_file_shared(file_id: str, user_id: str, team_id: str):
             error_message = 'Seems like something went wrong while creating an expense, please try again or contact support@fylehq.com'
             slack_client.chat_postMessage(channel=user.slack_dm_channel_id, text=error_message, thread_ts=message_ts, reply_broadcast=True)
 
-        FyleExpense(user).track_expense_creation(user, 'Expense created from uploading Receipt in Slack', expense['data'][0]['id'])
+        FyleExpense(user).track_expense_creation(user, 'Expense created from uploading Receipt in Slack', expense['id'])
         
         return None
 
