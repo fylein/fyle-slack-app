@@ -48,7 +48,7 @@ def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
 
 
 def round_amount(amount: float, currency: str) -> float:
-    """    
+    """
     `round_amount(10.5678, 'USD') -> 10.57`
 
     `round_amount(10.5678, 'OMR') -> 10.568`
@@ -122,7 +122,7 @@ def get_display_amount(amount: Union[str, int, float], currency: str) -> str:
     - This function can handle negative amount.
     - Throws `ValueError` if amount is `None` or is invalid.
     - Throws `ValueError` if currency is `None`
-    
+
     More info about iso4217 international standard for currencies - https://en.wikipedia.org/wiki/ISO_4217
     """
 
@@ -130,12 +130,12 @@ def get_display_amount(amount: Union[str, int, float], currency: str) -> str:
         raise ValueError('Error while formatting amount: Amount is None!')
 
     # Convert and clean the amount, if it is a string
-    if type(amount) == str:
+    if isinstance(amount, str):
         # An amount with '.' as the decimal separator and ',' as the thousand separator is expected for conversion to work properly
         cleaned_amount = amount.replace(',', '')
         amount = float(cleaned_amount)
 
-    # Sign to add at the beginning, 
+    # Sign to add at the beginning
     sign = '-' if amount < 0 else ''
     amount = abs(amount)
 
@@ -145,7 +145,7 @@ def get_display_amount(amount: Union[str, int, float], currency: str) -> str:
 
     # Create a format string and round the amount to currency precision
     format_string = '{:,.' + str(currency_precision) + 'f}'
-    
+
     # Format fails for cases like 2.665 and 2.675 both returns 2.67 so adding the 1e-9 helps in handling the precision issues
     # link https://docs.python.org/3/tutorial/floatingpoint.html#tut-fp-issues
     formatted_amount = format_string.format(amount + 1e-9)
