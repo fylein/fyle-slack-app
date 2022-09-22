@@ -4,7 +4,7 @@ from django.core.cache import cache
 from fyle.platform import exceptions
 
 from fyle_slack_app.fyle.expenses.views import FyleExpense
-from fyle_slack_app.slack.utils import get_slack_client
+from fyle_slack_app.slack.utils import get_slack_client, round_amount
 from fyle_slack_app.slack.ui.expenses import messages as expense_messages
 from fyle_slack_app.libs import utils, logger, assertions
 from fyle_slack_app.fyle.report_approvals.views import FyleReportApproval
@@ -24,15 +24,17 @@ def get_additional_currency_details(amount: int, home_currency: str, selected_cu
         amount = 0
     else:
         try:
-            amount = round(float(amount), 2)
+            amount = float(amount)
         except ValueError:
             amount = 0
+
+    logger.info(f'amount -> {amount} exchange_rate -> {exchange_rate}')
 
     additional_currency_details = {
         'foreign_currency': selected_currency,
         'home_currency': home_currency,
         'claim_amount': amount,
-        'total_amount': round(exchange_rate * amount, 2)
+        'total_amount': round_amount(exchange_rate * amount, home_currency)
     }
 
     return additional_currency_details

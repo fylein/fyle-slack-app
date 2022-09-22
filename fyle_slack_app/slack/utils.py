@@ -1,10 +1,11 @@
-from typing import List, Dict
+from typing import List, Dict, Union
 import enum
 # pylint: disable=import-error
-from forex_python.converter import CurrencyCodes
 
 from slack_sdk.errors import SlackApiError
 from slack_sdk.web import WebClient
+
+from babel.numbers import get_currency_precision, get_currency_symbol
 
 from fyle_slack_app.libs import assertions, http, utils, logger
 from fyle_slack_app.models import Team, User
@@ -46,18 +47,113 @@ def get_file_content_from_slack(url: str, bot_access_token: str) -> str:
     return file.content
 
 
-def get_currency_symbol(currency: str) -> str:
-    c = CurrencyCodes()
+def round_amount(amount: float, currency: str) -> float:
+    """    
+    `round_amount(10.5678, 'USD') -> 10.57`
 
-    try:
-        curr = c.get_symbol(currency)
-    except ValueError as error:
-        logger.error('Error fetching currency symbol of currency = %s', currency)
-        logger.error('Error -> %s', error)
+    `round_amount(10.5678, 'OMR') -> 10.568`
 
-    symbol = curr if curr is not None else currency
+    `round_amount(10.5678, 'JPY') -> 11`
 
-    return symbol
+    `round_amount(10.5678, 'CLF') -> 10.5678`
+
+    - Rounds the amount given to the appropriate number of decimal digits as specfied in the iso4217 standard.
+    - Throws `ValueError` if amount or currency is `None`
+
+    More info about iso4217 international standard for currencies - https://en.wikipedia.org/wiki/ISO_4217
+    """
+
+    if amount is None and currency is None:
+        raise ValueError('Error while rounding amount: Amount and Currency is None!')
+
+    if amount is None:
+        raise ValueError('Error while rounding amount: Amount is None!')
+
+    if currency is None:
+        raise ValueError('Error while rounding amount: Currency is None!')
+
+    # If given a currency that we could not find precision for, this function returns 2 as a default
+    precision = get_currency_precision(currency)
+
+    # Round fails for cases like 2.665 and 2.675 both returns 2.67 so adding the 1e-9 helps in handling the precision issues
+    # link https://docs.python.org/3/tutorial/floatingpoint.html#tut-fp-issues
+    rounded_amount = round(amount + 1e-9, precision)
+
+    return rounded_amount
+
+def format_currency(currency: str) -> str:
+    """
+    `format_currency('USD') -> '$'`
+
+    `format_currency('OMR') -> 'OMR '`
+
+    - Returns a formatted representation of a currency code following iso4217, to be used only for representational purposes with amount.
+    - If given a currency code for which a symbol is found, returns that symbol as is.
+    - If given a currency code for which a symbol is not found, returns the code with a space appended for better readability.
+    - Throws `ValueError` if currency is `None`
+
+    More info about iso4217 international standard for currencies - https://en.wikipedia.org/wiki/ISO_4217
+    """
+    if currency is None:
+        raise ValueError('Error while formatting currency: Currency is None!')
+
+    # If the currency doesnt have any symbol, the currency code is returned
+    currency_symbol = get_currency_symbol(currency)
+    currency_has_symbol = currency != currency_symbol
+
+    # Add a space to the currency, if it the currency doesnt have any symbol
+    # Example, if currency is OMR, for amount 100 this will end up displaying OMR 100 instead of OMR100
+    formatted_currency = currency_symbol if currency_has_symbol else currency_symbol + ' '
+    return formatted_currency
+
+
+def get_display_amount(amount: Union[str, int, float], currency: str) -> str:
+    """
+    `get_display_amount(10.56, 'USD') -> '$10.56'`
+
+    `get_display_amount(10.56, 'OMR') -> 'OMR 10.560'`
+
+    `get_display_amount(10.56, 'ISK') -> 'kr11'`
+
+    `get_display_amount(10.56, 'CLF', True) -> '10.5600'`
+
+    - Formats the amount given to the appropriate number of decimal digits as specfied in the iso4217 standard.
+    - Prepends a formatted representation of the currency code given to the amount.
+    - This function can handle negative amount.
+    - Throws `ValueError` if amount is `None` or is invalid.
+    - Throws `ValueError` if currency is `None`
+    
+    More info about iso4217 international standard for currencies - https://en.wikipedia.org/wiki/ISO_4217
+    """
+
+    if amount is None:
+        raise ValueError('Error while formatting amount: Amount is None!')
+
+    # Convert and clean the amount, if it is a string
+    if type(amount) == str:
+        cleaned_amount = amount.replace(',', '')
+        amount = float(cleaned_amount)
+
+    # Sign to add at the beginning, 
+    sign = '-' if amount < 0 else ''
+    amount = abs(amount)
+
+    # Gets the currency precision and symbol for currency specified
+    formatted_currency = format_currency(currency)
+    currency_precision = get_currency_precision(currency)
+
+    # Create a format string and round the amount to currency precision
+    format_string = '{:,.' + str(currency_precision) + 'f}'
+    
+    # Format fails for cases like 2.665 and 2.675 both returns 2.67 so adding the 1e-9 helps in handling the precision issues
+    # link https://docs.python.org/3/tutorial/floatingpoint.html#tut-fp-issues
+    formatted_amount = format_string.format(amount + 1e-9)
+    formatted_amount = f'{formatted_currency}{formatted_amount}'
+
+    # Finally, add the sign back to the formatted amount and return the result
+    formatted_amount = f'{sign}{formatted_amount}'
+
+    return formatted_amount
 
 def get_slack_latest_parent_message(user: User, slack_client: WebClient, thread_ts: str) -> Dict:
     message_history = slack_client.conversations_history(channel=user.slack_dm_channel_id, latest=thread_ts, inclusive=True, limit=1)

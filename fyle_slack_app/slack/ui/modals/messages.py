@@ -53,7 +53,7 @@ def get_report_expenses_dialog(user: User = None, report: Dict = None, private_m
 
 
 def get_report_section(report: Dict, report_url: str, private_metadata: str) -> List[Dict]:
-    report_currency_symbol = slack_utils.get_currency_symbol(report['currency'])
+    display_amount = slack_utils.get_display_amount(report['amount'], report['currency'])
 
     report_expenses_dialog = {
         'type': 'modal',
@@ -107,7 +107,7 @@ def get_report_section(report: Dict, report_url: str, private_metadata: str) -> 
                 'type': 'section',
                 'text': {
                     'type': 'mrkdwn',
-                    'text': ':page_facing_up: *Expenses ({}) for {} {}*'.format(report['num_expenses'], report_currency_symbol, round(report['amount'], 2))
+                    'text': ':page_facing_up: *Expenses ({}) for {}*'.format(report['num_expenses'], display_amount)
                 }
             }
         ]
@@ -138,12 +138,12 @@ def get_report_expenses_section(user: User, report_expenses: List[Dict]) -> List
             expense_initial_text = 'An'
 
         expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
-        expense_currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
+        display_amount = slack_utils.get_display_amount(expense['amount'], expense['currency'])
         expense_block_title = {
             'type': 'section',
             'text': {
                 'type': 'mrkdwn',
-                'text': '{} expense of :dollar: *<{}|{} {}>*'.format(expense_initial_text, expense_url, expense_currency_symbol, round(expense['amount'], 2))
+                'text': '{} expense of :dollar: *<{}|{}>*'.format(expense_initial_text, expense_url, display_amount)
             }
         }
         expense_block.append(expense_block_title)
