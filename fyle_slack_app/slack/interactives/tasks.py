@@ -28,8 +28,6 @@ def get_additional_currency_details(amount: int, home_currency: str, selected_cu
         except ValueError:
             amount = 0
 
-    logger.info(f'amount -> {amount} exchange_rate -> {exchange_rate}')
-
     additional_currency_details = {
         'foreign_currency': selected_currency,
         'home_currency': home_currency,

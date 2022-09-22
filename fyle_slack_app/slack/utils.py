@@ -131,6 +131,7 @@ def get_display_amount(amount: Union[str, int, float], currency: str) -> str:
 
     # Convert and clean the amount, if it is a string
     if type(amount) == str:
+        # An amount with '.' as the decimal separator and ',' as the thousand separator is expected for conversion to work properly
         cleaned_amount = amount.replace(',', '')
         amount = float(cleaned_amount)
 
