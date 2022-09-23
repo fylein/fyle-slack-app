@@ -60,8 +60,10 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     display_amount = slack_utils.get_display_amount(expense['amount'], expense['currency'])
     amount_details = '*Amount:*\n {}'.format(display_amount)
 
-    # If foreign currency exists, then show foreign amount and currency
-    if expense['foreign_currency'] is not None:
+    # If foreign currency and foreign amount exists, only then show foreign amount and currency
+    # This is done because we have some bad data where sometimes foreign amount is present but foreign currency is not and vice versa
+    # We can't say it is a foreign expense unless we have both
+    if expense['foreign_currency'] is not None and expense['foreign_amount'] is not None:
         display_foreign_amount = slack_utils.get_display_amount(expense['foreign_amount'], expense['foreign_currency'])
         amount_details = '{} \n ({})'.format(amount_details, display_foreign_amount)
 
