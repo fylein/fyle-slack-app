@@ -7,6 +7,7 @@ from fyle_slack_app.slack import utils as slack_utils
 def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
+    display_amount = slack_utils.get_display_amount(report['amount'], report['currency'])
 
     report_section_block = [
         {
@@ -35,7 +36,7 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
                 {
                     'type': 'mrkdwn',
                     'text': '*Amount:*\n {}'.format(
-                        slack_utils.get_display_amount(report['amount'], report['currency'])
+                        display_amount
                     )
                 },
                 {

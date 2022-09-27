@@ -97,13 +97,13 @@ def format_currency(currency: str) -> str:
     if currency is None:
         raise ValueError('Error while formatting currency: Currency is None!')
 
-    # If the currency doesnt have any symbol, the currency code is returned
+    # If the currency doesn't have any symbol, the currency code is returned
     currency_symbol = get_currency_symbol(currency)
-    currency_has_symbol = currency != currency_symbol
+    is_currency_having_symbol = currency != currency_symbol
 
     # Add a space to the currency, if it the currency doesnt have any symbol
     # Example, if currency is OMR, for amount 100 this will end up displaying OMR 100 instead of OMR100
-    formatted_currency = currency_symbol if currency_has_symbol else currency_symbol + ' '
+    formatted_currency = currency_symbol if is_currency_having_symbol else currency_symbol + ' '
     return formatted_currency
 
 
@@ -115,7 +115,7 @@ def get_display_amount(amount: Union[str, int, float], currency: str) -> str:
 
     `get_display_amount(10.56, 'ISK') -> 'kr11'`
 
-    `get_display_amount(10.56, 'CLF', True) -> '10.5600'`
+    `get_display_amount(10.56, 'CLF') -> 'CLF 10.5600'`
 
     - Formats the amount given to the appropriate number of decimal digits as specfied in the iso4217 standard.
     - Prepends a formatted representation of the currency code given to the amount.
