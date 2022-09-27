@@ -101,7 +101,7 @@ def format_currency(currency: str) -> str:
     currency_symbol = get_currency_symbol(currency)
     is_currency_having_symbol = currency != currency_symbol
 
-    # Add a space to the currency, if it the currency doesnt have any symbol
+    # Add a space to the currency, if it the currency doesn't have any symbol
     # Example, if currency is OMR, for amount 100 this will end up displaying OMR 100 instead of OMR100
     formatted_currency = currency_symbol if is_currency_having_symbol else currency_symbol + ' '
     return formatted_currency
