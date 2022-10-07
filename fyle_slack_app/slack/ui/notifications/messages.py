@@ -7,7 +7,7 @@ from fyle_slack_app.slack import utils as slack_utils
 def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
 
     readable_submitted_at = utils.get_formatted_datetime(report['last_submitted_at'], '%B %d, %Y')
-    report_currency_symbol = slack_utils.get_currency_symbol(report['currency'])
+    display_amount = slack_utils.get_display_amount(report['amount'], report['currency'])
 
     report_section_block = [
         {
@@ -35,9 +35,8 @@ def get_report_section_blocks(title_text: str, report: Dict) -> List[Dict]:
             'fields': [
                 {
                     'type': 'mrkdwn',
-                    'text': '*Amount:*\n {} {}'.format(
-                        report_currency_symbol,
-                        round(report['amount'], 2)
+                    'text': '*Amount:*\n {}'.format(
+                        display_amount
                     )
                 },
                 {
@@ -59,17 +58,13 @@ def get_expense_section_blocks(title_text: str, expense: Dict) -> List[Dict]:
     if sub_category is not None and category != sub_category:
         category = '{} / {}'.format(category, sub_category)
 
-    currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
-    amount = round(expense['amount'], 2)
-
-    amount_details = '*Amount:*\n {} {}'.format(currency_symbol, amount)
+    display_amount = slack_utils.get_display_amount(expense['amount'], expense['currency'])
+    amount_details = '*Amount:*\n {}'.format(display_amount)
 
     # If foreign currency exists, then show foreign amount and currency
     if expense['foreign_currency'] is not None:
-        foreign_currency_symbol = slack_utils.get_currency_symbol(expense['foreign_currency'])
-        foreign_amount = round(expense['foreign_amount'], 2)
-
-        amount_details = '{} \n ({} {})'.format(amount_details, foreign_currency_symbol, foreign_amount)
+        display_foreign_amount = slack_utils.get_display_amount(expense['foreign_amount'], expense['foreign_currency'])
+        amount_details = '{} \n ({})'.format(amount_details, display_foreign_amount)
 
     expense_section_block = [
         {
@@ -559,11 +554,10 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
 
 def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_url: str) -> List[Dict]:
 
-    currency_symbol = slack_utils.get_currency_symbol(expense['currency'])
+    display_amount = slack_utils.get_display_amount(expense['amount'], expense['currency'])
 
-    title_text = ':credit_card: A card expense of *{} {}* requires a :receipt: receipt. Please reply with a photo of your receipt in this thread!'.format(
-        currency_symbol,
-        round(expense['amount'], 2)
+    title_text = ':credit_card: A card expense of *{}* requires a :receipt: receipt. Please reply with a photo of your receipt in this thread!'.format(
+        display_amount
     )
 
     actions_block = {

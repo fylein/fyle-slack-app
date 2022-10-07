@@ -1,6 +1,7 @@
 from typing import Dict, List
 
 from fyle_slack_app.slack.ui.authorization import messages
+from fyle_slack_app.slack.utils import get_display_amount
 
 
 def get_pre_authorization_message(user_name: str, fyle_oauth_url: str) -> Dict:
@@ -19,13 +20,15 @@ def get_post_authorization_message() -> Dict:
     }
 
 
-def get_sent_back_reports_dashboard_view(reports: Dict, currency_symbol: str) -> List[Dict]:
+def get_sent_back_reports_dashboard_view(reports: Dict, home_currency: str) -> List[Dict]:
+    display_amount = get_display_amount(reports['total_amount'], home_currency)
+
     sent_back_reports_view = [
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":back: *Sent Back Reports - {} {} ({})*".format(currency_symbol, round(reports['total_amount'], 2), reports['count'])
+                "text": ":back: *Sent Back Reports - {} ({})*".format(display_amount, reports['count'])
             }
         },
         {
@@ -57,13 +60,15 @@ def get_sent_back_reports_dashboard_view(reports: Dict, currency_symbol: str) ->
     return sent_back_reports_view
 
 
-def get_incomplete_expenses_dashboard_view(expenses: Dict, currency_symbol: str):
+def get_incomplete_expenses_dashboard_view(expenses: Dict, home_currency: str):
+    display_amount = get_display_amount(expenses['total_amount'], home_currency)
+
     incomplete_expenses_view = [
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":x: *Incomplete Expenses - {} {} ({})*".format(currency_symbol, round(expenses['total_amount'], 2), expenses['count'])
+                "text": ":x: *Incomplete Expenses - {} ({})*".format(display_amount, expenses['count'])
             }
         },
         {
@@ -95,13 +100,15 @@ def get_incomplete_expenses_dashboard_view(expenses: Dict, currency_symbol: str)
     return incomplete_expenses_view
 
 
-def get_unreported_expenses_dashboard_view(expenses: Dict, currency_symbol: str):
+def get_unreported_expenses_dashboard_view(expenses: Dict, home_currency: str):
+    display_amount = get_display_amount(expenses['total_amount'], home_currency)
+
     unreported_expenses_view = [
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":interrobang: *Unreported Expenses - {} {} ({})*".format(currency_symbol, round(expenses['total_amount'], 2), expenses['count'])
+                "text": ":interrobang: *Unreported Expenses - {} ({})*".format(display_amount, expenses['count'])
             }
         },
         {
@@ -133,13 +140,15 @@ def get_unreported_expenses_dashboard_view(expenses: Dict, currency_symbol: str)
     return unreported_expenses_view
 
 
-def get_draft_reports_dashboard_view(reports: Dict, currency_symbol: str):
+def get_draft_reports_dashboard_view(reports: Dict, home_currency: str):
+    display_amount = get_display_amount(reports['total_amount'], home_currency)
+
     draft_reports_view = [
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":open_file_folder: *Draft Reports - {} {} ({})*".format(currency_symbol, round(reports['total_amount'], 2), reports['count'])
+                "text": ":open_file_folder: *Draft Reports - {} ({})*".format(display_amount, reports['count'])
             }
         },
         {
@@ -176,7 +185,7 @@ def get_dashboard_view(
     incomplete_expenses: Dict,
     unreported_expenses: Dict,
     draft_reports: Dict,
-    currency_symbol: str,
+    home_currency: str,
 ) -> Dict:
     dashboard_view = {
         "type": "home",
@@ -201,19 +210,19 @@ def get_dashboard_view(
         ]
     }
     if sent_back_reports is not None:
-        sent_back_reports_view = get_sent_back_reports_dashboard_view(sent_back_reports, currency_symbol)
+        sent_back_reports_view = get_sent_back_reports_dashboard_view(sent_back_reports, home_currency)
         dashboard_view['blocks'].extend(sent_back_reports_view)
 
     if incomplete_expenses is not None:
-        incomplete_expenses_view = get_incomplete_expenses_dashboard_view(incomplete_expenses, currency_symbol)
+        incomplete_expenses_view = get_incomplete_expenses_dashboard_view(incomplete_expenses, home_currency)
         dashboard_view['blocks'].extend(incomplete_expenses_view)
 
     if unreported_expenses is not None:
-        unreported_expenses_view = get_unreported_expenses_dashboard_view(unreported_expenses, currency_symbol)
+        unreported_expenses_view = get_unreported_expenses_dashboard_view(unreported_expenses, home_currency)
         dashboard_view['blocks'].extend(unreported_expenses_view)
 
     if draft_reports is not None:
-        draft_reports_view = get_draft_reports_dashboard_view(draft_reports, currency_symbol)
+        draft_reports_view = get_draft_reports_dashboard_view(draft_reports, home_currency)
         dashboard_view['blocks'].extend(draft_reports_view)
 
     return dashboard_view

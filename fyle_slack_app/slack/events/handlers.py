@@ -91,7 +91,6 @@ class SlackEventHandler:
             platform = get_fyle_sdk_connection(user.fyle_refresh_token)
             spender_profile = get_fyle_profile(user.fyle_refresh_token)
             home_currency = spender_profile['org']['currency']
-            currency_symbol = slack_utils.get_currency_symbol(home_currency)
             sent_back_reports, draft_reports = self.get_sent_back_and_draft_reports(platform, user_id)
             unreported_expenses, incomplete_expenses = self.get_unreported_and_incomplete_expenses(platform, user_id)
 
@@ -100,7 +99,7 @@ class SlackEventHandler:
                 incomplete_expenses=incomplete_expenses,
                 unreported_expenses=unreported_expenses,
                 draft_reports=draft_reports,
-                currency_symbol=currency_symbol
+                home_currency=home_currency
             )
         else:
             user_info = slack_client.users_info(user=user_id)
@@ -148,7 +147,7 @@ class SlackEventHandler:
         sent_back_reports = list(filter(lambda report: report['state'] == 'APPROVER_INQUIRY', sent_back_and_draft_reports['data']))
         if len(sent_back_reports) > 0:
             url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
-            total_amount = round(sum(report['amount'] for report in sent_back_reports), 2)
+            total_amount = sum(report['amount'] for report in sent_back_reports)
             sent_back_reports = {
                 'total_amount': total_amount,
                 'count': len(sent_back_reports),
@@ -160,7 +159,7 @@ class SlackEventHandler:
         draft_reports = list(filter(lambda report: report['state'] == 'DRAFT', sent_back_and_draft_reports['data']))
         if len(draft_reports) > 0:
             url = '{}/app/main/#/my_reports/'.format(settings.FYLE_APP_URL)
-            total_amount = round(sum(report['amount'] for report in draft_reports), 2)
+            total_amount = sum(report['amount'] for report in draft_reports)
             draft_reports = {
                 'total_amount': total_amount,
                 'count': len(draft_reports),
@@ -188,7 +187,7 @@ class SlackEventHandler:
 
         if len(incomplete_expenses) > 0:
             url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
-            total_amount = round(sum(expense['amount'] for expense in incomplete_expenses), 2)
+            total_amount = sum(filter(None, (expense['amount'] for expense in incomplete_expenses)))
             incomplete_expenses = {
                 'total_amount': total_amount,
                 'count': len(incomplete_expenses),
@@ -201,7 +200,7 @@ class SlackEventHandler:
 
         if len(unreported_expenses) > 0:
             url = '{}/app/main/#/my_expenses/'.format(settings.FYLE_APP_URL)
-            total_amount = round(sum(expense['amount'] for expense in unreported_expenses), 2)
+            total_amount = sum(expense['amount'] for expense in unreported_expenses)
             unreported_expenses = {
                 'total_amount': total_amount,
                 'count': len(unreported_expenses),
