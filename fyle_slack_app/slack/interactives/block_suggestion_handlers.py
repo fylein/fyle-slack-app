@@ -310,6 +310,8 @@ class BlockSuggestionHandler:
                 # In this case, this user entered text will get stored as a new merchant in merchants table
                 suggested_merchants = [merchant_value_entered]
 
+        # Trimming merchant options to have an upper limit of 100 options
+        suggested_merchants = suggested_merchants[0:100]
         for merchant in suggested_merchants:
             option = {
                 'text': {
