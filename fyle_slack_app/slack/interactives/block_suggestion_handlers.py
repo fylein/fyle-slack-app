@@ -294,7 +294,6 @@ class BlockSuggestionHandler:
 
         # Fetch all the options (choices) from Merchant expense field
         merchants_expense_field = fyle_expense.get_merchants_expense_field()
-        
         if merchants_expense_field['data'] and len(merchants_expense_field['data'][0]['options']) > 0:
             suggested_merchants = merchants_expense_field['data'][0]['options']
 
