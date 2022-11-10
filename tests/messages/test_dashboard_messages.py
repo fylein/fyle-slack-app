@@ -9,21 +9,23 @@ class TestAuthorizationMessages:
 
     def test_pre_authorization_message(self):
         pre_authorization_message = authorization.messages.get_pre_authorization_message(MOCK_USERNAME, FYLE_STOPLIGHT_URL)
-        assert type(pre_authorization_message) is list
+        assert pre_authorization_message[0]['text']['text'] == 'Hey there *{}* :wave:'.format(MOCK_USERNAME)
 
     def test_post_authorization_message(self):
         post_authorization_message = authorization.messages.get_post_authorization_message()
-        assert type(post_authorization_message) is list
+        assert post_authorization_message[0]['text']['text'] == 'Yaay :tada: you\'ve successfully linked *Fyle* to Slack :confetti_ball:  \n\n' 
 
 class TestDashboardMessages:
 
     def test_get_pre_authorization_message(self):
-        pre_authorization_message = authorization.messages.get_pre_authorization_message(MOCK_USERNAME, MOCK_FYLE_OAUTH_URL)
-        assert 'type' in pre_authorization_message[0]
+        pre_authorization_message = dashboard.messages.get_pre_authorization_message(MOCK_USERNAME, MOCK_FYLE_OAUTH_URL)
+        block = pre_authorization_message['blocks']
+        assert block[0]['text']['text'] == 'Hey there *{}* :wave:'.format(MOCK_USERNAME)
 
     def test_get_post_authorization_message(self):
-        post_authorization_message = authorization.messages.get_post_authorization_message()
-        assert type(post_authorization_message) is list
+        post_authorization_message = dashboard.messages.get_post_authorization_message()
+        block = post_authorization_message['blocks']
+        assert block[0]['text']['text'] == 'Yaay :tada: you\'ve successfully linked *Fyle* to Slack :confetti_ball:  \n\n' 
 
     def test_get_sent_back_reports_dashboard_view(self):
         mock_reports = {
@@ -32,7 +34,7 @@ class TestDashboardMessages:
             'url': MOCK_FYLE_OAUTH_URL
         }
         sent_back_reports_view = dashboard.messages.get_sent_back_reports_dashboard_view(mock_reports, 'INR')
-        assert type(sent_back_reports_view) is list
+        assert sent_back_reports_view[2]['elements'][0]['url'] == MOCK_FYLE_OAUTH_URL
 
     def test_get_incomplete_expenses_dashboard_view(self):
         mock_expenses = {
@@ -41,7 +43,7 @@ class TestDashboardMessages:
             'url': MOCK_FYLE_OAUTH_URL
         }
         incomplete_expenses_view = dashboard.messages.get_incomplete_expenses_dashboard_view(mock_expenses, 'INR')
-        assert type(incomplete_expenses_view) is list
+        assert incomplete_expenses_view[2]['elements'][0]['url'] == MOCK_FYLE_OAUTH_URL
 
     def test_get_unreported_expenses_dashboard_view(self):
         mock_expenses = {
@@ -50,7 +52,7 @@ class TestDashboardMessages:
             'url': MOCK_FYLE_OAUTH_URL
         }
         unreported_expenses_view = dashboard.messages.get_unreported_expenses_dashboard_view(mock_expenses, 'INR')
-        assert type(unreported_expenses_view) is list
+        assert unreported_expenses_view[2]['elements'][0]['url'] == MOCK_FYLE_OAUTH_URL
 
     def test_get_draft_reports_dashboard_view(self):
         mock_expenses = {
@@ -59,7 +61,7 @@ class TestDashboardMessages:
             'url': MOCK_FYLE_OAUTH_URL
         }
         draft_reports_view = dashboard.messages.get_draft_reports_dashboard_view(mock_expenses, 'INR')
-        assert type(draft_reports_view) is list
+        assert draft_reports_view[2]['elements'][0]['url'] == MOCK_FYLE_OAUTH_URL
 
     def test_get_dashboard_view(self):
         mock_sent_back_reports = {
@@ -90,4 +92,4 @@ class TestDashboardMessages:
             mock_draft_reports,
             mock_home_currency
         )
-        assert type(dashboard_view['blocks']) is list
+        assert dashboard_view['blocks'][0]['text']['text'] == "👋 *Hey there I'm Fyle Bot. Welcome to Fyle Dashboard!*"
