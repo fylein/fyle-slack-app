@@ -136,3 +136,4 @@ Thumbs.db
 nginx.conf
 .idea/
 *.pyc
+test-reports/
