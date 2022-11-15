@@ -89,8 +89,8 @@ def get_fyle_resource_url(fyle_refresh_token: str, resource: Dict, resource_type
     fyle_app_url = settings.FYLE_APP_URL
 
     RESOURCE_URL_MAPPING = {
-        'REPORT': '{}/app/main/#/enterprise/reports'.format(fyle_app_url),
-        'EXPENSE': '{}/app/main/#/enterprise/view_expense'.format(fyle_app_url)
+        'REPORT': '{}/app/main/#/reports'.format(fyle_app_url),
+        'EXPENSE': '{}/app/main/#/view_expense'.format(fyle_app_url)
     }
 
     resource_base_url = RESOURCE_URL_MAPPING[resource_type]
