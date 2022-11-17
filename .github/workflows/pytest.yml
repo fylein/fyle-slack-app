@@ -1,0 +1,70 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    types: [assigned, opened, synchronize, reopened]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    environment: CI Environment
+    steps:
+      - uses: actions/checkout@v2
+      - uses: satackey/action-docker-layer-caching@v0.0.11
+        continue-on-error: true
+      - name: Bring up Services and test for token health
+        run: |
+          docker-compose -f docker-compose-pipeline.yml build
+          docker-compose -f docker-compose-pipeline.yml up -d
+          docker-compose -f docker-compose-pipeline.yml exec -T api pytest tests/ --cov=fyle_slack_app/ --junit-xml=test-reports/report.xml --cov-report=term-missing | tee pytest-coverage.txt
+          echo "STATUS=$(cat pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
+          echo "FAILED=$(cat test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
+        env:
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
+          FYLE_CLIENT_ID: ${{ secrets.FYLE_CLIENT_ID }}
+          FYLE_CLIENT_SECRET: ${{ secrets.FYLE_CLIENT_SECRET }}
+          FYLE_ACCOUNTS_URL: ${{ secrets.FYLE_ACCOUNTS_URL }}
+          FYLE_APP_URL: ${{ secrets.FYLE_APP_URL }}
+          FYLE_BRANCHIO_BASE_URI: ${{ secrets.FYLE_BRANCHIO_BASE_URI }}
+          FYLE_STOPLIGHT_URL: ${{ secrets.FYLE_STOPLIGHT_URL }}
+          FYLE_TOKEN_URI: ${{ secrets.FYLE_TOKEN_URI }}
+          FYLE_REFRESH_TOKEN: ${{ secrets.FYLE_REFRESH_TOKEN }}
+          FYLE_SERVER_URL : ${{ secrets.FYLE_SERVER_URL }}
+          SLACK_CLIENT_ID: ${{ secrets.SLACK_CLIENT_ID }}
+          SLACK_CLIENT_SECRET: ${{ secrets.SLACK_CLIENT_SECRET }}
+          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
+          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
+          SLACK_APP_ID: ${{ secrets.SLACK_APP_ID }}
+          SLACK_SERVICE_BASE_URL: ${{ secrets.SLACK_SERVICE_BASE_URL }}
+          FYLEHQ_SLACK_URL: ${{ secrets.FYLEHQ_SLACK_URL }}
+          FYLE_SLACK_APP_SEGMENT_KEY: ${{ secrets.FYLE_SLACK_APP_SEGMENT_KEY }}
+          ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_PORT: ${{ secrets.DB_PORT }}
+          DEBUG: ${{ secrets.DEBUG }}
+      - name: Pytest coverage comment
+        uses: MishaKav/pytest-coverage-comment@main
+        if: ${{ always() && github.ref != 'refs/heads/master' }}
+        with:
+          create-new-comment: true
+          pytest-coverage-path: ./pytest-coverage.txt
+          junitxml-path: ./test-reports/report.xml
+      - name: Stop Services
+        run: docker compose -f docker-compose-pipeline.yml down
+      - name: Evaluate Coverage
+        if: ${{ (env.STATUS == 'FAIL') || (env.FAILED > 0) }}
+        run: exit 1
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        if: ${{ always() && github.ref != 'refs/heads/master' }}
+        env:
+          SLACK_COLOR: ${{ job.status }}
+          SLACK_MESSAGE: pytest job status - ${{ job.status }}
+          SLACK_TITLE: Pytest Run Stats
+          SLACK_ICON_EMOJI: ":terminator:"
+          SLACK_USERNAME: Gandalf
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_FOOTER: ''
