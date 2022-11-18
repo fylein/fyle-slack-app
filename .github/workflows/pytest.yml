@@ -53,7 +53,7 @@ jobs:
           pytest-coverage-path: ./pytest-coverage.txt
           junitxml-path: ./test-reports/report.xml
       - name: Stop Services
-        run: docker compose -f docker-compose-pipeline.yml down
+        run: docker compose -f docker-compose.yaml down
       - name: Evaluate Coverage
         if: ${{ (env.STATUS == 'FAIL') || (env.FAILED > 0) }}
         run: exit 1
