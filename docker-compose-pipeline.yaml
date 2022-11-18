@@ -4,8 +4,6 @@ services:
   slack-app:
     build: 
       context: ./
-      args: 
-        CI: ENABLED
     entrypoint: bash ./run.sh
     restart: unless-stopped
     volumes:
