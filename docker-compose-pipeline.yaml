@@ -11,11 +11,12 @@ services:
     volumes:
       - ./:/fyle_slack_app
     ports:
-      - 8008:8000
+      - 8007:8000
     depends_on:
       - db
     environment: 
       SECRET_KEY: ${SECRET_KEY}
+      DATABASE_URL: postgres://postgres:postgres@db:5432/slack_db
       FYLE_CLIENT_ID: ${FYLE_CLIENT_ID}
       FYLE_CLIENT_SECRET: ${FYLE_CLIENT_SECRET}
       FYLE_ACCOUNTS_URL: ${FYLE_ACCOUNTS_URL}
@@ -33,23 +34,23 @@ services:
       SLACK_SERVICE_BASE_URL: ${SLACK_SERVICE_BASE_URL}
       FYLEHQ_SLACK_URL: 'fakefylehqurl'
       FYLE_SLACK_APP_SEGMENT_KEY: ${FYLE_SLACK_APP_SEGMENT_KEY}
-      DB_NAME: ${DB_NAME}
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
+      DB_NAME: slack_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_HOST: db
+      DB_PORT: 5432
       DEBUG: ${DEBUG}
       ALLOWED_HOSTS: ${ALLOWED_HOSTS}
 
   db:
     image: "postgres:latest"
     environment: 
-      POSTGRES_DB: dummy
+      POSTGRES_DB: slack_db;
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
       - data:/var/lib/postgresql/data/
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 volumes: 
-    data:
     slack-app:
+    data:
