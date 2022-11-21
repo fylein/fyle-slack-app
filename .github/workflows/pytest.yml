@@ -51,7 +51,7 @@ jobs:
         with:
           create-new-comment: true
           pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: ./test-reports/report.xml
+          junitxml-path: ../test-reports/report.xml
       - name: Stop Services
         run: docker compose -f docker-compose-pipeline.yaml down
       - name: Evaluate Coverage
