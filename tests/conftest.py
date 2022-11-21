@@ -81,8 +81,6 @@ def test_connection(db):
 @pytest.fixture()
 def report_approval_user(request, mocker, test_connection):
     mocker_1 = mocker.patch('fyle_slack_app.fyle.utils.get_fyle_sdk_connection', return_value = test_connection)
-    mocker_1.__enter__()
-
     user = mock.Mock(spec = User)
     user.fyle_refresh_token = 'dummy-refresh-token'
     return user
