@@ -16,7 +16,7 @@ jobs:
         run: |
           docker-compose -f docker-compose-pipeline.yaml build
           docker-compose -f docker-compose-pipeline.yaml up -d
-          docker-compose -f docker-compose-pipeline.yaml exec -T slack-app pytest tests/ --cov --junit-xml=test-reports/report.xml --cov-report=term-missing | tee pytest-coverage.txt
+          docker-compose -f docker-compose-pipeline.yaml exec -T slack-app pytest tests/ --cov --junitxml="test-reports/report.xml" --cov-report=term-missing | tee pytest-coverage.txt
           echo "STATUS=$(cat ./pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat ./test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
         env:
@@ -51,7 +51,7 @@ jobs:
         with:
           create-new-comment: true
           pytest-coverage-path: ./pytest-coverage.txt
-          junitxml-path: test-reports/report.xml
+          junitxml-path: ./test-reports/report.xml
       - name: Stop Services
         run: docker compose -f docker-compose-pipeline.yaml down
       - name: Evaluate Coverage
