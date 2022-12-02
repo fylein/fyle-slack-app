@@ -16,7 +16,7 @@ jobs:
         run: |
           docker-compose -f docker-compose-pipeline.yaml build
           docker-compose -f docker-compose-pipeline.yaml up -d
-          docker-compose -f docker-compose-pipeline.yaml exec -T slack-app pytest tests/ --cov --junitxml="test-reports/report.xml" --cov-report=term-missing | tee pytest-coverage.txt
+          docker-compose -f docker-compose-pipeline.yaml exec -T slack-app pytest --cov=fyle_slack_app/ tests/ --junitxml="test-reports/report.xml" --cov-report=term-missing | tee pytest-coverage.txt
           echo "STATUS=$(cat ./pytest-coverage.txt | grep 'Required test' | awk '{ print $1 }')" >> $GITHUB_ENV
           echo "FAILED=$(cat ./test-reports/report.xml | awk -F'=' '{print $5}' | awk -F' ' '{gsub(/"/, "", $1); print $1}')" >> $GITHUB_ENV
         env:
@@ -46,6 +46,8 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DEBUG: ${{ secrets.DEBUG }}
       - name: Pytest coverage comment
+        on:
+          pull_request:
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}
         with:
