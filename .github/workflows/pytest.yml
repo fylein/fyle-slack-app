@@ -46,8 +46,6 @@ jobs:
           DB_PORT: ${{ secrets.DB_PORT }}
           DEBUG: ${{ secrets.DEBUG }}
       - name: Pytest coverage comment
-        on:
-          pull_request:
         uses: MishaKav/pytest-coverage-comment@main
         if: ${{ always() && github.ref != 'refs/heads/master' }}
         with:
