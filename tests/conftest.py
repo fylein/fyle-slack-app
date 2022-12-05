@@ -12,6 +12,14 @@ from fyle_slack_app.models import User
 
 FYLE_STOPLIGHT_URL = os.environ.get('FYLE_STOPLIGHT_URL')
 
+@pytest.fixture(autouse=True)
+def use_dummy_cache_backend(settings):
+    settings.CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.dummy.DummyCache",
+        }
+    }
+
 
 def http_request(method: str, url: str) -> Dict:
     headers = {
