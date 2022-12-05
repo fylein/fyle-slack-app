@@ -3,8 +3,8 @@ FROM python:3.8-slim
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update && \
-    apt-get install -y libpq-dev gcc python3.8-dev
+RUN apt-get update && apt-get -y install libpq-dev gcc && apt-get install git -y --no-install-recommends
+    
 
 #================================================================
 # pip install required modules

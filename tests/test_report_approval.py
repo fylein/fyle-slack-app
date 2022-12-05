@@ -52,7 +52,14 @@ def test_report_approve(user_feedback, notification_messages, fyle_utils, slack_
     mock_report_id = 'mock-report-id'
     mock_team_id = 'mock-team-id'
     mock_message_timestamp = 'mock-message-timestamp'
-    mock_notification_message = 'mock-notification-message'
+    mock_notification_message = [{
+        'type': 'section',
+        'text': {
+            'type': 'mrkdwn',
+            'text': 'Hey there'
+        }
+    }] # List[Dict]
+
     mock_is_approved_from_modal = 'mock-is-approved-from-modal'
     report_approved_message = 'Expense report approved :rocket:'
 

@@ -137,3 +137,5 @@ nginx.conf
 .idea/
 *.pyc
 test-reports/
+ngrok.log
+pytest-coverage.txt
