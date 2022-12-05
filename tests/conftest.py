@@ -92,4 +92,3 @@ def report_approval_user(request, mocker, test_connection):
     user = mock.Mock(spec = User)
     user.fyle_refresh_token = 'dummy-refresh-token'
     return user
-    
