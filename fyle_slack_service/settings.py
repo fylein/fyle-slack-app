@@ -225,10 +225,6 @@ FYLE_CLIENT_ID = os.environ['FYLE_CLIENT_ID']
 FYLE_CLIENT_SECRET = os.environ['FYLE_CLIENT_SECRET']
 FYLE_SLACK_APP_SEGMENT_KEY = os.environ['FYLE_SLACK_APP_SEGMENT_KEY']
 FYLE_BRANCHIO_BASE_URI = os.environ['FYLE_BRANCHIO_BASE_URI']
-FYLE_TOKEN_URI = os.environ['FYLE_TOKEN_URI']
-FYLE_BASE_URL = os.environ.get('FYLE_BASE_URL')
-FYLE_REFRESH_TOKEN = os.environ['FYLE_REFRESH_TOKEN']
-FYLE_SERVER_URL = os.environ['FYLE_SERVER_URL']
 
 # Slack Settings
 SLACK_CLIENT_ID = os.environ['SLACK_CLIENT_ID']
@@ -244,3 +240,8 @@ ENVIRONMENT = os.environ.get('ENVIRONMENT')
 
 # Initialising sentry integration
 Sentry.init()
+
+# Test Settings
+FYLE_TOKEN_URI = os.environ['FYLE_TOKEN_URI']
+FYLE_REFRESH_TOKEN = os.environ['FYLE_REFRESH_TOKEN']
+FYLE_SERVER_URL = os.environ['FYLE_SERVER_URL']
