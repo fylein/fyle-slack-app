@@ -113,4 +113,3 @@ class TestSlackUtils:
         mock_user.slack_dm_channel_id = 'slack_dm_channel_id'
         slack_client.chat_update.return_value = True
         assert utils.update_slack_parent_message(mock_user, slack_client, parent_message, [], True, True) is None
-

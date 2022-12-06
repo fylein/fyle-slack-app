@@ -241,4 +241,3 @@ class TestNotifications:
         }
         event_data = FyleNotificationView.track_notification('event_name', mock_user, resource_type, resource)
         assert all((rhs.get(key) == value for key, value in event_data.items()))
-    
