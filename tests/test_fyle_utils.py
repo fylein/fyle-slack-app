@@ -5,6 +5,8 @@ from requests import Response
 import mock
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
+from fyle_slack_app.models import User
+from fyle_slack_app.fyle.corporate_cards.views import FyleCorporateCard
 
 class TestUtils:
     def test_get_fyle_sdk_connection(self, mocker, db):
@@ -145,3 +147,21 @@ class TestUtils:
         FAKE_UPLOAD_URL, FAKE_FILE_CONTENT , CONTENT_TYPE = 'https://fake-url.com', 'fake-file-content', 'json'
         response = fyle_utils.upload_file_to_s3(FAKE_UPLOAD_URL, FAKE_FILE_CONTENT , CONTENT_TYPE)
         assert response.status_code == 200
+
+class TestFyleCorporateCard:
+    
+    def test_get_corporate_card_by_id(self, test_connection, mocker):
+        corporate_card_id = 'fake-corporate-card-id'
+        response = {
+            'count': 1,
+            'data' : 'data'
+        }
+        mocker.patch('fyle_slack_app.fyle.utils.get_fyle_sdk_connection', return_value = test_connection)
+        mocker.patch('fyle.platform.platform.v1beta.spender.corporate_cards.list', 
+            return_value = response
+        )
+        mock_user = mock.Mock(spec = User)
+        mock_user.refresh_token = 'refresh-token'
+        test_connection = FyleCorporateCard(mock_user)
+        corporate_card = test_connection.get_corporate_card_by_id(corporate_card_id)
+        assert corporate_card == 'data'

@@ -8,7 +8,7 @@ from fyle_slack_app.models import Team, User
 from fyle_slack_app.libs.utils import encode_state, decode_state
 from fyle_slack_app.slack.authorization.views import SlackAuthorization
 from fyle_slack_app.fyle.authorization.views import FyleAuthorization
-
+from slack_sdk.web.client import WebClient
 
 @mock.patch('fyle_slack_app.slack.authorization.views.utils')
 @mock.patch('fyle_slack_app.slack.authorization.views.Team')
@@ -169,3 +169,56 @@ def test_fyle_authorization(create_notification_subscription, track_fyle_authori
 
     track_fyle_authorization.assert_called_once()
     track_fyle_authorization.assert_called_with(mock_user, mock_fyle_profile)
+
+@mock.patch('fyle_slack_app.fyle.authorization.views.utils')
+@mock.patch('fyle_slack_app.fyle.authorization.views.fyle_utils')
+@mock.patch('fyle_slack_app.slack.utils.get_slack_user_dm_channel_id')
+@mock.patch('fyle_slack_app.fyle.authorization.views.WebClient')
+@mock.patch('fyle_slack_app.fyle.authorization.views.transaction')
+@mock.patch.object(FyleAuthorization, 'create_user')
+def test_fyle_authorization2(create_user, transaction, slack_client, slack_user_dm_channel_id, fyle_utils, utils, mock_fyle):
+
+    state_params = {
+        'team_id': 'T12345',
+        'user_id': 'U12345'
+    }
+
+    b64_encoded_state = encode_state(state_params)
+
+    # Create a request object to send to view for testing
+    request = RequestFactory().get('fyle/authorization')
+    mock_fyle_secret_code = 'secret-fyle-code'
+    request.GET = {
+        'code': mock_fyle_secret_code,
+        'state': b64_encoded_state,
+        'error': True
+    }
+
+    # Returns next value each time get_or_none is called
+    # in function which is to be tested
+    mock_team = mock.Mock(spec=Team)
+    utils.get_or_none.side_effect = [mock_team, None, None]
+
+    utils.decode_state = decode_state
+
+    mock_slack_user_dm_channel_id = 'UDM12345'
+    slack_user_dm_channel_id.return_value = mock_slack_user_dm_channel_id
+
+    # Mocking django transaction block
+    transaction.atomic.return_value.__enter__.return_value = True
+
+    # Mock Fyle utils methods
+    mock_fyle_refresh_token = 'fyle-refresh-token'
+    fyle_utils.get_fyle_refresh_token.return_value = mock_fyle_refresh_token
+
+    mock_fyle_profile = mock_fyle.spender.my_profile.get()['data']
+    fyle_utils.get_fyle_profile.return_value = mock_fyle_profile
+
+    mock_user = mock.Mock(spec=User)
+    create_user.return_value = mock_user
+
+    # Call function to test
+    response = FyleAuthorization.as_view()(request)
+
+    # Checking response type
+    assert isinstance(response, HttpResponseRedirect)

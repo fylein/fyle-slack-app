@@ -10,6 +10,7 @@ from slack_sdk.web import WebClient
 from fyle_slack_app.models import NotificationPreference, User, UserSubscriptionDetail
 from fyle_slack_app.models.notification_preferences import NotificationType
 from fyle_slack_app.fyle.notifications.views import FyleFylerNotification, FyleApproverNotification, FyleNotificationView
+from fyle_slack_app.fyle.notifications.views import FyleNotificationView
 
 # This is needed to parameterize the tests
 FYLER_NOTIFICATION_TYPES = [
@@ -187,3 +188,56 @@ def test_approver_notifications(track_notification, fyle_utils, slack_utils, use
     mock_slack_client.chat_postMessage.assert_called()
 
     track_notification.assert_called()
+
+
+class TestNotifications:
+    def test_get_report_tracking_data(self):
+        mock_user = mock.MagicMock(spec = User)
+        mock_user.slack_user_id = 'slack_user_id'
+        mock_user.fyle_user_id = 'fyle_user_id'
+        mock_user.email = 'email@gmail.com'
+        mock_user.slack_team.id = 'slack_team_id'
+        mock_user.slack_team.name = 'slack_team_name'
+        report_data = {
+            'id': 'id', 
+            'org_id':'org_id'
+        }
+        rhs = {
+            'asset': 'SLACK_APP',
+            'slack_user_id': 'slack_user_id',
+            'fyle_user_id': 'fyle_user_id',
+            'email': 'email@gmail.com',
+            'slack_team_id': 'slack_team_id',
+            'slack_team_name': 'slack_team_name',
+            'report_id': report_data['id'] , 
+            'org_id': report_data['org_id']
+        }
+        event_data = FyleNotificationView.get_report_tracking_data(mock_user, report_data)
+        assert all((rhs.get(key) == value for key, value in event_data.items()))
+
+
+    def test_track_notification(self, mocker):
+        resource_type = 'EXPENSE'
+        mock_user = mock.MagicMock(spec = User)
+        mock_user.slack_user_id = 'slack_user_id'
+        mock_user.fyle_user_id = 'fyle_user_id'
+        mock_user.email = 'email@gmail.com'
+        mock_user.slack_team.id = 'slack_team_id'
+        mock_user.slack_team.name = 'slack_team_name'
+
+        resource = {
+            'id': 'id',
+            'org_id' : 'org_id' 
+        }
+        rhs = {
+            'asset': 'SLACK_APP',
+            'slack_user_id': 'slack_user_id',
+            'fyle_user_id': 'fyle_user_id',
+            'email': 'email@gmail.com',
+            'slack_team_id': 'slack_team_id',
+            'slack_team_name': 'slack_team_name',
+            'expense_id': resource['id'] , 
+            'org_id': resource['org_id']
+        }
+        event_data = FyleNotificationView.track_notification('event_name', mock_user, resource_type, resource)
+        assert all((rhs.get(key) == value for key, value in event_data.items()))

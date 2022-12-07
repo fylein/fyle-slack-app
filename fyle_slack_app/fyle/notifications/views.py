@@ -108,6 +108,7 @@ class FyleNotificationView(View):
         tracking.identify_user(user.email)
 
         tracking.track_event(user.email, event_name, event_data)
+        return event_data
 
 
 class FyleFylerNotification(FyleNotificationView):
