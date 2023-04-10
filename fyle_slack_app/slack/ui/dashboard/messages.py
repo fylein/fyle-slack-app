@@ -108,14 +108,14 @@ def get_unreported_expenses_dashboard_view(expenses: Dict, home_currency: str):
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": ":interrobang: *Unreported Expenses - {} ({})*".format(display_amount, expenses['count'])
+                "text": ":interrobang: *Complete Expenses - {} ({})*".format(display_amount, expenses['count'])
             }
         },
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": "View all your unreported expenses for approval."
+                "text": "View all your complete expenses for approval."
             }
         },
         {
@@ -129,7 +129,7 @@ def get_unreported_expenses_dashboard_view(expenses: Dict, home_currency: str):
                     },
                     "url": expenses['url'],
                     "action_id": "unreported_expenses_viewed_in_fyle",
-                    "value": 'Unreported Expenses Viewed In Fyle'
+                    "value": 'Complete Expenses Viewed In Fyle'
                 }
             ]
         },
