@@ -242,6 +242,6 @@ ENVIRONMENT = os.environ.get('ENVIRONMENT')
 Sentry.init()
 
 # Test Settings
-FYLE_TOKEN_URI = os.environ['FYLE_TOKEN_URI']
-FYLE_REFRESH_TOKEN = os.environ['FYLE_REFRESH_TOKEN']
-FYLE_SERVER_URL = os.environ['FYLE_SERVER_URL']
+FYLE_TOKEN_URI = os.environ.get('FYLE_TOKEN_URI', None)
+FYLE_REFRESH_TOKEN = os.environ.get('FYLE_REFRESH_TOKEN', None)
+FYLE_SERVER_URL = os.environ.get('FYLE_SERVER_URL', None)
