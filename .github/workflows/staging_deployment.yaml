@@ -13,15 +13,20 @@ jobs:
     runs-on: ubuntu-latest
     environment: Staging
     steps:
-      - uses: actions/checkout@v2
-      - uses: satackey/action-docker-layer-caching@v0.0.11
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Docker Layer Caching
+        uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
-      - name: push to dockerhub
+      
+      - name: Push to Docker Hub
         uses: fylein/docker-release-action@master
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
           IMAGE_NAME: fyle_slack-app
+      
       - name: Deploy to Staging
         uses: fylein/aws-eks-deploy-action@master
         env:
@@ -36,6 +41,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           KUBERNETES_MANIFEST_FILE_PATH: deployment/staging/controller.yml
+      
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
