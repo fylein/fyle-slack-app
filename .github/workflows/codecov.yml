@@ -1,8 +1,11 @@
-name: Continuous Integration
+name: Codecov Report Upload
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
-    types: [assigned, opened, synchronize, reopened]
+    types: [labeled]
 
 jobs:
   pytest:
