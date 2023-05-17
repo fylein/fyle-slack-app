@@ -19,7 +19,8 @@ class NotificationType(enum.Enum):
 
     # Expense notification types
     EXPENSE_COMMENTED = 'EXPENSE_COMMENTED'
-    EXPENSE_MANDATORY_RECEIPT_MISSING = 'EXPENSE_MANDATORY_RECEIPT_MISSING'
+    EXPENSE_MATCHED = 'EXPENSE_MATCHED'
+    
 
 
 class NotificationPreference(models.Model):

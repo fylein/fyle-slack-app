@@ -102,7 +102,7 @@ NOTIFICATION_TYPE_UI_DETAILS = {
             }
         }
     },
-    NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value: {
+    NotificationType.EXPENSE_MATCHED.value: {
         'role_required': 'FYLER',
         'ui': {
             'type': 'section',

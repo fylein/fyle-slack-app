@@ -121,7 +121,7 @@ class FyleFylerNotification(FyleNotificationView):
             NotificationType.REPORT_APPROVER_SENDBACK.value: self.handle_report_approver_sendback,
             NotificationType.REPORT_COMMENTED.value: self.handle_report_commented,
             NotificationType.EXPENSE_COMMENTED.value: self.handle_expense_commented,
-            NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value: self.handle_expense_mandatory_receipt_missing,
+            NotificationType.EXPENSE_MATCHED.value: self.handle_expense_mandatory_receipt_missing,
             NotificationType.REPORT_PAID.value: self.handle_report_paid
         }
 
