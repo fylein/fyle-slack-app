@@ -168,7 +168,7 @@ class BlockActionHandler:
             'report_paid_notification_preference': NotificationType.REPORT_PAID.value,
             'report_commented_notification_preference': NotificationType.REPORT_COMMENTED.value,
             'expense_commented_notification_preference': NotificationType.EXPENSE_COMMENTED.value,
-            'expense_mandatory_receipt_missing_notification_preference': NotificationType.EXPENSE_MANDATORY_RECEIPT_MISSING.value
+            'expense_mandatory_receipt_missing_notification_preference': NotificationType.EXPENSE_MATCHED.value
         }
 
         is_enabled = True if value == 'enable' else False
