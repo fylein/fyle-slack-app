@@ -11,11 +11,18 @@ jobs:
   slack_app_deploy:
     if: (github.event_name != 'pull_request') || (github.event_name == 'pull_request' && github.event.action == 'labeled')
     runs-on: ubuntu-latest
+    environment: Staging
     steps:
       - uses: actions/checkout@v2
       - uses: satackey/action-docker-layer-caching@v0.0.11
         continue-on-error: true
-      - name: Deploy Slack App
+      - name: push to dockerhub
+        uses: fylein/docker-release-action@master
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          IMAGE_NAME: fyle_netsuite-api
+      - name: Deploy to Staging
         uses: fylein/aws-eks-deploy-action@master
         env:
           EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
@@ -28,7 +35,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          KUBERNETES_MANIFEST_FILE_PATH: deployment/staging/controller.yaml
+          KUBERNETES_MANIFEST_FILE_PATH: deployment/staging/controller.yml
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
