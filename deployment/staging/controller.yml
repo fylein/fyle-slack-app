@@ -26,9 +26,6 @@ spec:
       app: slack-app
   strategy:
     type: RollingUpdateing
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
   template:
     metadata:
       labels:
