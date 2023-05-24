@@ -1,22 +1,8 @@
-name: Deploy to Staging
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [labeled]
-
-jobs:
-  staging_deploy:
-    if: (github.event_name != 'pull_request') || (github.event_name == 'pull_request' && github.event.action == 'labeled' && github.event.label.name == 'deploy')
-    runs-on: ubuntu-latest
-
 apiVersion: v1
 kind: Service
 metadata:
   name: slack-app
-  namespace: slack
+  namespace: integrations
   labels:
     app: slack-app
 spec:
@@ -30,7 +16,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: slack-app
-  namespace: slack
+  namespace: integrations
   labels:
     app: slack-app
 spec:
@@ -50,7 +36,7 @@ spec:
     spec:
       containers:
         - name: slack-app
-          image: docker.io/sivafyle/fyle_slack-app:${version}
+          image: docker.io/{{DOCKERHUB_USERNAME}}/fyle_slack-app:{{RELEASE_VERSION}}
           resources:
             limits:
               memory: 200Mi
@@ -64,6 +50,9 @@ spec:
               port: 8000
             initialDelaySeconds: 10
             timeoutSeconds: 1
+          envFrom:
+            - secretRef:
+                name: slack-app-secrets
       terminationGracePeriodSeconds: 60
       imagePullSecrets:
         - name: myregistrykey2
@@ -72,7 +61,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: slack-app-qcluster
-  namespace: slack
+  namespace: integrations
   labels:
     app: slack-app-qcluster
 spec:
@@ -87,13 +76,16 @@ spec:
     spec:
       containers:
         - name: slack-app
-          image: docker.io/sivafyle/fyle_slack-app:${version}
+          image: docker.io/{{DOCKERHUB_USERNAME}}/fyle_slack-app:{{RELEASE_VERSION}}
           resources:
             limits:
               memory: 400Mi
             requests:
               memory: 400Mi
           command: [ 'bash', 'run_qcluster.sh' ]
+          envFrom:
+            - secretRef:
+                name: slack-app-secrets
       terminationGracePeriodSeconds: 60
       imagePullSecrets:
         - name: myregistrykey2
