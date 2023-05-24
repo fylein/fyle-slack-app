@@ -21,7 +21,7 @@ jobs:
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
-          IMAGE_NAME: fyle_netsuite-api
+          IMAGE_NAME: fyle_slack-app
       - name: Deploy to Staging
         uses: fylein/aws-eks-deploy-action@master
         env:
