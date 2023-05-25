@@ -1,17 +1,13 @@
-name: Deploy Slack App
+name: Deploy to Production
 
 on:
-  push:
-    branches:
-      - master
-  pull_request:
-    types: [labeled]
+  release:
+    types: [created]
 
 jobs:
-  slack_app_deploy:
-    if: (github.event_name != 'pull_request') || (github.event_name == 'pull_request' && github.event.action == 'labeled')
+  production_deploy:
     runs-on: ubuntu-latest
-    environment: Staging
+    environment: Production
     steps:
       - uses: actions/checkout@v2
       - uses: satackey/action-docker-layer-caching@v0.0.11
@@ -22,7 +18,7 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
           IMAGE_NAME: fyle_slack-app
-      - name: Deploy to Staging
+      - name: Deploy to Production
         uses: fylein/aws-eks-deploy-action@master
         env:
           EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
@@ -35,14 +31,14 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          KUBERNETES_MANIFEST_FILE_PATH: deployment/staging/controller.yml
+          KUBERNETES_MANIFEST_FILE_PATH: deployment/production/controller.yml
       - name: Slack Notification
         uses: rtCamp/action-slack-notify@v2
         env:
           SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: Slack App Deploy Status - ${{ job.status }}
-          SLACK_TITLE: Deploy Slack App
+          SLACK_MESSAGE: Production Deploy Status - ${{ job.status }}
+          SLACK_TITLE: Deploy Slack APP to Production
           SLACK_ICON_EMOJI: ":pepeok:"
-          SLACK_USERNAME: Slack_App
+          SLACK_USERNAME: SLACK_APP
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_FOOTER: ''

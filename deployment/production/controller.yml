@@ -25,10 +25,7 @@ spec:
     matchLabels:
       app: slack-app
   strategy:
-    type: RollingUpdateing
-    rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
@@ -69,6 +66,8 @@ spec:
   selector:
     matchLabels:
       app: slack-app-qcluster
+  strategy:
+    type: RollingUpdate
   template:
     metadata:
       labels:
