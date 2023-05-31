@@ -49,6 +49,10 @@ class SlackAuthorization(View):
         slack_team = utils.get_or_none(Team, id=team_id)
 
         if slack_team is not None:
+            # Update bot access token
+            slack_team.bot_access_token = bot_access_token
+            slack_team.save()
+
             # If slack team already exists means
             # Slack bot is already installed in the workspace
             # Send user a message that bot is already installed
