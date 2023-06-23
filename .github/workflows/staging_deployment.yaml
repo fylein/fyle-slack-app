@@ -1,4 +1,4 @@
-name: Deploy Slack App
+name: Deploy to Staging
 
 on:
   push:
