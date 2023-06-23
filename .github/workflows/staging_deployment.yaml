@@ -22,27 +22,33 @@ jobs:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
           IMAGE_NAME: fyle_slack-app
-      - name: Deploy to Staging
-        uses: fylein/aws-eks-deploy-action@master
-        env:
-          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          LOCAL_HOST: ${{ secrets.LOCAL_HOST }}
-          LOCAL_PORT: ${{ secrets.LOCAL_PORT }}
-          REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-          EKS_KUBECTL_ROLE: ${{ secrets.EKS_KUBECTL_ROLE }}
-          ROLE_SESSION_NAME: ${{ secrets.ROLE_SESSION_NAME }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          KUBERNETES_MANIFEST_FILE_PATH: deployment/staging/controller.yml
-      - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_COLOR: ${{ job.status }}
-          SLACK_MESSAGE: Slack App Deploy Status - ${{ job.status }}
-          SLACK_TITLE: Deploy Slack App
-          SLACK_ICON_EMOJI: ":pepeok:"
-          SLACK_USERNAME: Slack_App
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_FOOTER: ''
+
+      - name: Install kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Clone another repository
+        uses: actions/checkout@v2
+        with:
+          repository: ${{ secrets.STAGING_DEPLOY_REPO }}
+          ref: master
+          path: ${{ secrets.STAGING_DEPLOY_REPO }}
+          persist-credentials: false
+          token: ${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}
+
+      - name: Update Image Tag
+        run: |
+          NEW_TAG="v$(git rev-parse --short HEAD)"
+          cd ${{ secrets.STAGING_DEPLOY_REPO }}/${{ secrets.EKS_CLUSTER_NAME }}/integrations
+          kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app:$NEW_TAG
+
+      - name: Commit and push changes
+        run: |
+          cd ${{ secrets.STAGING_DEPLOY_REPO }}/
+          git config --global user.email "integrations@fylehq.com"
+          git config --global user.name "GitHub Actions"
+          git add .
+          git commit -m "Update image tag"
+          git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ secrets.STAGING_DEPLOY_REPO }}
+          git push origin master
