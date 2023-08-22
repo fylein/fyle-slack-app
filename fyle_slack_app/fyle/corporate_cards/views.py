@@ -27,6 +27,7 @@ class FyleCorporateCard:
     def get_corporate_card_transaction(self, corporate_card_id: str) -> Dict:
         query_params = {
             'id': 'eq.{}'.format(corporate_card_id),
+            'order': 'created_at.desc',
             'limit': '1',
             'offset': '0'
         }
