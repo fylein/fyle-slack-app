@@ -280,7 +280,7 @@ class FyleFylerNotification(FyleNotificationView):
 
         corporate_card_id = list(expense['matched_corporate_card_transaction_ids'])[0]
 
-        corporate_card_transactions = FyleCorporateCard(user).get_corporate_card_transactions(corporate_card_id)
+        corporate_card_transactions = FyleCorporateCard(user).get_corporate_card_transaction(corporate_card_id)
 
         # Fetch corporate card
         card = FyleCorporateCard(user).get_corporate_card_by_id(corporate_card_transactions['corporate_card_id'])
