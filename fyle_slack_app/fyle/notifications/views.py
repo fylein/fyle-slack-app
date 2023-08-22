@@ -290,7 +290,8 @@ class FyleFylerNotification(FyleNotificationView):
 
             card_expense_notification_message, title_text = notification_messages.get_expense_mandatory_receipt_missing_notification(
                 expense,
-                expense_url
+                expense_url,
+                corporate_card_transactions
             )
 
             slack_client.chat_postMessage(

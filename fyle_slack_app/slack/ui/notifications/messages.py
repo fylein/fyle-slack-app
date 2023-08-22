@@ -502,10 +502,10 @@ def get_card_expense_attach_receipt_action(expense_id: str) -> Dict:
     return card_expense_attach_receipt_action
 
 
-def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict]:
+def get_card_expense_section_blocks(expense: Dict, title_text: str, corporate_card_transactions: Dict) -> List[Dict]:
 
     readable_spend_date = utils.get_formatted_datetime(expense['spent_at'], '%B %d, %Y')
-    card_number = expense['matched_corporate_card_transactions'][0]['corporate_card_number']
+    card_number = corporate_card_transactions['corporate_card']['card_number']
     card_number_last_4_digits = card_number[-4:]
     card_details = 'Ending {} (VISA)'.format(card_number_last_4_digits)
 
@@ -552,7 +552,7 @@ def get_card_expense_section_blocks(expense: Dict, title_text: str) -> List[Dict
     return card_expense_section_block
 
 
-def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_url: str) -> List[Dict]:
+def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_url: str, corporate_card_transactions: Dict) -> List[Dict]:
 
     display_amount = slack_utils.get_display_amount(expense['amount'], expense['currency'])
 
@@ -565,7 +565,7 @@ def get_expense_mandatory_receipt_missing_notification(expense: Dict, expense_ur
         'elements': []
     }
 
-    card_expense_section_block = get_card_expense_section_blocks(expense, title_text)
+    card_expense_section_block = get_card_expense_section_blocks(expense, title_text, corporate_card_transactions)
 
     attach_receipt_section = get_card_expense_attach_receipt_action(expense['id'])
     actions_block['elements'].append(attach_receipt_section)
