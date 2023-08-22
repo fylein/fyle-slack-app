@@ -32,5 +32,5 @@ class FyleCorporateCard:
             'offset': '0'
         }
         response = self.connection.v1beta.admin.corporate_card_transactions.list(query_params=query_params)
-        corporate_card_transactions = response['data'][0]
-        return corporate_card_transactions
+        corporate_card_transaction = response['data'][0]
+        return corporate_card_transaction
