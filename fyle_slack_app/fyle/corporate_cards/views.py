@@ -23,3 +23,14 @@ class FyleCorporateCard:
         response = self.connection.v1beta.spender.corporate_cards.list(query_params=query_params)
         corporate_card = response['data'] if response['count'] == 1 else None
         return corporate_card
+
+    def get_corporate_card_transaction(self, corporate_card_id: str) -> Dict:
+        query_params = {
+            'id': 'eq.{}'.format(corporate_card_id),
+            'order': 'created_at.desc',
+            'limit': '1',
+            'offset': '0'
+        }
+        response = self.connection.v1beta.admin.corporate_card_transactions.list(query_params=query_params)
+        corporate_card_transaction = response['data'][0]
+        return corporate_card_transaction
