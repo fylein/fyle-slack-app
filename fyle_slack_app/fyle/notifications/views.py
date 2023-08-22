@@ -278,10 +278,12 @@ class FyleFylerNotification(FyleNotificationView):
     def handle_expense_mandatory_receipt_missing(self, webhook_data: Dict, user: User, slack_client: WebClient) -> JsonResponse:
         expense = webhook_data['data']
 
-        corporate_card_id = expense['matched_corporate_card_transactions'][0]['corporate_card_id']
+        corporate_card_id = list(expense['matched_corporate_card_transaction_ids'])[0]
+
+        corporate_card_transactions = FyleCorporateCard(user).get_corporate_card_transactions(corporate_card_id)
 
         # Fetch corporate card
-        card = FyleCorporateCard(user).get_corporate_card_by_id(corporate_card_id)
+        card = FyleCorporateCard(user).get_corporate_card_by_id(corporate_card_transactions['corporate_card_id'])
 
         if card and card[0] and card[0]['is_visa_enrolled'] is True:
             expense_url = fyle_utils.get_fyle_resource_url(user.fyle_refresh_token, expense, 'EXPENSE')
