@@ -1,4 +1,4 @@
-aiohttp==3.7.4
+aiohttp==3.8.5
 analytics-python==1.2.9
 arrow==0.17.0
 asgiref==3.3.1
