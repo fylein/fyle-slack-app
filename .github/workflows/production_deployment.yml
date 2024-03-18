@@ -36,7 +36,7 @@ jobs:
       - name: Update Image Tag
         run: |
           NEW_TAG="v$(git rev-parse --short HEAD)"
-          cd ${{ vars.PROD_DEPLOY_REPO }}/${{ secrets.EKS_CLUSTER_NAME }}/integrations
+          cd ${{ vars.PROD_DEPLOY_REPO }}/${{ vars.PROD_US1_DEPLOY_DIR }}/integrations
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app:$NEW_TAG
 
       - name: Commit and push changes
