@@ -27,24 +27,24 @@ jobs:
       - name: Clone another repository
         uses: actions/checkout@v2
         with:
-          repository: ${{ secrets.PROD_DEPLOY_REPO }}
+          repository: ${{ vars.PROD_DEPLOY_REPO }}
           ref: master
-          path: ${{ secrets.PROD_DEPLOY_REPO }}
+          path: ${{ vars.PROD_DEPLOY_REPO }}
           persist-credentials: false
           token: ${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}
 
       - name: Update Image Tag
         run: |
           NEW_TAG="v$(git rev-parse --short HEAD)"
-          cd ${{ secrets.PROD_DEPLOY_REPO }}/${{ secrets.EKS_CLUSTER_NAME }}/integrations
+          cd ${{ vars.PROD_DEPLOY_REPO }}/${{ secrets.EKS_CLUSTER_NAME }}/integrations
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app:$NEW_TAG
 
       - name: Commit and push changes
         run: |
-          cd ${{ secrets.PROD_DEPLOY_REPO }}/
+          cd ${{ vars.PROD_DEPLOY_REPO }}/
           git config --global user.email "integrations@fylehq.com"
           git config --global user.name "GitHub Actions"
           git add .
           git commit -m "Update slack-app image tag"
-          git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ secrets.PROD_DEPLOY_REPO }}
+          git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.PROD_DEPLOY_REPO }}
           git push origin master
