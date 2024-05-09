@@ -40,7 +40,7 @@ jobs:
       - name: Update Image Tag
         run: |
           NEW_TAG="v$(git rev-parse --short HEAD)"
-          cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/integrations
+          cd ${{ vars.STAGING_DEPLOY_REPO }}/${{ vars.STAGING_DEPLOY_DIR }}/staging/integrations
           kustomize edit set image docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app=docker.io/${{ secrets.DOCKERHUB_USERNAME }}/fyle_slack-app:$NEW_TAG
 
       - name: Commit and push changes
@@ -49,6 +49,6 @@ jobs:
           git config --global user.email "integrations@fylehq.com"
           git config --global user.name "GitHub Actions"
           git add .
-          git commit -m "Update image tag"
+          git commit -m "Deployed slack-app:$NEW_TAG to staging"
           git remote set-url origin https://x-access-token:${{ secrets.DEPLOY_GIT_ACCESS_TOKEN }}@github.com/${{ vars.STAGING_DEPLOY_REPO }}
           git push origin master
