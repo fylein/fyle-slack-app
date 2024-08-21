@@ -40,7 +40,7 @@ jobs:
           SLACK_APP_ID: ${{ secrets.SLACK_APP_ID }}
           SLACK_SERVICE_BASE_URL: ${{ secrets.SLACK_SERVICE_BASE_URL }}
           FYLEHQ_SLACK_URL: 'fakefylehqurl'
-          FYLE_SLACK_APP_SEGMENT_KEY: ${{ secrets.FYLE_SLACK_APP_SEGMENT_KEY }}
+          FYLE_SLACK_APP_MIXPANEL_TOKEN: ${{ secrets.FYLE_SLACK_APP_MIXPANEL_TOKEN }}
           ALLOWED_HOSTS: ${{ secrets.ALLOWED_HOSTS }}
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}

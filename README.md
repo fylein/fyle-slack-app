@@ -58,7 +58,7 @@
     SLACK_APP_ID=fakeslackappid
     SLACK_SERVICE_BASE_URL=akeslackservicebaseurl
     FYLEHQ_SLACK_URL=fakefylehqurl
-    FYLE_SLACK_APP_SEGMENT_KEY=fakesegmentkey
+    FYLE_SLACK_APP_MIXPANEL_TOKEN=fakemixpaneltoken
     ALLOWED_HOSTS=fakeallowedhosts
     DB_NAME=database
     DB_USER=slack_user
