@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'apps.fyle_slack_app',
+    'fyle_slack_app',
     'django_q'
 ]
 

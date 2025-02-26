@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class FyleSlackAppConfig(AppConfig):
-    name = 'apps,fyle_slack_app'
+    name = 'fyle_slack_app'
 
     def ready(self) -> None:
         super().ready()
