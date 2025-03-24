@@ -7,7 +7,7 @@ services:
     entrypoint: bash ./run.sh
     restart: unless-stopped
     volumes:
-      - ./:/fyle_slack_app
+      - slack-app-volume:/fyle_slack_app
     ports:
       - 8007:8000
     depends_on:
@@ -50,5 +50,5 @@ services:
       - data:/var/lib/postgresql/data/
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 volumes: 
-    slack-app:
+    slack-app-volume:
     data:
