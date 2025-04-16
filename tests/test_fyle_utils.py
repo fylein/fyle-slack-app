@@ -157,7 +157,7 @@ class TestFyleCorporateCard:
             'data' : 'data'
         }
         mocker.patch('fyle_slack_app.fyle.utils.get_fyle_sdk_connection', return_value = test_connection)
-        mocker.patch('fyle.platform.platform.v1beta.spender.corporate_cards.list', 
+        mocker.patch('fyle.platform.platform.v1.spender.corporate_cards.list', 
             return_value = response
         )
         mock_user = mock.Mock(spec = User)

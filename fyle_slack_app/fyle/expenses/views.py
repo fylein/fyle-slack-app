@@ -25,7 +25,7 @@ class FyleExpense:
 
 
     def get_expense_fields(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.expense_fields.list(query_params=query_params)
+        return self.connection.v1.spender.expense_fields.list(query_params=query_params)
 
 
     def get_default_expense_fields(self) -> Dict:
@@ -68,11 +68,11 @@ class FyleExpense:
 
 
     def get_categories(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.categories.list(query_params=query_params)
+        return self.connection.v1.spender.categories.list(query_params=query_params)
 
 
     def get_projects(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.projects.list(query_params=query_params)
+        return self.connection.v1.spender.projects.list(query_params=query_params)
 
     def get_merchants(self, query_text: str) -> Dict:
         query_params = {
@@ -81,35 +81,35 @@ class FyleExpense:
             'order': 'display_name.asc',
             'q': query_text
         }
-        return self.connection.v1beta.spender.merchants.list(query_params=query_params)
+        return self.connection.v1.spender.merchants.list(query_params=query_params)
 
     def get_cost_centers(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.cost_centers.list(query_params=query_params)
+        return self.connection.v1.spender.cost_centers.list(query_params=query_params)
 
 
     def get_expenses(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        return self.connection.v1.spender.expenses.list(query_params=query_params)
 
 
     def get_reports(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.reports.list(query_params=query_params)
+        return self.connection.v1.spender.reports.list(query_params=query_params)
 
 
     def get_employees(self, query_params: Dict) -> Dict:
-        return self.connection.v1beta.spender.employees.list(query_params=query_params)
+        return self.connection.v1.spender.employees.list(query_params=query_params)
 
 
     def get_places_autocomplete(self, query: str) -> Dict:
-        return self.connection.v1beta.common.places_autocomplete.list(q=query)
+        return self.connection.v1.common.places_autocomplete.list(q=query)
 
 
     def get_place_by_place_id(self, place_id: str) -> Dict:
-        return self.connection.v1beta.common.places.get_by_id(place_id)
+        return self.connection.v1.common.places.get_by_id(place_id)
 
 
     def get_exchange_rate(self, from_currency: str, to_currency: str) -> Dict:
         current_date = datetime.datetime.today().strftime('%Y-%m-%d')
-        exchange_rate = self.connection.v1beta.common.currencies_exchange_rate.get(
+        exchange_rate = self.connection.v1.common.currencies_exchange_rate.get(
             from_currency, to_currency, current_date
         )
         return exchange_rate['data']['exchange_rate']
@@ -282,7 +282,7 @@ class FyleExpense:
             'limit': '1',
             'offset': '0'
         }
-        response = self.connection.v1beta.spender.expenses.list(query_params=query_params)
+        response = self.connection.v1.spender.expenses.list(query_params=query_params)
         expense = response['data'] if response['count'] == 1 else None
         return expense
 

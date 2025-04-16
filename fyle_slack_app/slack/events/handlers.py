@@ -136,7 +136,7 @@ class SlackEventHandler:
         sent_back_and_draft_reports = cache.get(f'{user_id}.sent_back_and_draft_reports')
 
         if sent_back_and_draft_reports is None:
-            sent_back_and_draft_reports = platform.v1beta.spender.reports.list(query_params={
+            sent_back_and_draft_reports = platform.v1.spender.reports.list(query_params={
                 'limit': 100,
                 'offset': 0,
                 'order': 'created_at.desc',
@@ -175,7 +175,7 @@ class SlackEventHandler:
         incomplete_and_unreported_expenses = cache.get(f'{user_id}.incomplete_and_unreported_expenses')
 
         if incomplete_and_unreported_expenses is None:
-            incomplete_and_unreported_expenses = platform.v1beta.spender.expenses.list(query_params={
+            incomplete_and_unreported_expenses = platform.v1.spender.expenses.list(query_params={
                 'limit': 100,
                 'offset': 0,
                 'order': 'created_at.desc',

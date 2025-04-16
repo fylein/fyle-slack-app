@@ -6,7 +6,7 @@ class TestFyleReportApproval:
 
     def test_get_approver_report(self, mocker, db, report_approval_user):  
         fake_return_value = [1, 2, 3]
-        mocker.patch('fyle.platform.platform.v1beta.approver.reports.list', 
+        mocker.patch('fyle.platform.platform.v1.approver.reports.list', 
             return_value = fake_return_value
         )
         fyle_report_approval = FyleReportApproval(report_approval_user)
@@ -15,7 +15,7 @@ class TestFyleReportApproval:
 
     def test_get_report_by_id(self, mocker, db, report_approval_user):
         fake_return_value = [1, 2, 3]
-        mocker.patch('fyle.platform.platform.v1beta.approver.reports.get_by_id', 
+        mocker.patch('fyle.platform.platform.v1.approver.reports.get_by_id', 
             return_value = fake_return_value
         )
         test_connection = FyleReportApproval(report_approval_user)
@@ -24,7 +24,7 @@ class TestFyleReportApproval:
 
     def test_get_approver_report_expenses(self, mocker, db, report_approval_user):
         fake_return_value = [1, 2, 3]
-        mocker.patch('fyle.platform.platform.v1beta.approver.expenses.list', 
+        mocker.patch('fyle.platform.platform.v1.approver.expenses.list', 
             return_value = fake_return_value
         )
         test_connection = FyleReportApproval(report_approval_user)
@@ -33,7 +33,7 @@ class TestFyleReportApproval:
 
     def test_approve_report(self, mocker, db, report_approval_user):
         fake_return_value = [1, 2, 3]
-        mocker.patch('fyle.platform.platform.v1beta.approver.reports.approve', 
+        mocker.patch('fyle.platform.platform.v1.approver.reports.approve', 
             return_value = fake_return_value
         )
         test_connection = FyleReportApproval(report_approval_user)

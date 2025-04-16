@@ -56,7 +56,7 @@ def get_fyle_profile(refresh_token, fyle_user_id):
     connection = get_fyle_sdk_connection(refresh_token, fyle_user_id)
     if connection is None:
         return None
-    fyle_profile_response = connection.v1beta.spender.my_profile.get()
+    fyle_profile_response = connection.v1.spender.my_profile.get()
     return fyle_profile_response['data']
 
 
