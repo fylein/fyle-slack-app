@@ -10,8 +10,6 @@ jobs:
     environment: CI Environment
     steps:
       - uses: actions/checkout@v2
-      - uses: satackey/action-docker-layer-caching@v0.0.11
-        continue-on-error: true
       - name: Bring up Services and test for token health
         run: |
           docker compose -f docker-compose-pipeline.yaml build
