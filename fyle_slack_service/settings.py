@@ -80,22 +80,11 @@ WSGI_APPLICATION = 'fyle_slack_service.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
+DATABASES = {'default': dj_database_url.config()}
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ['DB_NAME'],
-        'USER': os.environ['DB_USER'],
-        'PASSWORD': os.environ['DB_PASSWORD'],
-        'HOST': os.environ['DB_HOST'],
-        'PORT': os.environ['DB_PORT'],
-    },
-    # Cache DB
-    'cache': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'cache.db.sqlite3'
-    }
-}
+DATABASES['default']['DISABLE_SERVER_SIDE_CURSORS'] = True
+
+DATABASES['cache'] = {'ENGINE': 'django.db.backends.sqlite3', 'NAME': 'cache.db.sqlite3'}
 
 CACHES = {
     'default': {
