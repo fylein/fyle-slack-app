@@ -113,13 +113,15 @@ class SlackCommandHandler:
 
 
     def handle_expense_form(self, user_id: str, team_id: str, user_dm_channel_id: str, trigger_id: str):
-        user = utils.get_or_none(User, slack_user_id=user_id)
-
-        slack_client = slack_utils.get_slack_client(team_id)
-
+        # Create loading modal first
         loading_modal = expense_messages.expense_form_loading_modal(title='Create Expense', loading_message='Loading the best expense form :zap:')
 
+        # Get slack client and open modal immediately to use trigger_id before expiration
+        slack_client = slack_utils.get_slack_client(team_id)
         response = slack_client.views_open(user=user_id, view=loading_modal, trigger_id=trigger_id)
+
+        # Get user after modal is opened (this can take time but trigger_id is already used)
+        user = utils.get_or_none(User, slack_user_id=user_id)
 
         async_task(
             'fyle_slack_app.slack.commands.tasks.open_expense_form',
